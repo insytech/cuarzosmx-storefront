@@ -1,10 +1,19 @@
 import { Radio as RadioGroupOption } from "@headlessui/react"
 import { Text, clx } from "@medusajs/ui"
-import React, { useContext, useMemo, type JSX } from "react"
+import React, { useContext, useEffect, useMemo, useState, type JSX } from "react"
+import { initMercadoPago, Wallet } from "@mercadopago/sdk-react"
 
 import Radio from "@modules/common/components/radio"
 
-import { isManual } from "@lib/constants"
+// Initialize Mercado Pago SDK with your Public Key
+const mercadopagoPublicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
+if (mercadopagoPublicKey) {
+  initMercadoPago(mercadopagoPublicKey, {
+    locale: 'es-MX'
+  })
+}
+
+import { isManual, isMercadoPago } from "@lib/constants"
 import SkeletonCardDetails from "@modules/skeletons/components/skeleton-card-details"
 import { CardElement } from "@stripe/react-stripe-js"
 import { StripeCardElementOptions } from "@stripe/stripe-js"
@@ -64,6 +73,72 @@ const PaymentContainer: React.FC<PaymentContainerProps> = ({
 }
 
 export default PaymentContainer
+
+export const MercadoPagoContainer = ({
+  paymentProviderId,
+  selectedPaymentOptionId,
+  paymentInfoMap,
+  disabled = false,
+  paymentSession,
+}: Omit<PaymentContainerProps, "children"> & {
+  paymentSession?: any
+}) => {
+  // Get preferenceId from backend-generated payment session
+  // The @nicogorga/medusa-payment-mercadopago module returns session_id
+  const preferenceId = paymentSession?.data?.preferenceId || paymentSession?.data?.session_id
+  const hasError = (!preferenceId || paymentSession?.provider_id !== paymentProviderId) && selectedPaymentOptionId === paymentProviderId
+
+  console.log('MercadoPagoContainer - Payment Session:', paymentSession)
+  console.log('MercadoPagoContainer - Preference ID:', preferenceId)
+  console.log('MercadoPagoContainer - Has Error:', hasError)
+
+  return (
+    <PaymentContainer
+      paymentProviderId={paymentProviderId}
+      selectedPaymentOptionId={selectedPaymentOptionId}
+      paymentInfoMap={paymentInfoMap}
+      disabled={disabled}
+    >
+      {selectedPaymentOptionId === paymentProviderId && (
+        <div className="my-4 transition-all duration-150 ease-in-out">
+          <Text className="txt-medium-plus text-ui-fg-base mb-1">
+            Completa tu pago con Mercado Pago:
+          </Text>
+          {hasError ? (
+            <div className="text-center py-4 border border-red-200 rounded-md bg-red-50">
+              <Text className="text-sm text-red-600 mb-2">
+                Error al configurar Mercado Pago
+              </Text>
+              <Text className="text-xs text-red-500">
+                Verifica la configuración del backend y las credenciales de Mercado Pago
+              </Text>
+            </div>
+          ) : preferenceId ? (
+            <div style={{ width: '300px', margin: '20px auto' }}>
+              <Wallet
+                initialization={{ preferenceId }}
+                onReady={() => console.log('Mercado Pago Wallet is ready')}
+                onError={(error) => {
+                  console.error('Mercado Pago error:', error)
+                  // You could set an error state here if needed
+                }}
+              />
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <Text className="text-sm text-ui-fg-subtle">
+                Preparando opciones de pago...
+              </Text>
+              <div className="mt-2 flex justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-ui-fg-base" />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </PaymentContainer>
+  )
+}
 
 export const StripeCardContainer = ({
   paymentProviderId,

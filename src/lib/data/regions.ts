@@ -11,7 +11,7 @@ export const listRegions = async () => {
   }
 
   return sdk.client
-    .fetch<{ regions: HttpTypes.StoreRegion[] }>(`/store/regions`, {
+    .fetch<{ regions: HttpTypes.StoreRegion[] }>("/store/regions", {
       method: "GET",
       next,
       cache: "force-cache",

@@ -1,12 +1,13 @@
 "use client"
 
 import { RadioGroup } from "@headlessui/react"
-import { isStripe as isStripeFunc, paymentInfoMap } from "@lib/constants"
-import { initiatePaymentSession } from "@lib/data/cart"
+import { isStripe as isStripeFunc, isMercadoPago, paymentInfoMap } from "@lib/constants"
+import { initiatePaymentSession, retrieveCart } from "@lib/data/cart"
 import { CheckCircleSolid, CreditCard } from "@medusajs/icons"
 import { Button, Container, Heading, Text, clx } from "@medusajs/ui"
 import ErrorMessage from "@modules/checkout/components/error-message"
 import PaymentContainer, {
+  MercadoPagoContainer,
   StripeCardContainer,
 } from "@modules/checkout/components/payment-container"
 import Divider from "@modules/common/components/divider"
@@ -43,7 +44,7 @@ const Payment = ({
   const setPaymentMethod = async (method: string) => {
     setError(null)
     setSelectedPaymentMethod(method)
-    if (isStripeFunc(method)) {
+    if (isStripeFunc(method) || isMercadoPago(method)) {
       await initiatePaymentSession(cart, {
         provider_id: method,
       })
@@ -67,7 +68,7 @@ const Payment = ({
   )
 
   const handleEdit = () => {
-    router.push(pathname + "?" + createQueryString("step", "payment"), {
+    router.push(`${pathname}?${createQueryString("step", "payment")}`, {
       scroll: false,
     })
   }
@@ -78,6 +79,9 @@ const Payment = ({
       const shouldInputCard =
         isStripeFunc(selectedPaymentMethod) && !activeSession
 
+      const shouldCreateMercadoPagoSession =
+        isMercadoPago(selectedPaymentMethod) && !activeSession
+
       const checkActiveSession =
         activeSession?.provider_id === selectedPaymentMethod
 
@@ -87,9 +91,20 @@ const Payment = ({
         })
       }
 
-      if (!shouldInputCard) {
+      // For MercadoPago, ensure preferenceId or session_id exists
+      if (isMercadoPago(selectedPaymentMethod)) {
+        const updatedCart = await retrieveCart(cart.id)
+        const mercadoPagoSession = updatedCart?.payment_collection?.payment_sessions?.find(
+          (s: any) => s.provider_id === selectedPaymentMethod && s.status === "pending"
+        )
+        if (!mercadoPagoSession?.data?.preferenceId && !mercadoPagoSession?.data?.session_id) {
+          throw new Error("MercadoPago preference not created. Please check backend configuration.")
+        }
+      }
+
+      if (!shouldInputCard && !shouldCreateMercadoPagoSession) {
         return router.push(
-          pathname + "?" + createQueryString("step", "review"),
+          `${pathname}?${createQueryString("step", "review")}`,
           {
             scroll: false,
           }
@@ -153,6 +168,13 @@ const Payment = ({
                         setError={setError}
                         setCardComplete={setCardComplete}
                       />
+                    ) : isMercadoPago(paymentMethod.id) ? (
+                      <MercadoPagoContainer
+                        paymentProviderId={paymentMethod.id}
+                        selectedPaymentOptionId={selectedPaymentMethod}
+                        paymentInfoMap={paymentInfoMap}
+                        paymentSession={activeSession}
+                      />
                     ) : (
                       <PaymentContainer
                         paymentInfoMap={paymentInfoMap}
@@ -196,8 +218,8 @@ const Payment = ({
             }
             data-testid="submit-payment-button"
           >
-            {!activeSession && isStripeFunc(selectedPaymentMethod)
-              ? " Enter card details"
+            {!activeSession && (isStripeFunc(selectedPaymentMethod) || isMercadoPago(selectedPaymentMethod))
+              ? "Procesar pago"
               : "Continue to review"}
           </Button>
         </div>
