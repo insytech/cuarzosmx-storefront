@@ -71,6 +71,7 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+          "Montserrat",
           "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
