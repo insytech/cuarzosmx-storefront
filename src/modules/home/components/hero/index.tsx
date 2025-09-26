@@ -7,7 +7,6 @@ import { Autoplay, Pagination, Navigation, Parallax } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/navigation'
-import 'swiper/css/parallax'
 
 const Hero = () => {
   const slides = [
@@ -28,37 +27,53 @@ const Hero = () => {
       title: 'Calidad Premium',
       subtitle: 'Cristales seleccionados con cuidado',
       buttonText: 'Comprar Ahora'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&h=800&fit=crop',
+      title: 'Regalos con Significado',
+      subtitle: 'Sorprende con joyería de cuarzo',
+      buttonText: 'Descubre Más'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=1200&h=800&fit=crop',
+      title: 'Artesanía y Diseño',
+      subtitle: 'Hecho a mano con pasión',
+      buttonText: 'Conoce al Artesano'
     }
   ]
 
   return (
-    <div className="h-[75vh] w-full relative overflow-hidden">
+    <div className="h-[75vh] relative overflow-hidden">
       <Swiper
-        spaceBetween={30}
+        grabCursor={true}
+        spaceBetween={40}
+        slidesPerView={1.5}
         centeredSlides={true}
+        speed={900}
+        parallax={true}
+        loop={true}
+        navigation={true}
+        pagination={{ clickable: true }}
+
         autoplay={{
           delay: 3000,
-          disableOnInteraction: false,
+          pauseOnMouseEnter: true,
         }}
-        pagination={{
-          clickable: true,
-        }}
-        navigation={true}
-        parallax={true}
-        modules={[Autoplay, Pagination, Navigation, Parallax]}
-        className="h-full"
+        modules={[Autoplay, Parallax, Pagination, Navigation]}
+        className="h-[80vh] rounded-2xl active:transform scale-[1]"
       >
         {slides.map((slide, index) => (
-          <SwiperSlide key={index}>
-            <div className="relative h-full rounded-2xl overflow-hidden">
+          <SwiperSlide key={index} className="object-cover ">
+            <div className="relative h-[80%] rounded-2xl overflow-hidden">
               <img
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transform scale-[1.3] transition-[0.5s] filter grayscale-1 active:filter grayscale-0"
                 src={slide.image}
                 alt={slide.title}
-                data-swiper-parallax="-30%"
+                data-swiper-parallax-x="30%"
+                loading="lazy"
               />
-              <div className="absolute inset-0  flex flex-col justify-center items-center text-center p-8">
-                <div className="space-y-6 max-w-2xl">
+              <div className="absolute inset-0 bg-black/40 flex flex-col justify-center items-center text-center p-8">
+                <div className="z-20 absolute left-3 bottom-3 max-w-2xl space-x-2">
                   <Heading
                     level="h1"
                     className="text-4xl md:text-6xl leading-tight text-white font-light drop-shadow-2xl"
