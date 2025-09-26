@@ -85,7 +85,7 @@ export const MercadoPagoContainer = ({
 }) => {
   // Get preferenceId from backend-generated payment session
   // The @nicogorga/medusa-payment-mercadopago module returns session_id
-  const preferenceId = paymentSession?.data?.preferenceId || paymentSession?.data?.session_id
+  const preferenceId = paymentSession?.data?.id || paymentSession?.data?.session_id
   const hasError = (!preferenceId || paymentSession?.provider_id !== paymentProviderId) && selectedPaymentOptionId === paymentProviderId
 
   console.log('MercadoPagoContainer - Payment Session:', paymentSession)
