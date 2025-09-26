@@ -12,9 +12,9 @@ export default async function Footer() {
   const productCategories = await listCategories()
 
   return (
-    <footer className="border-t border-morado w-full">
+    <footer className="border-t border-purple w-full bg-light-gray/50">
       <div className="content-container flex flex-col w-full">
-        <div className="flex flex-col gap-y-6 xsmall:flex-row items-start justify-between py-40">
+        <div className="flex flex-col gap-y-8 xsmall:flex-row items-start justify-between py-16 md:py-24">
           <div>
             <LocalizedClientLink
               href="/"
@@ -27,7 +27,7 @@ export default async function Footer() {
             {productCategories && productCategories?.length > 0 && (
               <div className="flex flex-col gap-y-2">
                 <span className="txt-small-plus txt-ui-fg-base">
-                  Categories
+                  Categorías
                 </span>
                 <ul
                   className="grid grid-cols-1 gap-2"
@@ -84,7 +84,7 @@ export default async function Footer() {
             {collections && collections.length > 0 && (
               <div className="flex flex-col gap-y-2">
                 <span className="txt-small-plus txt-ui-fg-base">
-                  Collections
+                  Colecciones
                 </span>
                 <ul
                   className={clx(
@@ -115,7 +115,7 @@ export default async function Footer() {
                     href="#"
                     className="hover:text-ui-fg-base"
                   >
-                    About Us
+                    Sobre Nosotros
                   </a>
                 </li>
                 <li>
@@ -123,7 +123,7 @@ export default async function Footer() {
                     href="#"
                     className="hover:text-ui-fg-base"
                   >
-                    Contact
+                    Contacto
                   </a>
                 </li>
                 <li>
@@ -131,16 +131,16 @@ export default async function Footer() {
                     href="#"
                     className="hover:text-ui-fg-base"
                   >
-                    Privacy Policy
+                    Política de Privacidad
                   </a>
                 </li>
               </ul>
             </div>
           </div>
         </div>
-        <div className="flex w-full mb-16 justify-center text-ui-fg-muted">
+        <div className="flex w-full mb-8 justify-center text-ui-fg-muted border-t border-purple/20 pt-8">
           <Text className="txt-compact-small">
-            © {new Date().getFullYear()} CuarzosMX. All rights reserved.
+            © {new Date().getFullYear()} CuarzosMX. Todos los derechos reservados.
           </Text>
         </div>
       </div>

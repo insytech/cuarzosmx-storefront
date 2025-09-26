@@ -1,24 +1,29 @@
-import { Github } from "@medusajs/icons"
 import { Button, Heading } from "@medusajs/ui"
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
 const Hero = () => {
   return (
-    <div className="h-[75vh] w-full border-b border-morado relative bg-beige">
-      <div className="absolute inset-0 z-10 flex flex-col justify-center items-center text-center small:p-32 gap-6">
-        <span>
+    <div className="h-[75vh] w-full relative bg-gradient-to-br from-beige via-light-purple to-gold">
+      <div className="absolute inset-0 z-10 flex flex-col justify-center items-center text-center small:p-32 gap-8">
+        <span className="space-y-4">
           <Heading
             level="h1"
-            className="text-3xl leading-10 text-negro font-normal"
+            className="text-4xl md:text-5xl leading-tight text-black font-serif font-light"
           >
-            Welcome to CuarzosMX
+            Bienvenido a CuarzosMX
           </Heading>
           <Heading
             level="h2"
-            className="text-3xl leading-10 text-morado-oscuro font-normal"
+            className="text-2xl md:text-3xl leading-relaxed text-dark-purple font-light"
           >
-            Discover Unique Quartz Jewelry
+            Descubre Joyería Única de Cuarzo
           </Heading>
         </span>
+        <LocalizedClientLink href="/store">
+          <Button className="bg-purple hover:bg-dark-purple text-white px-8 py-3 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl">
+            Explorar Colección
+          </Button>
+        </LocalizedClientLink>
       </div>
     </div>
   )
