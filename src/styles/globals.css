@@ -52,6 +52,33 @@
   }
 }
 
+/* Swiper custom styles */
+.swiper-slide-active {
+  transform: scale(.95);
+  transition: all 0.5s ease;
+}
+
+.swiper-slide .img-wrapper {
+  transform: scale(1.3);
+  transition: 0.5s;
+}
+
+.swiper-slide-active .img-wrapper {
+  transform: scale(1);
+}
+
+.swiper-slide img {
+  transform: scale(1.3);
+  filter: grayscale(1);
+  object-fit: cover;
+  user-select: none;
+  transition: transform 0.5s ease, filter 0.5s ease;
+}
+
+.swiper-slide-active img {
+  filter: grayscale(0);
+}
+
 @layer components {
   .content-container {
     @apply max-w-[1440px] w-full mx-auto px-6;

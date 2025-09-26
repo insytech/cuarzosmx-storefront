@@ -60,18 +60,20 @@ const Hero = () => {
           pauseOnMouseEnter: true,
         }}
         modules={[Autoplay, Parallax, Pagination, Navigation]}
-        className="h-[80vh] rounded-2xl active:transform scale-[1]"
+        className="h-[80vh] "
       >
         {slides.map((slide, index) => (
-          <SwiperSlide key={index} className="object-cover ">
+          <SwiperSlide key={index} className="object-cover">
             <div className="relative h-[80%] rounded-2xl overflow-hidden">
-              <img
-                className="w-full h-full object-cover transform scale-[1.3] transition-[0.5s] filter grayscale-1 active:filter grayscale-0"
-                src={slide.image}
-                alt={slide.title}
-                data-swiper-parallax-x="30%"
-                loading="lazy"
-              />
+              <div className="img-wrapper">
+                <img
+                  className="w-full h-full object-cover"
+                  src={slide.image}
+                  alt={slide.title}
+                  data-swiper-parallax-x="30%"
+                  loading="lazy"
+                />
+              </div>
               <div className="absolute inset-0 bg-black/40 flex flex-col justify-center items-center text-center p-8">
                 <div className="z-20 absolute left-3 bottom-3 max-w-2xl space-x-2">
                   <Heading
