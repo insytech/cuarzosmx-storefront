@@ -37,13 +37,13 @@ const Hero = () => {
     {
       image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=1200&h=800&fit=crop',
       title: 'Artesanía y Diseño',
-      subtitle: 'Hecho a mano con pasión',
+      subtitle: 'Hecho a mano con pasión, descubre nuestras promociones y descuentos de hasta el 22% en piezas seleccionadas.',
       buttonText: 'Conoce al Artesano'
     }
   ]
 
   return (
-    <div className="h-[75vh] relative overflow-hidden">
+    <div className="h-[90vh] relative overflow-hidden">
       <Swiper
         grabCursor={true}
         spaceBetween={40}
@@ -54,13 +54,12 @@ const Hero = () => {
         loop={true}
         navigation={true}
         pagination={{ clickable: true }}
-
         autoplay={{
-          delay: 3000,
+          delay: 5000,
           pauseOnMouseEnter: true,
         }}
         modules={[Autoplay, Parallax, Pagination, Navigation]}
-        className="h-[80vh] "
+        className="h-[90vh] "
       >
         {slides.map((slide, index) => (
           <SwiperSlide key={index} className="object-cover">
@@ -74,26 +73,26 @@ const Hero = () => {
                   loading="lazy"
                 />
               </div>
-              <div className="absolute inset-0 bg-black/40 flex flex-col justify-center items-center text-center p-8">
-                <div className="z-20 absolute left-3 bottom-3 max-w-2xl space-x-2">
+              <div className="absolute inset-0 bg-black/40 p-8">
+                <div className="z-20 absolute left-4 bottom-4 max-w-2xl">
                   <Heading
                     level="h1"
-                    className="text-4xl md:text-6xl leading-tight text-white font-light drop-shadow-2xl"
+                    className="text-4xl md:text-6xl leading-tight text-white font-bold text-left drop-shadow-2xl"
                   >
                     {slide.title}
                   </Heading>
                   <Heading
                     level="h2"
-                    className="text-xl md:text-3xl leading-relaxed text-white font-light drop-shadow-lg"
+                    className="text-xl md:text-3xl leading-relaxed text-white font-bold text-left drop-shadow-lg mt-2"
                   >
                     {slide.subtitle}
                   </Heading>
-                  <LocalizedClientLink href="/store">
-                    <Button className="bg-white hover:bg-gray-100 text-black px-10 py-3 rounded-full shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 font-medium">
-                      {slide.buttonText}
-                    </Button>
-                  </LocalizedClientLink>
                 </div>
+                <LocalizedClientLink href="/store">
+                  <Button className="absolute bottom-4 right-4 bg-white hover:bg-gray-100 text-black px-10 py-3 rounded-full shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 font-medium z-20">
+                    {slide.buttonText}
+                  </Button>
+                </LocalizedClientLink>
               </div>
             </div>
           </SwiperSlide>
