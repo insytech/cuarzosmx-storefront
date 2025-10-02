@@ -83,6 +83,35 @@
   filter: grayscale(0);
 }
 
+.swiper-button-next,
+.swiper-button-prev {
+  color: #E6D6F3 !important;
+  font-size: 12px !important;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 16px;
+}
+
+.swiper-pagination-bullet {
+  background: #A77FCB !important;
+}
+
 @layer components {
   .content-container {
     @apply max-w-[1440px] w-full mx-auto px-6;
