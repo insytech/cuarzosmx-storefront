@@ -1,13 +1,16 @@
 import { Suspense } from "react"
-
 import { listRegions } from "@lib/data/regions"
 import { StoreRegion } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import CartButton from "@modules/layout/components/cart-button"
-import SideMenu from "@modules/layout/components/side-menu"
+import CategoriesPopover from "./categories-dropdown.tsx"
+
+
 
 export default async function Nav() {
   const regions = await listRegions().then((regions: StoreRegion[]) => regions)
+
+
 
   return (
     <div className="sticky top-0 inset-x-0 z-50 group">
@@ -72,7 +75,7 @@ export default async function Nav() {
       {/* Barra secundaria */}
       <nav className="bg-purple text-white flex items-center justify-between px-8 py-2">
         <div className="flex items-center gap-6">
-          <SideMenu regions={regions} /> {/* TODO: Cambiar por un desplegable hacia abajo con las categorías */}
+          <CategoriesPopover />
           <LocalizedClientLink href="/" className="font-semibold hover:underline">Inicio</LocalizedClientLink>
           <LocalizedClientLink href="/store" className="font-semibold hover:underline">Tienda</LocalizedClientLink>
           <LocalizedClientLink href="/pages" className="font-semibold hover:underline">Paginas</LocalizedClientLink>
