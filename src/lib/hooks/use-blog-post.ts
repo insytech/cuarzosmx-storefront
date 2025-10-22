@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from 'react'
 import { blogApi } from '../util/blog-api'
 import { BlogPost } from '../../types/global'
