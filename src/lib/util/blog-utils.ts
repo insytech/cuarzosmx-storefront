@@ -2,15 +2,26 @@ import * as DOMPurify from 'dompurify'
 import { marked } from 'marked'
 
 export const sanitizeHtml = (markdown: string): string => {
-    const html = marked.parse(markdown) as string
+    // Check if the content is already HTML (contains HTML tags)
+    const isHtml = /<[^>]*>/.test(markdown)
+
+    let html: string
+    if (isHtml) {
+        // If it's already HTML, use it directly
+        html = markdown
+    } else {
+        // If it's markdown, parse it
+        html = marked.parse(markdown) as string
+    }
 
     return DOMPurify.default.sanitize(html, {
-        ADD_TAGS: ['iframe'],
+        ADD_TAGS: ['iframe', 'img'],
         ADD_ATTR: [
             'allow', 'allowfullscreen', 'frameborder',
-            'scrolling', 'src', 'width', 'height'
+            'scrolling', 'src', 'width', 'height', 'alt', 'class'
         ],
-        ALLOWED_URI_REGEXP: /^https:\/\/(www\.)?(youtube\.com\/embed\/|vimeo\.com\/)/
+        ALLOWED_URI_REGEXP: /^https?:\/\/.*/,
+        ALLOW_DATA_ATTR: false
     })
 }
 
@@ -45,4 +56,22 @@ export const getImageUrl = (thumbnailUrl: string | null): string | null => {
     const cleanThumbnailUrl = thumbnailUrl.replace(/^\//, '')
 
     return `${cleanBaseUrl}/${cleanThumbnailUrl}`
+}
+
+export const processMarkdownImages = (markdown: string): string => {
+    // Handle both markdown image syntax and HTML img tags
+
+    // First, handle markdown image syntax: ![alt](src)
+    let processed = markdown.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+        const processedUrl = getImageUrl(src) || src
+        return `![${alt}](${processedUrl})`
+    })
+
+    // Then, handle HTML img tags: <img src="..." alt="..." />
+    processed = processed.replace(/<img([^>]+)src=["']([^"']+)["']([^>]*)>/g, (match, before, src, after) => {
+        const processedUrl = getImageUrl(src) || src
+        return `<img${before}src="${processedUrl}"${after}>`
+    })
+
+    return processed
 }

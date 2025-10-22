@@ -1,4 +1,4 @@
-import { sanitizeHtml } from "@util/blog-utils"
+import { sanitizeHtml, processMarkdownImages } from "@util/blog-utils"
 
 interface BlogContentProps {
     markdown: string
@@ -6,7 +6,9 @@ interface BlogContentProps {
 }
 
 const BlogContent = ({ markdown, className = "" }: BlogContentProps) => {
-    const htmlContent = sanitizeHtml(markdown)
+    // Process images in content (whether markdown or HTML) before sanitization
+    const processedContent = processMarkdownImages(markdown)
+    const htmlContent = sanitizeHtml(processedContent)
 
     return (
         <div
