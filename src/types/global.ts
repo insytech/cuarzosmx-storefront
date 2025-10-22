@@ -22,3 +22,27 @@ export type StoreFreeShippingPrice = StorePrice & {
   target_remaining: number
   remaining_percentage: number
 }
+
+export type BlogPost = {
+  id: string
+  title: string
+  url_slug: string
+  body_markdown: string
+  thumbnail_url?: string
+  seo_title?: string
+  seo_description?: string
+  status: 'published'
+  created_at: string
+  updated_at: string
+}
+
+export type BlogPostsResponse = {
+  posts: BlogPost[]
+  count: number
+  limit: number
+  offset: number
+}
+
+export type BlogPostResponse = {
+  post: BlogPost
+}
