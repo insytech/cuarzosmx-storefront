@@ -3,21 +3,15 @@ import { listRegions } from "@lib/data/regions"
 import { StoreRegion } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import CartButton from "@modules/layout/components/cart-button"
+import TopBar from "@modules/layout/components/top-bar"
 import CategoriesPopover from "./categories-dropdown.tsx"
-
-
 
 export default async function Nav() {
   const regions = await listRegions().then((regions: StoreRegion[]) => regions)
 
-
-
   return (
     <div className="sticky top-0 inset-x-0 z-50 group">
-      <div className="bg-purple text-white text-center text-xs py-2 font-semibold flex justify-center items-center gap-2">
-        <span>20 % De descuento en la compra de 12 o mas productos</span>
-        <span className="ml-auto mr-4 font-bold">MXN</span>
-      </div>
+      <TopBar />
       <header className="h-20 mx-auto bg-white px-8 shadow-sm">
         <nav className="content-container txt-xsmall-plus text-ui-fg-subtle flex items-center justify-between w-full h-full text-small-regular">
           <div className="flex items-center gap-4 h-full">
@@ -29,32 +23,27 @@ export default async function Nav() {
               <img src="/cuarzosmx-logo.webp" alt="CuarzosMX" className="h-16" />
             </LocalizedClientLink>
           </div>
-          {/* Buscador */}
-          <div className=" gap-x-6 flex-1 flex justify-center">
-            <div className="flex bg-gray-50 rounded-md overflow-hidden border border-gray-200">
-              <span className="flex items-center px-3 text-gray-400">
-                <svg width="18" height="18" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="7" strokeWidth="2" /><path d="M17 17L13.5 13.5" strokeWidth="2" strokeLinecap="round" /></svg>
-              </span>
-              <input
-                type="text"
-                placeholder="Buscar tu producto favorito..."
-                className="bg-transparent px-2 py-2 outline-none w-56 md:w-80"
-              />
-              <select className="bg-transparent px-2 py-2 outline-none border-l border-gray-200 text-gray-500">
-                <option>Seleccionar Categoría</option>
-                //TODO: Llenar con categorias de productos desde DB
-              </select>
-            </div>
+          <div className="flex items-center gap-x-6 h-full flex-1 basis-0 justify-center">
+            <CategoriesPopover />
+            <LocalizedClientLink href="/" className="font-semibold hover:underline">Inicio</LocalizedClientLink>
+            <LocalizedClientLink href="/store" className="font-semibold hover:underline">Tienda</LocalizedClientLink>
+            <LocalizedClientLink href="/pages" className="font-semibold hover:underline">Paginas</LocalizedClientLink>
+            <LocalizedClientLink href="/about" className="font-semibold hover:underline">Acerca de Nosotros</LocalizedClientLink>
+            <LocalizedClientLink href="/blog" className="font-semibold hover:underline">Blog</LocalizedClientLink>
+            <LocalizedClientLink href="/contact" className="font-semibold hover:underline">Contacto</LocalizedClientLink>
           </div>
           <div className="flex items-center gap-x-6 h-full flex-1 basis-0 justify-end">
-            <div className="hidden small:flex items-center gap-x-6 h-full">
-              <LocalizedClientLink
-                className="hover:text-ui-fg-base"
-                href="/account"
-                data-testid="nav-account-link"
-              >
-                Cuenta
-              </LocalizedClientLink>
+            <div className="flex items-center gap-x-4">
+              <button className="p-2 hover:bg-gray-100 rounded-full">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+              <button className="p-2 hover:bg-gray-100 rounded-full">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </button>
             </div>
             <Suspense
               fallback={
@@ -63,7 +52,10 @@ export default async function Nav() {
                   href="/cart"
                   data-testid="nav-cart-link"
                 >
-                  Carrito (0)
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.1 5H19M7 13v8a2 2 0 002 2h10a2 2 0 002-2v-3" />
+                  </svg>
+                  (0)
                 </LocalizedClientLink>
               }
             >
@@ -72,21 +64,6 @@ export default async function Nav() {
           </div>
         </nav>
       </header>
-      {/* Barra secundaria */}
-      <nav className="bg-purple text-white flex items-center justify-between px-8 py-2">
-        <div className="flex items-center gap-6">
-          <CategoriesPopover />
-          <LocalizedClientLink href="/" className="font-semibold hover:underline">Inicio</LocalizedClientLink>
-          <LocalizedClientLink href="/store" className="font-semibold hover:underline">Tienda</LocalizedClientLink>
-          <LocalizedClientLink href="/pages" className="font-semibold hover:underline">Paginas</LocalizedClientLink>
-          <LocalizedClientLink href="/about" className="font-semibold hover:underline">Acerca de Nosotros</LocalizedClientLink>
-          <LocalizedClientLink href="/blog" className="font-semibold hover:underline">Blog</LocalizedClientLink>
-          <LocalizedClientLink href="/contact" className="font-semibold hover:underline">Contacto</LocalizedClientLink>
-        </div>
-        <LocalizedClientLink href="/store" className="bg-white text-purple px-6 py-2 rounded-full font-semibold shadow hover:bg-gray-100 transition">
-          Comprar Ahora
-        </LocalizedClientLink>
-      </nav>
     </div>
   )
 }

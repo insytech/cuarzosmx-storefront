@@ -51,7 +51,7 @@ const CategoriesPopover = () => {
             >
                 <PopoverPanel
                     static
-                    className="absolute left-0 mt-2 z-50 bg-white rounded-b-xl shadow-lg border border-purple"
+                    className="absolute left-0 mt-2 z-50 bg-white rounded-b-xl shadow-lg border border-main-color"
                     style={{ width: width || btnRef.current?.offsetWidth || "auto" }}
                 >
                     <ul className="py-2">
@@ -59,7 +59,7 @@ const CategoriesPopover = () => {
                             <li key={cat}>
                                 <a
                                     href={`/category/${encodeURIComponent(cat.toLowerCase().replace(/\s+/g, "-"))}`}
-                                    className="block px-5 py-2 text-gray-800 hover:bg-purple-50 hover:text-purple-700 transition"
+                                    className="block px-5 py-2 text-gray-800 hover:bg-main-color-50 hover:text-main-color-700 transition"
                                 >
                                     {cat}
                                 </a>

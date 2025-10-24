@@ -12,7 +12,7 @@ export default async function Footer() {
   const productCategories = await listCategories()
 
   return (
-    <footer className="border-t border-purple w-full bg-light-gray/50">
+    <footer className="border-t border-main-color w-full bg-light-gray/50">
       <div className="content-container flex flex-col w-full">
         <div className="flex flex-col gap-y-8 xsmall:flex-row items-start justify-between py-16 md:py-24">
           <div>
@@ -138,7 +138,7 @@ export default async function Footer() {
             </div>
           </div>
         </div>
-        <div className="flex w-full mb-8 justify-center text-ui-fg-muted border-t border-purple/20 pt-8">
+        <div className="flex w-full mb-8 justify-center text-ui-fg-muted border-t border-main-color/20 pt-8">
           <Text className="txt-compact-small">
             © {new Date().getFullYear()} CuarzosMX. Todos los derechos reservados.
           </Text>

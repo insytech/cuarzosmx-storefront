@@ -1,14 +1,18 @@
 import { Metadata } from "next"
 
-import FeaturedProducts from "@modules/home/components/featured-products"
-import Hero from "@modules/home/components/hero"
-import { listCollections } from "@lib/data/collections"
+import HeroBlock from "@modules/home/components/hero-block"
+import ProductCarousel from "@modules/home/components/product-carousel"
+import InterstitialBanner from "@modules/home/components/interstitial-banner"
+import EditorialBlock from "@modules/home/components/editorial-block"
+import LifestyleBlock from "@modules/home/components/lifestyle-block"
+import CategoryGrid from "@modules/home/components/category-grid"
+import NewsletterBlock from "@modules/home/components/newsletter-block"
+import { listProducts } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
 
 export const metadata: Metadata = {
-  title: "Medusa Next.js Starter Template",
-  description:
-    "A performant frontend ecommerce starter template with Next.js 15 and Medusa.",
+  title: "CuarzosMX - Joyería Única de Cuarzo",
+  description: "Descubre joyería única de cuarzo de alta calidad. Piezas artesanales que reflejan tu esencia.",
 }
 
 export default async function Home(props: {
@@ -20,22 +24,65 @@ export default async function Home(props: {
 
   const region = await getRegion(countryCode)
 
-  const { collections } = await listCollections({
-    fields: "id, handle, title",
-  })
-
-  if (!collections || !region) {
+  if (!region) {
     return null
   }
 
+  const { response: { products } } = await listProducts({
+    countryCode,
+    queryParams: {
+      limit: 20,
+      fields: "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags"
+    }
+  })
+
   return (
     <>
-      <Hero />
-      <div className="py-12">
-        <ul className="flex flex-col gap-x-6">
-          <FeaturedProducts collections={collections} region={region} />
-        </ul>
-      </div>
+      {/* 2. Sección Hero */}
+      <HeroBlock />
+
+      {/* 3. Carrusel de Productos (Bloque 1) */}
+      <ProductCarousel
+        title="Productos Destacados"
+        products={products || []}
+        region={region}
+      />
+
+      {/* 4. Carrusel de Productos (Bloque 2) */}
+      <ProductCarousel
+        title="Nuevos Ingresos"
+        products={products?.slice(4, 8) || []}
+        region={region}
+      />
+
+      {/* 5. Banner CTA */}
+      <InterstitialBanner />
+
+      {/* 6. Carrusel de Productos (Bloque 3) */}
+      <ProductCarousel
+        title="Más Vendidos"
+        products={products?.slice(8, 12) || []}
+        region={region}
+      />
+
+      {/* 7. Bloque Editorial */}
+      <EditorialBlock />
+
+      {/* 8. Banner con Texto Superpuesto */}
+      <LifestyleBlock />
+
+      {/* 9. Grilla de Categorías */}
+      <CategoryGrid />
+
+      {/* 10. Carrusel de Productos (Bloque 4) */}
+      <ProductCarousel
+        title="Recomendados para Ti"
+        products={products?.slice(12, 16) || []}
+        region={region}
+      />
+
+      {/* 11. Sección de Newsletter */}
+      <NewsletterBlock />
     </>
   )
 }

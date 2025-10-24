@@ -13,7 +13,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         {product.collection && (
           <LocalizedClientLink
             href={`/collections/${product.collection.handle}`}
-            className="text-sm text-dark-purple hover:text-purple uppercase tracking-wide font-medium"
+            className="text-sm text-main-color-dark hover:text-main-color uppercase tracking-wide font-medium"
           >
             {product.collection.title}
           </LocalizedClientLink>
@@ -27,7 +27,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         </Heading>
 
         <Text
-          className="text-lg text-dark-purple leading-relaxed whitespace-pre-line"
+          className="text-lg text-main-color leading-relaxed whitespace-pre-line"
           data-testid="product-description"
         >
           {product.description}

@@ -34,17 +34,17 @@ module.exports = {
           80: "#1F2937",
           90: "#111827",
         },
-        purple: "#A77FCB",
-        "dark-purple": "#7C4D9B",
-        "light-purple": "#E6D6F3",
+        "main-color": "#A77FCB",
+        "main-color-dark": "#7C4D9B",
+        "main-color-light": "#E6D6F3",
         white: "#FFFFFF",
         "light-gray": "#F7F7F7",
         black: "#222222",
         beige: "#F5F2EF",
         gold: "#D6BFA6",
-        "light-pink": "#F8E3EA",
-        "quartz-pink": "#F7BFD7",
-        "light-green": "#B6E2D3",
+        "quartz-pink": "#F8E3EA",
+        "quartz-red": "#F7BFD7",
+        "quartz-green": "#B6E2D3",
       },
       borderRadius: {
         none: "0px",
@@ -66,9 +66,6 @@ module.exports = {
         xlarge: "1680px",
         "2xlarge": "1920px",
       },
-      fontSize: {
-        "3xl": "2rem",
-      },
       fontFamily: {
         sans: [
           "Montserrat",
@@ -81,6 +78,9 @@ module.exports = {
           "Ubuntu",
           "sans-serif",
         ],
+      },
+      fontSize: {
+        "3xl": "2rem",
       },
       keyframes: {
         ring: {

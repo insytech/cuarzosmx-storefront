@@ -150,7 +150,7 @@ export default function ProductActions({
             !isValidVariant
           }
           variant="primary"
-          className="w-full h-12 bg-purple hover:bg-dark-purple text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+          className="w-full h-12 bg-main-color hover:bg-main-color-dark text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
           isLoading={isAdding}
           data-testid="add-product-button"
         >
