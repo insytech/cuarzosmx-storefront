@@ -7,7 +7,6 @@ import InterstitialBanner from "@modules/home/components/interstitial-banner"
 import EditorialBlock from "@modules/home/components/editorial-block"
 import LifestyleBlock from "@modules/home/components/lifestyle-block"
 import CategoryGrid from "@modules/home/components/category-grid"
-import NewsletterBlock from "@modules/home/components/newsletter-block"
 import { listProducts } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
 
@@ -84,9 +83,6 @@ export default async function Home(props: {
         products={products?.slice(12, 16) || []}
         region={region}
       />
-
-      {/* 11. Sección de Newsletter */}
-      <NewsletterBlock />
     </>
   )
 }
