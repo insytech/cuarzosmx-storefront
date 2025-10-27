@@ -1,5 +1,4 @@
 import { Text } from "@medusajs/ui"
-import { listProducts } from "@lib/data/products"
 import { getProductPrice } from "@lib/util/get-product-price"
 import { HttpTypes } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
@@ -10,45 +9,60 @@ export default async function ProductPreview({
   product,
   isFeatured,
   region,
+  imageClassName,
+  showPrice,
 }: {
   product: HttpTypes.StoreProduct
   isFeatured?: boolean
   region: HttpTypes.StoreRegion
+  imageClassName?: string
+  showPrice?: boolean
 }) {
-  // const pricedProduct = await listProducts({
-  //   regionId: region.id,
-  //   queryParams: { id: [product.id!] },
-  // }).then(({ response }) => response.products[0])
-
-  // if (!pricedProduct) {
-  //   return null
-  // }
-
   const { cheapestPrice } = getProductPrice({
     product,
   })
 
   return (
-    <LocalizedClientLink href={`/products/${product.handle}`} className="group">
-      <div data-testid="product-wrapper" className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-light-gray/20">
-        <div className="relative overflow-hidden">
+    <LocalizedClientLink href={`/products/${product.handle}`} className="group w-full">
+      <div data-testid="product-wrapper" className="flex flex-col h-full">
+        {/* Imagen cuadrada con efecto hover */}
+        <div className="relative w-full aspect-square overflow-hidden rounded-lg bg-white shadow-sm hover:shadow-lg transition-all duration-300 group/image flex items-center justify-center">
           <Thumbnail
             thumbnail={product.thumbnail}
             images={product.images}
-            size="full"
+            size="square"
             isFeatured={isFeatured}
+            className={imageClassName ? imageClassName : "transition-transform duration-300 ease-in-out group-hover/image:scale-110 object-cover w-full h-full"}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          {/* Overlay gradient on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 rounded-lg" />
         </div>
-        <div className="p-4">
-          <div className="flex justify-between items-start">
-            <Text className="text-black font-medium text-lg leading-tight flex-1 mr-2" data-testid="product-title">
-              {product.title}
-            </Text>
-            <div className="flex items-center gap-x-2 flex-shrink-0">
-              {cheapestPrice && <PreviewPrice price={cheapestPrice} />}
+
+        {/* Contenido del producto */}
+        <div className="flex flex-col gap-2 mt-4">
+          {/* Nombre del producto */}
+          <Text
+            className="text-black font-semibold text-base leading-snug line-clamp-2 group-hover:text-main-color transition-colors"
+            data-testid="product-title"
+          >
+            {product.title}
+          </Text>
+
+          {/* Precio */}
+          {showPrice && cheapestPrice && (
+            <div className="flex items-center">
+              <span className="text-main-color font-bold text-lg">
+                <PreviewPrice price={cheapestPrice} />
+              </span>
             </div>
-          </div>
+          )}
+
+          {/* Pequeña descripción si existe */}
+          {product.description && (
+            <p className="text-main-color-dark text-xs line-clamp-1 opacity-70 mt-1">
+              {product.description}
+            </p>
+          )}
         </div>
       </div>
     </LocalizedClientLink>

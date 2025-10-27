@@ -13,37 +13,43 @@ export default function ProductCarousel({ title, products, region }: ProductCaro
         return null
     }
 
+    // Determina el número de columnas según la cantidad de productos (mínimo 1, máximo 4)
+    const columns = Math.max(1, Math.min(products.length, 4))
+    const maxWidth = products.length === 1 ? "max-w-sm" : "max-w-7xl"
+
     return (
-        <section className="w-full py-12">
-            <div className="section-container">
-                <div className="text-center mb-8">
-                    <Heading level="h2" className="text-3xl md:text-4xl font-bold">
+        <section className="w-full py-16 bg-light-gray">
+            <div className={`${maxWidth} mx-auto px-4`}>
+                {/* Encabezado */}
+                <div className="text-center mb-12">
+                    <Heading level="h2" className="text-3xl md:text-4xl lg:text-5xl font-bold text-main-color-dark mb-4">
                         {title}
                     </Heading>
+                    <div className="flex justify-center">
+                        <div className="h-1 w-16 bg-main-color rounded-full" />
+                    </div>
+                    <p className="text-main-color-dark text-base md:text-lg mt-6 max-w-2xl mx-auto">
+                        Descubre nuestros productos más populares y esenciales espirituales
+                    </p>
                 </div>
 
-                <div className="relative">
-                    <button className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-3 hover:bg-gray-50 transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-                    <button className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-3 hover:bg-gray-50 transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-12">
-                        {products.slice(0, 4).map((product) => (
-                            <ProductPreview
-                                key={product.id}
-                                product={product}
-                                region={region}
-                                isFeatured={true}
-                            />
-                        ))}
-                    </div>
+                {/* Grid de productos */}
+                <div
+                    className="grid gap-8"
+                    style={{
+                        gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                        justifyItems: products.length === 1 ? "center" : undefined,
+                    }}
+                >
+                    {products.slice(0, 4).map((product) => (
+                        <ProductPreview
+                            key={product.id}
+                            product={product}
+                            region={region}
+                            isFeatured={true}
+                            showPrice
+                        />
+                    ))}
                 </div>
             </div>
         </section>
