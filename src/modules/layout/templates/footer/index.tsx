@@ -28,7 +28,7 @@ export default function Footer() {
         <div className="py-12 small:py-16 border-b border-white/10">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-12">
 
-            {/* Logo & Description Section */}
+            {/* Logo & Social Links Section */}
             <div className="flex flex-col gap-6">
               <LocalizedClientLink
                 href="/"
@@ -37,9 +37,11 @@ export default function Footer() {
                 <img
                   src="/Logo-Cuarzos.webp"
                   alt="CuarzosMX Logo"
-                  className="h-32 small:h-40 w-auto"
+                  className="w-32"
+
                 />
               </LocalizedClientLink>
+
               {/* Social Links */}
               <div className="flex gap-4 pt-2">
                 <a
@@ -75,24 +77,29 @@ export default function Footer() {
 
             {/* Videoteca Section */}
             <div className="flex flex-col gap-4">
-              <span className="txt-small-plus txt-ui-fg-base">
-                Videoteca
-              </span>
-              <ul className="space-y-3 text-xs small:text-sm">
+              <div className="text-center">
+                <a
+                  href="https://www.youtube.com/@claudiacuarzos9781/videos"
+                  className="txt-small-plus txt-ui-fg-base font-bold"
+                >
+                  VIDEOTECA
+                </a>
+              </div>
+              <ul className="space-y-3 text-xs small:text-sm text-white/80 txt-small">
                 <li>
                   <a
                     href="https://www.youtube.com/watch?v=P-p6qhlm70s"
-                    className=" hover:text-white transition-colors duration-200"
+                    className="hover:text-white transition-colors duration-200"
                   >
-                    • Cómo limpio y programo un cuarzo
+                    *Como limpio y programo un cuarzo
                   </a>
                 </li>
                 <li>
                   <a
                     href="https://www.youtube.com/watch?v=aqXx2YeXhdY&t=1s"
-                    className=" hover:text-white transition-colors duration-200"
+                    className="hover:text-white transition-colors duration-200"
                   >
-                    • Poderosa energía de los cuarzos
+                    *Poderosa energía de los cuarzos para protegerte
                   </a>
                 </li>
                 <li>
@@ -100,15 +107,15 @@ export default function Footer() {
                     href="https://www.youtube.com/watch?v=7OwjtoggbHE&t=2s"
                     className="hover:text-white transition-colors duration-200"
                   >
-                    • Cómo uso los cuarzos en mi casa
+                    *Como uso los cuarzos en mi casa
                   </a>
                 </li>
                 <li>
                   <a
                     href="https://www.youtube.com/watch?v=uAbZB6m_w0s"
-                    className=" hover:text-white transition-colors duration-200"
+                    className="hover:text-white transition-colors duration-200"
                   >
-                    • Cómo uso los cuarzos a mi favor?
+                    *Como uso los cuarzos a mi favor
                   </a>
                 </li>
               </ul>
@@ -116,64 +123,63 @@ export default function Footer() {
 
             {/* La empresa Section */}
             <div className="flex flex-col gap-y-2">
-              <span className="txt-small-plus txt-ui-fg-base">CuarzosMX</span>
-              <ul className="grid grid-cols-1 gap-y-2 text-ui-fg-subtle txt-small">
+              <div className="text-center">
+                <span className="txt-small-plus txt-ui-fg-base font-bold">
+                  LA EMPRESA
+                </span>
+              </div>
+              <ul className="grid grid-cols-1 gap-y-2 text-white/80 txt-small">
                 <li>
                   <a
-                    href="#"
-                    className="hover:text-ui-fg-base"
+                    href="/store"
+                    className="hover:text-white transition-colors duration-200"
                   >
-                    Sobre Nosotros
+                    Catálogo
                   </a>
                 </li>
                 <li>
                   <a
                     href="https://www.youtube.com/watch?v=uAbZB6m_w0s"
-                    className=" hover:text-white transition-colors duration-200"
+                    className="hover:text-white transition-colors duration-200"
                   >
-                    Contacto
+                    Contactanos
                   </a>
                 </li>
                 <li>
-                  <LocalizedClientLink href="/privacy" className="hover:text-white transition-colors">
-                    Política de Privacidad
-                  </LocalizedClientLink>
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors duration-200"
+                  >
+                    Nosotros
+                  </a>
                 </li>
                 <li>
-                  <LocalizedClientLink href="/terms" className="hover:text-white transition-colors">
-                    Política de devoluciones y reembolsos
-                  </LocalizedClientLink>
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors duration-200"
+                  >
+                    Preguntas Frecuentes
+                  </a>
                 </li>
               </ul>
             </div>
 
-            {/* Colecciones Section */}
-            {collections && collections.length > 0 && (
-              <div className="flex flex-col gap-y-2">
-                <span className="txt-small-plus txt-ui-fg-base">
-                  Colecciones
+            {/* CuarzosMX Section */}
+            <div className="flex flex-col gap-y-2">
+              <div className="text-center">
+                <span className="txt-small-plus txt-ui-fg-base font-bold">
+                  CUARZOS.MX
                 </span>
-                <ul
-                  className={clx(
-                    "grid grid-cols-1 gap-2 text-ui-fg-subtle txt-small",
-                    {
-                      "grid-cols-2": (collections?.length || 0) > 3,
-                    }
-                  )}
-                >
-                  {collections?.slice(0, 6).map((c) => (
-                    <li key={c.id}>
-                      <LocalizedClientLink
-                        className="hover:text-ui-fg-base"
-                        href={`/collections/${c.handle}`}
-                      >
-                        {c.title}
-                      </LocalizedClientLink>
-                    </li>
-                  ))}
-                </ul>
               </div>
-            )}
+              <p className="text-xs small:text-sm leading-relaxed text-white/85 font-light">
+                Somos una tienda especializada en la venta de cuarzos desde hace más de 20 años.
+              </p>
+              <div className="text-center">
+                <LocalizedClientLink href="/terms" className="text-white/80 hover:text-white transition-colors duration-200 text-xs small:text-sm">
+                  Política de devoluciones y reembolsos
+                </LocalizedClientLink>
+              </div>
+            </div>
           </div>
         </div >
       </div>
