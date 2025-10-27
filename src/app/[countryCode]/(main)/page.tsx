@@ -1,6 +1,7 @@
 import { Metadata } from "next"
 
 import HeroBlock from "@modules/home/components/hero-block"
+import FeaturesBanner from "@modules/home/components/features-banner"
 import ProductCarousel from "@modules/home/components/product-carousel"
 import InterstitialBanner from "@modules/home/components/interstitial-banner"
 import EditorialBlock from "@modules/home/components/editorial-block"
@@ -40,6 +41,9 @@ export default async function Home(props: {
     <>
       {/* 2. Sección Hero */}
       <HeroBlock />
+
+      {/* 2.1. Banner de Características */}
+      <FeaturesBanner />
 
       {/* 3. Carrusel de Productos (Bloque 1) */}
       <ProductCarousel
