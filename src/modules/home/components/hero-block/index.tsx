@@ -2,61 +2,50 @@ import { Button, Heading } from "@medusajs/ui"
 
 export default function HeroBlock() {
     return (
-        <section className="w-full py-12">
-            <div className="section-container">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[500px]">
-                    {/* Columna Izquierda - 2/3 */}
-                    <div className="lg:col-span-2 relative">
-                        <div className="h-full bg-gray-300 rounded-lg overflow-hidden relative">
-                            <div className="absolute inset-0 bg-black/20 flex flex-col justify-center p-8">
-                                <div className="max-w-lg">
-                                    <Heading level="h1" className="text-4xl md:text-5xl font-bold mb-4 text-white">
-                                        [Título H1]
-                                    </Heading>
-                                    <p className="text-lg md:text-xl mb-6 text-white">
-                                        [Párrafo Corto]
-                                    </p>
-                                    <Button className="btn-primary">
-                                        [Botón CTA]
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
+        <section className="w-full min-h-[600px] lg:min-h-[700px] flex flex-col lg:flex-row px-10">
+            {/* Columna Izquierda: 50% en desktop, 100% en móvil */}
+            <div className="w-full lg:w-1/2 min-h-[220px] flex items-center justify-center bg-main-color-light relative">
+                <div className="max-w-lg px-6 py-12 w-full">
+                    <Heading level="h1" className="text-3xl md:text-5xl font-bold mb-4 text-main-color-dark">
+                        [Título H1]
+                    </Heading>
+                    <p className="text-base md:text-xl mb-6 text-main-color-dark">
+                        [Párrafo Corto]
+                    </p>
+                    <Button className="bg-main-color text-white px-8 py-3 rounded-large shadow-lg">
+                        [Botón CTA]
+                    </Button>
+                </div>
+            </div>
+
+            {/* Columna Central: 25% en desktop, 100% en móvil */}
+            <div className="w-full lg:w-1/4 min-h-[180px] flex flex-col">
+                {/* Sección superior */}
+                <div className="h-40 lg:h-1/2 flex items-center justify-center bg-quartz-pink border-b border-beige">
+                    <div className="w-24 h-24 rounded-lg bg-quartz-red/60 flex items-center justify-center">
+                        <span className="text-main-color-dark text-sm">[Placeholder]</span>
                     </div>
+                </div>
+                {/* Sección inferior */}
+                <div className="h-40 lg:h-1/2 flex items-center justify-center bg-quartz-green">
+                    <div className="w-24 h-24 rounded-lg bg-main-color-light/60 flex items-center justify-center">
+                        <span className="text-main-color-dark text-sm">[Placeholder]</span>
+                    </div>
+                </div>
+            </div>
 
-                    {/* Columna Derecha - 1/3 */}
-                    <div className="lg:col-span-1">
-                        <div className="flex flex-col space-y-4 h-full">
-                            {/* Imagen 1 */}
-                            <div className="bg-gray-300 rounded-lg overflow-hidden aspect-square relative">
-                                <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                                    <div className="text-center text-gray-500">
-                                        <div className="w-12 h-12 bg-gray-400 rounded-full mx-auto mb-2" />
-                                        <span className="text-sm">[Placeholder Imagen]</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Imagen 2 */}
-                            <div className="bg-gray-300 rounded-lg overflow-hidden aspect-square relative">
-                                <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                                    <div className="text-center text-gray-500">
-                                        <div className="w-12 h-12 bg-gray-400 rounded-full mx-auto mb-2" />
-                                        <span className="text-sm">[Placeholder Imagen]</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Imagen 3 */}
-                            <div className="bg-gray-300 rounded-lg overflow-hidden aspect-square relative">
-                                <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                                    <div className="text-center text-gray-500">
-                                        <div className="w-12 h-12 bg-gray-400 rounded-full mx-auto mb-2" />
-                                        <span className="text-sm">[Placeholder Imagen]</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            {/* Columna Derecha: 25% en desktop, 100% en móvil */}
+            <div className="w-full lg:w-1/4 min-h-[180px] flex flex-col">
+                {/* Sección superior */}
+                <div className="h-40 lg:h-1/2 flex items-center justify-center bg-gold border-b border-beige">
+                    <div className="w-24 h-24 rounded-lg bg-beige/60 flex items-center justify-center">
+                        <span className="text-main-color-dark text-sm">[Placeholder]</span>
+                    </div>
+                </div>
+                {/* Sección inferior */}
+                <div className="h-40 lg:h-1/2 flex items-center justify-center bg-light-gray">
+                    <div className="w-24 h-24 rounded-lg bg-main-color/20 flex items-center justify-center">
+                        <span className="text-main-color-dark text-sm">[Placeholder]</span>
                     </div>
                 </div>
             </div>
