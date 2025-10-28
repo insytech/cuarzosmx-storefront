@@ -1,35 +1,47 @@
 import { Button, Heading } from "@medusajs/ui"
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
 export default function HeroBlock() {
     return (
         <section className="w-full min-h-[600px] lg:min-h-[800px] flex flex-col lg:flex-row px-32 gap-2">
             {/* Columna Izquierda: 50% en desktop, 100% en móvil */}
-            <div className="w-full lg:w-1/2 aspect-square flex items-center justify-center bg-main-color-light relative p-2">
-                <div className="max-w-lg px-6 py-12 w-full">
-                    <Heading level="h1" className="text-3xl md:text-5xl font-bold mb-4 text-main-color-dark">
-                        [Título H1]
-                    </Heading>
-                    <p className="text-base md:text-xl mb-6 text-main-color-dark">
-                        [Párrafo Corto]
-                    </p>
-                    <Button className="bg-main-color text-white px-8 py-3 rounded-large shadow-lg">
-                        [Botón CTA]
-                    </Button>
-                </div>
-            </div>
+            <LocalizedClientLink
+                href="/collections/promo-1"
+                className="w-full lg:w-1/2 aspect-square flex items-center justify-center bg-main-color-light relative p-2"
+            >
+                <img
+                    src="/promo/promo-1.webp"
+                    alt="Promo 1"
+                    className="w-full h-full object-cover rounded-lg"
+                />
+            </LocalizedClientLink>
 
             {/* Columna Central: 25% en desktop, 100% en móvil */}
             <div className="w-full lg:w-1/4 min-h-[180px] flex flex-col gap-2">
                 {/* Sección superior */}
-                <div className="aspect-square flex items-center justify-center bg-quartz-pink border-b border-beige p-2">
-                    <div className="w-24 h-24 rounded-lg bg-quartz-red/60 flex items-center justify-center">
-                        <span className="text-main-color-dark text-sm">[Placeholder]</span>
+                <div className="aspect-square flex items-center justify-center bg-quartz-pink border-b border-beige p-2 relative">
+                    <img
+                        src="/promo/promo-2.webp"
+                        alt="Promo 2"
+                        className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
+                        <Button className="bg-white text-main-color-dark px-4 py-2 rounded-large shadow-lg hover:bg-gray-100">
+                            Comprar Ahora
+                        </Button>
                     </div>
                 </div>
                 {/* Sección inferior */}
-                <div className="aspect-square flex items-center justify-center bg-quartz-green p-2">
-                    <div className="w-24 h-24 rounded-lg bg-main-color-light/60 flex items-center justify-center">
-                        <span className="text-main-color-dark text-sm">[Placeholder]</span>
+                <div className="aspect-square flex items-center justify-center bg-quartz-green p-2 relative">
+                    <img
+                        src="/promo/promo-3.webp"
+                        alt="Promo 3"
+                        className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
+                        <Button className="bg-white text-main-color-dark px-4 py-2 rounded-large shadow-lg hover:bg-gray-100">
+                            Descubre Más
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -37,15 +49,29 @@ export default function HeroBlock() {
             {/* Columna Derecha: 25% en desktop, 100% en móvil */}
             <div className="w-full lg:w-1/4 min-h-[180px] flex flex-col gap-2">
                 {/* Sección superior */}
-                <div className="aspect-square flex items-center justify-center bg-gold border-b border-beige p-2">
-                    <div className="w-24 h-24 rounded-lg bg-beige/60 flex items-center justify-center">
-                        <span className="text-main-color-dark text-sm">[Placeholder]</span>
+                <div className="aspect-square flex items-center justify-center bg-gold border-b border-beige p-2 relative">
+                    <img
+                        src="/promo/promo-4.webp"
+                        alt="Promo 4"
+                        className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
+                        <Button className="bg-white text-main-color-dark px-4 py-2 rounded-large shadow-lg hover:bg-gray-100">
+                            Oferta Especial
+                        </Button>
                     </div>
                 </div>
                 {/* Sección inferior */}
-                <div className="aspect-square flex items-center justify-center bg-light-gray p-2">
-                    <div className="w-24 h-24 rounded-lg bg-main-color/20 flex items-center justify-center">
-                        <span className="text-main-color-dark text-sm">[Placeholder]</span>
+                <div className="aspect-square flex items-center justify-center bg-light-gray p-2 relative">
+                    <img
+                        src="/promo/promo-5.webp"
+                        alt="Promo 5"
+                        className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
+                        <Button className="bg-white text-main-color-dark px-4 py-2 rounded-large shadow-lg hover:bg-gray-100">
+                            Ver Detalles
+                        </Button>
                     </div>
                 </div>
             </div>
