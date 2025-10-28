@@ -4,6 +4,13 @@ import "styles/globals.css"
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
+  title: "CuarzosMX - Joyería Única de Cuarzo",
+  description:
+    "Descubre joyería única de cuarzo de alta calidad. Piezas artesanales que reflejan tu esencia.",
+  keywords: ["cuarzo", "joyería", "artesanal", "alta calidad"],
+  icons: {
+    icon: "/favicon.webp",
+  },
 }
 
 export default function RootLayout(props: { children: React.ReactNode }) {
