@@ -7,7 +7,7 @@ export default function HeroBlock() {
             {/* Columna Izquierda: 50% en desktop, 100% en móvil */}
             <LocalizedClientLink
                 href="/collections/promo-1"
-                className="w-full lg:w-1/2 aspect-square flex items-center justify-center bg-main-color-light relative p-2"
+                className="w-full lg:w-1/2 aspect-square flex items-center justify-center relative "
             >
                 <img
                     src="/promo/promo-1.webp"
@@ -19,7 +19,7 @@ export default function HeroBlock() {
             {/* Columna Central: 25% en desktop, 100% en móvil */}
             <div className="w-full lg:w-1/4 min-h-[180px] flex flex-col gap-2">
                 {/* Sección superior */}
-                <div className="aspect-square flex items-center justify-center bg-quartz-pink border-b border-beige p-2 relative">
+                <div className="aspect-square flex items-center justify-center relative">
                     <img
                         src="/promo/promo-2.webp"
                         alt="Promo 2"
@@ -32,7 +32,7 @@ export default function HeroBlock() {
                     </div>
                 </div>
                 {/* Sección inferior */}
-                <div className="aspect-square flex items-center justify-center bg-quartz-green p-2 relative">
+                <div className="aspect-square flex items-center justify-center relative">
                     <img
                         src="/promo/promo-3.webp"
                         alt="Promo 3"
@@ -49,7 +49,7 @@ export default function HeroBlock() {
             {/* Columna Derecha: 25% en desktop, 100% en móvil */}
             <div className="w-full lg:w-1/4 min-h-[180px] flex flex-col gap-2">
                 {/* Sección superior */}
-                <div className="aspect-square flex items-center justify-center bg-gold border-b border-beige p-2 relative">
+                <div className="aspect-square flex items-center justify-center relative">
                     <img
                         src="/promo/promo-4.webp"
                         alt="Promo 4"
@@ -62,7 +62,7 @@ export default function HeroBlock() {
                     </div>
                 </div>
                 {/* Sección inferior */}
-                <div className="aspect-square flex items-center justify-center bg-light-gray p-2 relative">
+                <div className="aspect-square flex items-center justify-center  relative">
                     <img
                         src="/promo/promo-5.webp"
                         alt="Promo 5"
