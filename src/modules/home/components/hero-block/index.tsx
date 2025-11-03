@@ -34,7 +34,7 @@ export default function HeroBlock() {
                 {/* Sección inferior */}
                 <div className="aspect-square flex items-center justify-center relative">
                     <img
-                        src="/promo/promo-3.webp"
+                        src="/promo/promo-6.webp"
                         alt="Promo 3"
                         className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
                     />
