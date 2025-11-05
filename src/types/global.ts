@@ -46,3 +46,29 @@ export type BlogPostsResponse = {
 export type BlogPostResponse = {
   post: BlogPost
 }
+
+export type Banner = {
+  id: string
+  title: string
+  image_url: string
+  image_key?: string
+  link_url?: string
+  position: 'main' | 'right_1' | 'right_2' | 'right_3' | 'right_4'
+  is_active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export type PromotionMessage = {
+  id: string
+  message: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type BannerResponse = {
+  banners: Banner[]
+  promotionMessage: PromotionMessage | null
+}

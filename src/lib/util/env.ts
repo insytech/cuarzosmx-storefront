@@ -1,3 +1,3 @@
 export const getBaseURL = () => {
-  return process.env.NEXT_PUBLIC_BASE_URL || "https://localhost:8000"
+  return process.env.MEDUSA_BACKEND_URL || "http://localhost:9000"
 }

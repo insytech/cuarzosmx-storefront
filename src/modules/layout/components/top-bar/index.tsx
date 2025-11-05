@@ -1,9 +1,34 @@
+"use client"
+
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import { useEffect, useState } from "react"
+import { PromotionMessage, BannerResponse } from "../../../../types/global"
+import { fetchBanners } from "@util/banner-api"
 
 export default function TopBar() {
+    const [promotionMessage, setPromotionMessage] = useState<PromotionMessage | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const loadPromotionMessage = async () => {
+            try {
+                const response: BannerResponse = await fetchBanners()
+                setPromotionMessage(response.promotionMessage)
+            } catch (err) {
+                console.error("Error loading promotion message:", err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        loadPromotionMessage()
+    }, [])
+
+    const displayMessage = promotionMessage?.message || "20% DE DESCUENTO POR LA COMPRA DE MÁS DE 12 PRODUCTOS"
+
     return (
         <div className="w-full bg-main-color text-white text-center text-xs py-2 font-semibold flex justify-between items-center px-8">
-            <span>20% DE DESCUENTO POR LA COMPRA DE MÁS DE 12 PRODUCTOS</span>
+            <span>{loading ? "Cargando..." : displayMessage}</span>
             <div className="flex gap-4">
                 <a href="https://www.instagram.com/cuarzosmx_oficial/" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">
                     {/* Instagram icon */}
