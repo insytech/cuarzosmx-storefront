@@ -15,13 +15,23 @@ export default async function Nav() {
       <header className="h-20 mx-auto bg-white px-8 ">
         <nav className="flex items-center justify-between w-full h-full max-w-8xl mx-24">
           {/* Logo */}
-          <div className="flex-shrink-0 pr-8">
+          <div className="flex-shrink-0 pr-4">
             <LocalizedClientLink
               href="/"
               className="hover:opacity-80 transition-opacity"
               data-testid="nav-store-link"
             >
               <img src="/cuarzosmx-logo.webp" alt="CuarzosMX" className="h-14" />
+            </LocalizedClientLink>
+          </div>
+          <div className="flex-shrink-0 pr-8">
+            <LocalizedClientLink
+              href="/"
+              className="hover:opacity-80 transition-opacity"
+              data-testid="nav-store-link"
+            >
+              <img src="/TIPO BLACK.webp" alt="CuarzosMX Logotype" className="h-9" />
+
             </LocalizedClientLink>
           </div>
 

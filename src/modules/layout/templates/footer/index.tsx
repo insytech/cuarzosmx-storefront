@@ -35,9 +35,9 @@ export default function Footer() {
                 className="hover:opacity-85 transition-opacity w-fit"
               >
                 <img
-                  src="/Logo-Cuarzos.webp"
+                  src="/IMAGOTIPO 2 BLANCO.webp"
                   alt="CuarzosMX Logo"
-                  className="w-32"
+                  className="w-36"
 
                 />
               </LocalizedClientLink>
