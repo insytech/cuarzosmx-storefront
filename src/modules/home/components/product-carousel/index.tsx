@@ -22,7 +22,7 @@ export default function ProductCarousel({ title, products, region }: ProductCaro
             <div className={`${maxWidth} mx-auto px-4`}>
                 {/* Encabezado */}
                 <div className="text-center mb-12">
-                    <Heading level="h2" className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
+                    <Heading level="h2" className="font-serenity text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
                         {title}
                     </Heading>
                     <div className="flex justify-center">

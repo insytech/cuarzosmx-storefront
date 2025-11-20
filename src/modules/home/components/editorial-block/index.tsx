@@ -31,7 +31,7 @@ export default function EditorialBlock() {
                     <div className="space-y-6 z-20">
                         <Heading
                             level="h2"
-                            className="text-3xl md:text-5xl font-extrabold text-left text-gray-800 leading-tight"
+                            className="font-serenity text-3xl md:text-5xl font-extrabold text-left text-gray-800 leading-tight"
                         >
                             ENERGÍA DE LOS<br />CUARZOS
                         </Heading>

@@ -19,7 +19,7 @@ export default function InterstitialBanner() {
     return (
         <section className="w-full py-10 md:py-16 bg-white">
             <div className="max-w-6xl mx-auto px-4">
-                <h2 className="text-center text-3xl md:text-5xl font-bold text-gray-800 mb-12">
+                <h2 className="font-serenity text-center text-3xl md:text-5xl font-bold text-gray-800 mb-12">
                     Cuarzos Según tu Signo
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8 justify-items-center">

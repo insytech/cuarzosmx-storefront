@@ -71,6 +71,7 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+
           "Montserrat",
           "Inter",
           "-apple-system",
@@ -81,6 +82,8 @@ module.exports = {
           "Ubuntu",
           "sans-serif",
         ],
+        serenity: ['Simple Serenity Serif', 'serif'],
+        aqua: ['Aqua Grotesque', 'sans-serif'],
       },
       fontSize: {
         "3xl": "2rem",
