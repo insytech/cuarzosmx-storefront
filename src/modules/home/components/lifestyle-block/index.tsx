@@ -10,13 +10,13 @@ const intenciones = [
     },
     {
         nombre: "Amor",
-        descripcion: "Atrae amor y armonía",
+        descripcion: "Atrae amor y armonía a tu vida",
         imagen: "/categorias/AMOR.webp",
         href: "/categories/amor"
     },
     {
         nombre: "Abundancia",
-        descripcion: "Prosperidad y éxito",
+        descripcion: "Prosperidad y éxito desde el interior",
         imagen: "/categorias/ABUNDANCIA.webp",
         href: "/categories/abundancia"
     },
@@ -53,16 +53,16 @@ export default function LifestyleBlock() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                     <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
-                        <span className="text-white/80 uppercase tracking-[0.3em] text-sm mb-4 font-light">
+                        <span className="text-white/80 uppercase tracking-[0.3em] text-sm mb-4 font-light drop-shadow-md">
                             Conecta con tu esencia
                         </span>
                         <Heading
                             level="h2"
-                            className="font-serenity text-3xl md:text-5xl lg:text-6xl font-bold mb-6 text-white drop-shadow-lg max-w-4xl"
+                            className="font-serenity text-3xl md:text-5xl lg:text-6xl font-bold mb-6 text-white drop-shadow-2xl max-w-4xl"
                         >
                             Vive en Armonía con la Energía de los Cuarzos
                         </Heading>
-                        <p className="text-white/90 text-lg md:text-xl max-w-2xl mb-8 font-light">
+                        <p className="text-white/90 text-lg md:text-xl max-w-2xl mb-8 font-light drop-shadow-md">
                             Cada piedra guarda un propósito especial para acompañarte en tu camino espiritual
                         </p>
                         <LocalizedClientLink href="/store">
@@ -106,10 +106,10 @@ export default function LifestyleBlock() {
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
                                 <div className="absolute inset-0 flex flex-col justify-end p-4">
-                                    <h3 className="text-white font-bold text-lg md:text-xl mb-1 drop-shadow-md">
+                                    <h3 className="text-white font-bold text-lg md:text-xl mb-1 drop-shadow-lg">
                                         {intencion.nombre}
                                     </h3>
-                                    <p className="text-white/80 text-xs md:text-sm font-light opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <p className="text-white/80 text-xs md:text-sm font-light opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-md">
                                         {intencion.descripcion}
                                     </p>
                                 </div>

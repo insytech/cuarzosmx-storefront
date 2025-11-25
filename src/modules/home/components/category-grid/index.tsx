@@ -10,7 +10,7 @@ const categorias = [
     },
     {
         nombre: "Decorativos",
-        descripcion: "Armoniza tus espacios",
+        descripcion: "Armoniza tus espacios con estilo",
         imagen: "/categorias/DECORATIVOS.webp",
         href: "/categories/decorativos"
     },
