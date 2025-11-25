@@ -68,14 +68,14 @@ export default async function Home(props: {
         region={region}
       />
 
-      {/* 7. Bloque Editorial */}
-      <EditorialBlock />
-
-      {/* 8. Banner con Texto Superpuesto */}
+      {/* 7. Banner con Texto Superpuesto */}
       <LifestyleBlock />
 
-      {/* 9. Grilla de Categorías */}
+      {/* 8. Grilla de Categorías */}
       <CategoryGrid />
+
+      {/* 9. Bloque Editorial */}
+      <EditorialBlock />
 
       {/* 10. Carrusel de Productos (Bloque 4) */}
       <ProductCarousel
