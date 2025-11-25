@@ -10,6 +10,7 @@ import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-relat
 import { notFound } from "next/navigation"
 import ProductActionsWrapper from "./product-actions-wrapper"
 import { HttpTypes } from "@medusajs/types"
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -28,39 +29,114 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
 
   return (
     <>
-      <div
-        className="content-container flex flex-col small:flex-row small:items-start py-6 relative"
-        data-testid="product-container"
-      >
-        <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-6">
-          <ProductInfo product={product} />
-          <ProductTabs product={product} />
-        </div>
-        <div className="block w-full relative">
-          <ImageGallery images={product?.images || []} />
-        </div>
-        <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-12">
-          <ProductOnboardingCta />
-          <Suspense
-            fallback={
-              <ProductActions
-                disabled={true}
-                product={product}
-                region={region}
-              />
-            }
-          >
-            <ProductActionsWrapper id={product.id} region={region} />
-          </Suspense>
+      {/* Breadcrumb */}
+      <div className="bg-gray-50 border-b border-gray-100">
+        <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 py-4">
+          <nav className="flex items-center gap-2 text-sm text-gray-500">
+            <LocalizedClientLink href="/" className="hover:text-main-color transition-colors">
+              Inicio
+            </LocalizedClientLink>
+            <span>/</span>
+            <LocalizedClientLink href="/store" className="hover:text-main-color transition-colors">
+              Tienda
+            </LocalizedClientLink>
+            {product.collection && (
+              <>
+                <span>/</span>
+                <LocalizedClientLink
+                  href={`/collections/${product.collection.handle}`}
+                  className="hover:text-main-color transition-colors"
+                >
+                  {product.collection.title}
+                </LocalizedClientLink>
+              </>
+            )}
+            <span>/</span>
+            <span className="text-gray-800 font-medium truncate max-w-[200px]">
+              {product.title}
+            </span>
+          </nav>
         </div>
       </div>
+
+      {/* Main Product Section */}
       <div
-        className="content-container my-16 small:my-32"
-        data-testid="related-products-container"
+        className="content-container max-w-7xl mx-auto px-4 lg:px-8 py-8 md:py-12"
+        data-testid="product-container"
       >
-        <Suspense fallback={<SkeletonRelatedProducts />}>
-          <RelatedProducts product={product} countryCode={countryCode} />
-        </Suspense>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+          {/* Left Column - Images */}
+          <div className="order-1">
+            <ImageGallery images={product?.images || []} />
+          </div>
+
+          {/* Right Column - Product Details */}
+          <div className="order-2 lg:sticky lg:top-24 lg:self-start">
+            <div className="flex flex-col gap-8">
+              {/* Product Info */}
+              <ProductInfo product={product} />
+
+              {/* Product Actions (Price, Options, Add to Cart) */}
+              <div className="bg-gray-50 rounded-2xl p-6">
+                <ProductOnboardingCta />
+                <Suspense
+                  fallback={
+                    <ProductActions
+                      disabled={true}
+                      product={product}
+                      region={region}
+                    />
+                  }
+                >
+                  <ProductActionsWrapper id={product.id} region={region} />
+                </Suspense>
+              </div>
+
+              {/* Trust Badges */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex flex-col items-center text-center p-4 bg-white border border-gray-100 rounded-xl">
+                  <div className="w-10 h-10 bg-main-color-light rounded-full flex items-center justify-center mb-2">
+                    <svg className="w-5 h-5 text-main-color" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium text-gray-700">100% Original</span>
+                </div>
+                <div className="flex flex-col items-center text-center p-4 bg-white border border-gray-100 rounded-xl">
+                  <div className="w-10 h-10 bg-main-color-light rounded-full flex items-center justify-center mb-2">
+                    <svg className="w-5 h-5 text-main-color" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium text-gray-700">Envío Seguro</span>
+                </div>
+                <div className="flex flex-col items-center text-center p-4 bg-white border border-gray-100 rounded-xl">
+                  <div className="w-10 h-10 bg-main-color-light rounded-full flex items-center justify-center mb-2">
+                    <svg className="w-5 h-5 text-main-color" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium text-gray-700">Pago Seguro</span>
+                </div>
+              </div>
+
+              {/* Product Tabs */}
+              <ProductTabs product={product} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Related Products */}
+      <div className="bg-gray-50 py-16 md:py-24">
+        <div
+          className="content-container max-w-7xl mx-auto px-4 lg:px-8"
+          data-testid="related-products-container"
+        >
+          <Suspense fallback={<SkeletonRelatedProducts />}>
+            <RelatedProducts product={product} countryCode={countryCode} />
+          </Suspense>
+        </div>
       </div>
     </>
   )

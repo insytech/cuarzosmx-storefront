@@ -47,18 +47,25 @@ export default async function RelatedProducts({
   }
 
   return (
-    <div className="product-page-constraint">
-      <div className="flex flex-col items-center text-center mb-16">
-        <span className="text-base-regular text-gray-600 mb-6">
-          Related products
+    <div className="w-full">
+      {/* Section Header */}
+      <div className="flex flex-col items-center text-center mb-12">
+        <span className="inline-flex items-center gap-2 text-main-color text-sm font-semibold uppercase tracking-wide mb-3">
+          <span className="w-8 h-px bg-main-color" />
+          También te puede interesar
+          <span className="w-8 h-px bg-main-color" />
         </span>
-        <p className="text-2xl-regular text-ui-fg-base max-w-lg">
-          You might also want to check out these products.
+        <h2 className="font-serenity text-3xl md:text-4xl font-bold text-gray-900">
+          Productos Relacionados
+        </h2>
+        <p className="text-gray-500 mt-2 max-w-md">
+          Descubre más cuarzos y productos que complementan tu selección
         </p>
       </div>
 
-      <ul className="grid grid-cols-2 small:grid-cols-3 medium:grid-cols-4 gap-x-6 gap-y-8">
-        {products.map((product) => (
+      {/* Products Grid */}
+      <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        {products.slice(0, 8).map((product) => (
           <li key={product.id}>
             <Product region={region} product={product} />
           </li>
