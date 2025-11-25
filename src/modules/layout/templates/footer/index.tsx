@@ -130,36 +130,36 @@ export default function Footer() {
               </div>
               <ul className="grid grid-cols-1 gap-y-2 text-white/80 txt-small">
                 <li>
-                  <a
+                  <LocalizedClientLink
                     href="/store"
                     className="hover:text-white transition-colors duration-200"
                   >
                     Catálogo
-                  </a>
+                  </LocalizedClientLink>
                 </li>
                 <li>
-                  <a
-                    href="https://www.youtube.com/watch?v=uAbZB6m_w0s"
+                  <LocalizedClientLink
+                    href="/contact"
                     className="hover:text-white transition-colors duration-200"
                   >
-                    Contactanos
-                  </a>
+                    Contáctanos
+                  </LocalizedClientLink>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <LocalizedClientLink
+                    href="/about"
                     className="hover:text-white transition-colors duration-200"
                   >
                     Nosotros
-                  </a>
+                  </LocalizedClientLink>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <LocalizedClientLink
+                    href="/faq"
                     className="hover:text-white transition-colors duration-200"
                   >
                     Preguntas Frecuentes
-                  </a>
+                  </LocalizedClientLink>
                 </li>
               </ul>
             </div>
