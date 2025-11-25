@@ -19,7 +19,7 @@ export default function ProductCarousel({ title, products, region }: ProductCaro
 
     return (
         <section className="w-full py-16 bg-light-gray">
-            <div className={`${maxWidth} mx-auto px-4`}>
+            <div className={`${maxWidth} mx-auto px-6 md:px-12 lg:px-16`}>
                 {/* Encabezado */}
                 <div className="text-center mb-12">
                     <Heading level="h2" className="font-serenity text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
