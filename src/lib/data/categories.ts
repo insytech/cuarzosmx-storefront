@@ -27,7 +27,8 @@ export const listCategories = async (query?: Record<string, any>) => {
 }
 
 export const getCategoryByHandle = async (categoryHandle: string[]) => {
-  const handle = `${categoryHandle.join("/")}`
+  // Get the last handle in the path (the actual category we want)
+  const handle = categoryHandle[categoryHandle.length - 1]
 
   const next = {
     ...(await getCacheOptions("categories")),
@@ -35,10 +36,10 @@ export const getCategoryByHandle = async (categoryHandle: string[]) => {
 
   return sdk.client
     .fetch<HttpTypes.StoreProductCategoryListResponse>(
-      `/store/product-categories`,
+      "/store/product-categories",
       {
         query: {
-          fields: "*category_children, *products",
+          fields: "*category_children, *products, *parent_category, *parent_category.parent_category",
           handle,
         },
         next,
