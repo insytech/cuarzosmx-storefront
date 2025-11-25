@@ -5,6 +5,7 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import CartButton from "@modules/layout/components/cart-button"
 import TopBar from "@modules/layout/components/top-bar"
 import CategoriesPopover from "./categories-dropdown.tsx"
+import MobileMenu from "@modules/layout/components/mobile-menu"
 
 export default async function Nav() {
   const regions = await listRegions().then((regions: StoreRegion[]) => regions)
@@ -12,30 +13,32 @@ export default async function Nav() {
   return (
     <div className="sticky top-0 inset-x-0 z-50 group">
       <TopBar />
-      <header className="h-20 mx-auto bg-white px-8 ">
-        <nav className="flex items-center justify-between w-full h-full max-w-8xl mx-24">
+      <header className="h-16 lg:h-20 mx-auto bg-white px-4 lg:px-8 shadow-sm">
+        <nav className="flex items-center justify-between w-full h-full max-w-8xl lg:mx-24">
+          {/* Mobile Menu Button */}
+          <div className="lg:hidden">
+            <MobileMenu regions={regions} />
+          </div>
+
           {/* Logo */}
-          <div className="flex-shrink-0 pr-4">
+          <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0 lg:pr-4">
             <LocalizedClientLink
               href="/"
               className="hover:opacity-80 transition-opacity"
               data-testid="nav-store-link"
             >
-              <img src="/cuarzosmx-logo.webp" alt="CuarzosMX" className="h-14" />
+              <img src="/cuarzosmx-logo.webp" alt="CuarzosMX" className="h-10 lg:h-14" />
             </LocalizedClientLink>
-          </div>
-          <div className="flex-shrink-0 pr-8">
             <LocalizedClientLink
               href="/"
-              className="hover:opacity-80 transition-opacity"
+              className="hover:opacity-80 transition-opacity hidden sm:block"
               data-testid="nav-store-link"
             >
-              <img src="/TIPO BLACK.webp" alt="CuarzosMX Logotype" className="h-9" />
-
+              <img src="/TIPO BLACK.webp" alt="CuarzosMX Logotype" className="h-7 lg:h-9" />
             </LocalizedClientLink>
           </div>
 
-          {/* Navegación Central */}
+          {/* Navegación Central - Desktop Only */}
           <div className="hidden lg:flex items-center gap-8 flex-1 justify-center">
             <CategoriesPopover />
             <LocalizedClientLink href="/" className=" font-semibold text-gray-700 hover:text-gray-900 transition-colors">
@@ -59,9 +62,9 @@ export default async function Nav() {
           </div>
 
           {/* Acciones Derecha */}
-          <div className="flex items-center gap-6 pl-8">
-            {/* Buscador */}
-            <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors" title="Buscar">
+          <div className="flex items-center gap-3 lg:gap-6 lg:pl-8">
+            {/* Buscador - Hidden on mobile for now */}
+            <button className="hidden lg:block p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors" title="Buscar">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
