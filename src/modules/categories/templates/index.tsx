@@ -37,61 +37,107 @@ export default function CategoryTemplate({
   getParents(category)
 
   return (
-    <div
-      className="flex flex-col small:flex-row small:items-start py-6 content-container"
-      data-testid="category-container"
-    >
-      <RefinementList sortBy={sort} data-testid="sort-by-container" />
-      <div className="w-full">
-        <div className="flex flex-row mb-8 text-2xl-semi gap-4">
-          {parents &&
-            parents.map((parent) => (
-              <span key={parent.id} className="text-ui-fg-subtle">
+    <>
+      {/* Hero Section */}
+      <div className="w-full bg-gradient-to-r from-main-color to-main-color-dark py-12 md:py-16">
+        <div className="content-container max-w-7xl mx-auto px-4 lg:px-8">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-2 text-sm text-white/80 mb-4">
+            <LocalizedClientLink href="/" className="hover:text-white transition-colors">
+              Inicio
+            </LocalizedClientLink>
+            <span>/</span>
+            <LocalizedClientLink href="/store" className="hover:text-white transition-colors">
+              Tienda
+            </LocalizedClientLink>
+            {parents?.reverse().map((parent) => (
+              <span key={parent.id} className="flex items-center gap-2">
+                <span>/</span>
                 <LocalizedClientLink
-                  className="mr-4 hover:text-black"
+                  className="hover:text-white transition-colors"
                   href={`/categories/${parent.handle}`}
-                  data-testid="sort-by-link"
                 >
                   {parent.name}
                 </LocalizedClientLink>
-                /
               </span>
             ))}
-          <h1 data-testid="category-page-title">{category.name}</h1>
+            <span>/</span>
+            <span className="text-white font-medium">{category.name}</span>
+          </nav>
+
+          {/* Title */}
+          <h1 className="font-serenity text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3">
+            {category.name}
+          </h1>
+
+          {/* Description */}
+          {category.description && (
+            <p className="text-white/90 text-base md:text-lg max-w-3xl">
+              {category.description}
+            </p>
+          )}
         </div>
-        {category.description && (
-          <div className="mb-8 text-base-regular">
-            <p>{category.description}</p>
-          </div>
-        )}
-        {category.category_children && (
-          <div className="mb-8 text-base-large">
-            <ul className="grid grid-cols-1 gap-2">
-              {category.category_children?.map((c) => (
-                <li key={c.id}>
-                  <InteractiveLink href={`/categories/${c.handle}`}>
-                    {c.name}
-                  </InteractiveLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        <Suspense
-          fallback={
-            <SkeletonProductGrid
-              numberOfProducts={category.products?.length ?? 8}
-            />
-          }
-        >
-          <PaginatedProducts
-            sortBy={sort}
-            page={pageNumber}
-            categoryId={category.id}
-            countryCode={countryCode}
-          />
-        </Suspense>
       </div>
-    </div>
+
+      {/* Main Content */}
+      <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 py-8 md:py-12">
+        {/* Subcategories */}
+        {category.category_children && category.category_children.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Subcategorías</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {category.category_children?.map((c) => (
+                <LocalizedClientLink
+                  key={c.id}
+                  href={`/categories/${c.handle}`}
+                  className="group bg-white border border-gray-200 rounded-xl p-4 hover:border-main-color hover:shadow-lg transition-all duration-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-800 font-medium group-hover:text-main-color transition-colors">
+                      {c.name}
+                    </span>
+                    <svg
+                      className="w-5 h-5 text-gray-400 group-hover:text-main-color group-hover:translate-x-1 transition-all"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </LocalizedClientLink>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Products Section */}
+        <div className="flex flex-col lg:flex-row lg:items-start gap-8">
+          {/* Filters Sidebar */}
+          <div className="lg:w-64 flex-shrink-0">
+            <RefinementList sortBy={sort} data-testid="sort-by-container" />
+          </div>
+
+          {/* Products Grid */}
+          <div className="flex-1">
+            <Suspense
+              fallback={
+                <SkeletonProductGrid
+                  numberOfProducts={category.products?.length ?? 12}
+                />
+              }
+            >
+              <PaginatedProducts
+                sortBy={sort}
+                page={pageNumber}
+                categoryId={category.id}
+                countryCode={countryCode}
+              />
+            </Suspense>
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
