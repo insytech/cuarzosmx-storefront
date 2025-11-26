@@ -4,6 +4,7 @@ import { Dialog, Transition } from "@headlessui/react"
 import { Fragment, useState } from "react"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { HttpTypes } from "@medusajs/types"
+import SearchButton from "@modules/search/components/search-button"
 
 type CategoryItem = {
     name: string
@@ -170,6 +171,14 @@ export default function MobileMenu({ regions }: MobileMenuProps) {
                                 {!showCategories ? (
                                     /* Main Menu */
                                     <div className="p-4">
+                                        {/* Search Button */}
+                                        <div className="mb-4">
+                                            <SearchButton
+                                                className="w-full flex items-center justify-center gap-2 p-4 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 transition-colors"
+                                                showText={true}
+                                            />
+                                        </div>
+
                                         {/* Categories Button */}
                                         <button
                                             onClick={() => setShowCategories(true)}

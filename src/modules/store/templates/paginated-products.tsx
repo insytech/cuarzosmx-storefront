@@ -3,6 +3,7 @@ import { getRegion } from "@lib/data/regions"
 import ProductPreview from "@modules/products/components/product-preview"
 import { Pagination } from "@modules/store/components/pagination"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
 const PRODUCT_LIMIT = 12
 
@@ -12,6 +13,7 @@ type PaginatedProductsParams = {
   category_id?: string[]
   id?: string[]
   order?: string
+  q?: string
 }
 
 export default async function PaginatedProducts({
@@ -21,6 +23,7 @@ export default async function PaginatedProducts({
   categoryId,
   productsIds,
   countryCode,
+  searchQuery,
 }: {
   sortBy?: SortOptions
   page: number
@@ -28,25 +31,31 @@ export default async function PaginatedProducts({
   categoryId?: string
   productsIds?: string[]
   countryCode: string
+  searchQuery?: string
 }) {
   const queryParams: PaginatedProductsParams = {
     limit: 12,
   }
 
   if (collectionId) {
-    queryParams["collection_id"] = [collectionId]
+    queryParams.collection_id = [collectionId]
   }
 
   if (categoryId) {
-    queryParams["category_id"] = [categoryId]
+    queryParams.category_id = [categoryId]
   }
 
   if (productsIds) {
-    queryParams["id"] = productsIds
+    queryParams.id = productsIds
   }
 
   if (sortBy === "created_at") {
-    queryParams["order"] = "created_at"
+    queryParams.order = "created_at"
+  }
+
+  // Añadir búsqueda
+  if (searchQuery) {
+    queryParams.q = searchQuery
   }
 
   const region = await getRegion(countryCode)
@@ -55,7 +64,7 @@ export default async function PaginatedProducts({
     return null
   }
 
-  let {
+  const {
     response: { products, count },
   } = await listProductsWithSort({
     page,
@@ -66,10 +75,44 @@ export default async function PaginatedProducts({
 
   const totalPages = Math.ceil(count / PRODUCT_LIMIT)
 
+  // Si no hay resultados
+  if (products.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-20 h-20 mb-6 rounded-full bg-main-color-light flex items-center justify-center">
+          <svg className="w-10 h-10 text-main-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <h3 className="font-serenity text-xl font-semibold text-gray-900 mb-2">
+          {searchQuery ? "No encontramos productos" : "No hay productos disponibles"}
+        </h3>
+        <p className="text-gray-500 mb-6 max-w-md">
+          {searchQuery
+            ? `No hay productos que coincidan con "${searchQuery}". Intenta con otros términos o explora nuestras categorías.`
+            : "Pronto agregaremos más productos a nuestra tienda."}
+        </p>
+        <LocalizedClientLink
+          href="/store"
+          className="inline-flex items-center gap-2 bg-main-color text-white px-6 py-3 rounded-full hover:bg-main-color-dark transition-colors font-medium"
+        >
+          Ver todos los productos
+        </LocalizedClientLink>
+      </div>
+    )
+  }
+
   return (
     <>
+      {/* Contador de resultados */}
+      <div className="mb-6 flex items-center justify-between">
+        <p className="text-sm text-gray-600">
+          Mostrando <span className="font-medium">{products.length}</span> de <span className="font-medium">{count}</span> productos
+        </p>
+      </div>
+
       <ul
-        className="grid grid-cols-2 w-full small:grid-cols-3 medium:grid-cols-4 gap-x-6 gap-y-8"
+        className="grid grid-cols-2 w-full sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
         data-testid="products-list"
       >
         {products.map((p) => {

@@ -6,6 +6,7 @@ import CartButton from "@modules/layout/components/cart-button"
 import TopBar from "@modules/layout/components/top-bar"
 import CategoriesPopover from "./categories-dropdown.tsx"
 import MobileMenu from "@modules/layout/components/mobile-menu"
+import SearchButton from "@modules/search/components/search-button"
 
 export default async function Nav() {
   const regions = await listRegions().then((regions: StoreRegion[]) => regions)
@@ -47,9 +48,7 @@ export default async function Nav() {
             <LocalizedClientLink href="/store" className=" font-semibold text-gray-700 hover:text-gray-900 transition-colors">
               Tienda
             </LocalizedClientLink>
-            <LocalizedClientLink href="/pages" className=" font-semibold text-gray-700 hover:text-gray-900 transition-colors">
-              Páginas
-            </LocalizedClientLink>
+
             <LocalizedClientLink href="/about" className=" font-semibold text-gray-700 hover:text-gray-900 transition-colors">
               Acerca de Nosotros
             </LocalizedClientLink>
@@ -63,12 +62,9 @@ export default async function Nav() {
 
           {/* Acciones Derecha */}
           <div className="flex items-center gap-3 lg:gap-6 lg:pl-8">
-            {/* Buscador - Hidden on mobile for now */}
-            <button className="hidden lg:block p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors" title="Buscar">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
+            {/* Buscador */}
+            <SearchButton className="hidden sm:block" />
+
             {/* Carrito */}
             <Suspense
               fallback={
