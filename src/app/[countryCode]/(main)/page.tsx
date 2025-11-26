@@ -10,9 +10,8 @@ import CategoryGrid from "@modules/home/components/category-grid"
 import { getRegion } from "@lib/data/regions"
 import {
   getFeaturedProducts,
-  getNewArrivals,
-  getBestSellers,
-  getRecommendedProducts,
+  getOnSaleProducts,
+  getTrendingProducts,
 } from "@lib/data/home-products"
 
 export const metadata: Metadata = {
@@ -41,12 +40,11 @@ export default async function Home(props: {
   }
 
   // Obtener productos para cada sección en paralelo
-  const [featuredSection, newArrivalsSection, bestSellersSection, recommendedSection] =
+  const [featuredSection, onSaleSection, trendingSection] =
     await Promise.all([
       getFeaturedProducts(countryCode, 4),
-      getNewArrivals(countryCode, 4),
-      getBestSellers(countryCode, 4),
-      getRecommendedProducts(countryCode, 4),
+      getOnSaleProducts(countryCode, 4),
+      getTrendingProducts(countryCode, 4),
     ])
 
   return (
@@ -66,43 +64,34 @@ export default async function Home(props: {
         viewAllLink={featuredSection.viewAllLink}
       />
 
-      {/* 4. Nuevos Ingresos */}
-      <ProductCarousel
-        title={newArrivalsSection.title}
-        subtitle={newArrivalsSection.subtitle}
-        products={newArrivalsSection.products}
-        region={region}
-        viewAllLink={newArrivalsSection.viewAllLink}
-      />
-
-      {/* 5. Banner CTA */}
+      {/* 4. Banner CTA */}
       <InterstitialBanner />
 
-      {/* 6. Más Vendidos */}
+      {/* 5. Ofertas Especiales (solo se muestra si hay productos con descuento) */}
       <ProductCarousel
-        title={bestSellersSection.title}
-        subtitle={bestSellersSection.subtitle}
-        products={bestSellersSection.products}
+        title={onSaleSection.title}
+        subtitle={onSaleSection.subtitle}
+        products={onSaleSection.products}
         region={region}
-        viewAllLink={bestSellersSection.viewAllLink}
+        viewAllLink={onSaleSection.viewAllLink}
       />
 
-      {/* 7. Banner con Texto Superpuesto */}
+      {/* 6. Banner con Texto Superpuesto */}
       <LifestyleBlock />
 
-      {/* 8. Grilla de Categorías */}
+      {/* 7. Grilla de Categorías */}
       <CategoryGrid />
 
-      {/* 9. Bloque Editorial */}
+      {/* 8. Bloque Editorial */}
       <EditorialBlock />
 
-      {/* 10. Recomendados para Ti */}
+      {/* 9. En Tendencia */}
       <ProductCarousel
-        title={recommendedSection.title}
-        subtitle={recommendedSection.subtitle}
-        products={recommendedSection.products}
+        title={trendingSection.title}
+        subtitle={trendingSection.subtitle}
+        products={trendingSection.products}
         region={region}
-        viewAllLink={recommendedSection.viewAllLink}
+        viewAllLink={trendingSection.viewAllLink}
       />
     </>
   )

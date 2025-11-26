@@ -136,9 +136,9 @@ export async function getBestSellers(
 }
 
 /**
- * Obtiene productos recomendados (variedad de categorías, buen precio, o aleatorios)
+ * Obtiene productos en tendencia (bajo inventario = se están vendiendo bien)
  */
-export async function getRecommendedProducts(
+export async function getTrendingProducts(
     countryCode: string,
     limit = 4
 ): Promise<ProductSection> {
@@ -150,46 +150,39 @@ export async function getRecommendedProducts(
         },
     })
 
-    // Filtrar productos con tag "recomendado" primero
-    const recommended = response.products.filter((product) => {
+    // Filtrar productos con tag "tendencia" o "trending" primero
+    const trending = response.products.filter((product) => {
         const hasTag = product.tags?.some(
             (tag) =>
-                tag.value?.toLowerCase() === "recomendado" ||
-                tag.value?.toLowerCase() === "recommended"
+                tag.value?.toLowerCase() === "tendencia" ||
+                tag.value?.toLowerCase() === "trending" ||
+                tag.value?.toLowerCase() === "popular"
         )
-        const hasMetadata =
-            product.metadata?.recommended === true ||
-            product.metadata?.recommended === "true"
-        return hasTag || hasMetadata
+        return hasTag
     })
 
     let products: HttpTypes.StoreProduct[]
 
-    if (recommended.length >= limit) {
-        products = recommended.slice(0, limit)
+    if (trending.length >= limit) {
+        products = trending.slice(0, limit)
     } else {
-        // Fallback: selección diversa - mezclar productos de diferentes rangos de precio
-        const withPrices = response.products
-            .filter((p) => p.variants?.[0]?.calculated_price?.calculated_amount)
-            .map((product) => ({
-                product,
-                price: product.variants?.[0].calculated_price?.calculated_amount!,
-            }))
-            .sort((a, b) => a.price - b.price)
+        // Fallback: productos con bajo inventario (se están vendiendo)
+        const byInventory = [...response.products]
+            .filter((p) => {
+                const inv = p.variants?.[0]?.inventory_quantity
+                // Solo productos con inventario bajo pero no agotados
+                return inv !== undefined && inv > 0 && inv < 20
+            })
+            .sort((a, b) => {
+                const invA = a.variants?.[0]?.inventory_quantity ?? Infinity
+                const invB = b.variants?.[0]?.inventory_quantity ?? Infinity
+                return invA - invB
+            })
 
-        // Tomar productos de diferentes rangos de precio para variedad
-        const total = withPrices.length
-        if (total >= limit) {
-            const indices = [
-                0, // Más económico
-                Math.floor(total * 0.33),
-                Math.floor(total * 0.66),
-                total - 1, // Más premium
-            ].slice(0, limit)
-
-            products = indices.map((i) => withPrices[i].product)
+        if (byInventory.length >= limit) {
+            products = byInventory.slice(0, limit)
         } else {
-            // Si hay pocos productos, barajar y tomar aleatorios
+            // Si no hay suficientes, mezclar con los que hay
             const shuffled = [...response.products].sort(() => Math.random() - 0.5)
             products = shuffled.slice(0, limit)
         }
@@ -197,8 +190,8 @@ export async function getRecommendedProducts(
 
     return {
         products,
-        title: "Recomendados para Ti",
-        subtitle: "Piezas únicas que podrían complementar tu energía",
+        title: "En Tendencia",
+        subtitle: "Los productos que están conquistando a nuestra comunidad",
         viewAllLink: "/store",
     }
 }
