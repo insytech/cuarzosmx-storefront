@@ -1,6 +1,7 @@
 "use client"
 
 import { Heading } from "@medusajs/ui"
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
 type SectionProps = {
     title: string
@@ -18,6 +19,32 @@ function Section({ title, children }: SectionProps) {
                 {children}
             </div>
         </div>
+    )
+}
+
+type RelatedLinkProps = {
+    href: string
+    title: string
+    description: string
+    icon: React.ReactNode
+}
+
+function RelatedLink({ href, title, description, icon }: RelatedLinkProps) {
+    return (
+        <LocalizedClientLink
+            href={href}
+            className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl hover:bg-main-color-light/30 transition-colors duration-200 group"
+        >
+            <div className="w-10 h-10 bg-main-color rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                {icon}
+            </div>
+            <div>
+                <h4 className="font-semibold text-gray-800 group-hover:text-main-color transition-colors">
+                    {title}
+                </h4>
+                <p className="text-sm text-gray-600">{description}</p>
+            </div>
+        </LocalizedClientLink>
     )
 }
 
@@ -281,14 +308,25 @@ export default function TermsTemplate() {
                         </div>
                     </Section>
 
-                    {/* Condiciones de Entrega */}
+                    {/* Condiciones de Entrega - Enlace */}
                     <Section title="Condiciones de Entrega">
                         <p>
-                            Los pedidos realizados en Cuarzos MX son enviados al día siguiente
-                            siempre y cuando sea día hábil, de realizar el pedido en fin de
-                            semana o en día festivo el envío se realizará al próximo día
-                            laboral más cercano.
+                            Consulta nuestra política completa de envíos para conocer los
+                            tiempos de entrega, zonas de cobertura, costos y seguimiento de
+                            pedidos.
                         </p>
+                        <div className="mt-4">
+                            <RelatedLink
+                                href="/shipping"
+                                title="Políticas de Envío"
+                                description="Tiempos de entrega, zonas de cobertura y seguimiento de pedidos"
+                                icon={
+                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                    </svg>
+                                }
+                            />
+                        </div>
                     </Section>
 
                     {/* Condiciones de Pago */}
@@ -349,142 +387,24 @@ export default function TermsTemplate() {
                         </p>
                     </Section>
 
-                    {/* Cambios y Devoluciones */}
+                    {/* Cambios y Devoluciones - Enlace */}
                     <Section title="Cambios y Devoluciones">
                         <p>
-                            Las condiciones para cambios y devoluciones de pedidos que a
-                            continuación se indican serán de aplicación sin perjuicio de los
-                            derechos que legalmente le asistan.
+                            Garantizamos tu satisfacción. Consulta nuestra política completa
+                            de cambios y devoluciones para conocer los procedimientos,
+                            condiciones y tiempos de reembolso.
                         </p>
-
-                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mt-4">
-                            <h3 className="font-bold text-blue-800 text-lg mb-3">
-                                Productos Dañados o Defectuosos y Entregas Incorrectas
-                            </h3>
-                            <p className="text-blue-900">
-                                Podrá cambiar sus productos, u obtener un reembolso íntegro si
-                                dichos productos del pedido se encuentran{" "}
-                                <strong>dañados o presentan defectos</strong> una vez recibidos,
-                                o si los productos que recibe{" "}
-                                <strong>no son los que solicitó originalmente</strong>.
-                            </p>
-                            <p className="text-blue-900 mt-2">
-                                Ten en cuenta que la tienda online podrá aceptar la devolución o
-                                cambio del producto a través de nuestro Servicio de Atención al
-                                Cliente siempre y cuando se comuniquen en un periodo{" "}
-                                <strong>no mayor a 24hrs</strong> después de haber recibido su
-                                paquete.
-                            </p>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-6 mt-6">
-                            {/* Cambios */}
-                            <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-                                <h4 className="font-bold text-green-800 text-lg mb-3 flex items-center gap-2">
-                                    <svg
-                                        className="w-5 h-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                        />
+                        <div className="mt-4">
+                            <RelatedLink
+                                href="/returns"
+                                title="Política de Cambios y Devoluciones"
+                                description="Procedimientos, condiciones y tiempos de reembolso"
+                                icon={
+                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                     </svg>
-                                    Cambios
-                                </h4>
-                                <p className="text-green-900">
-                                    Cuando solicites un cambio por productos dañados o defectuosos
-                                    o un pedido incorrecto, le enviaremos los artículos de
-                                    sustitución de manera <strong>gratuita</strong>.
-                                </p>
-                                <p className="text-green-900 mt-2">
-                                    El cambio se realizará siempre y cuando nos haya devuelto
-                                    previamente los productos del pedido en perfecto estado, o en
-                                    el caso de productos dañados o defectuosos se requiere que se
-                                    envíen fotografías de estos.
-                                </p>
-                            </div>
-
-                            {/* Devoluciones */}
-                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
-                                <h4 className="font-bold text-amber-800 text-lg mb-3 flex items-center gap-2">
-                                    <svg
-                                        className="w-5 h-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
-                                        />
-                                    </svg>
-                                    Devoluciones
-                                </h4>
-                                <p className="text-amber-900">
-                                    Si deseas devolver productos dañados o defectuosos, o
-                                    recibiste un pedido incorrecto, te reembolsaremos:
-                                </p>
-                                <ul className="list-disc pl-6 mt-2 text-amber-900">
-                                    <li>El precio total de compra</li>
-                                    <li>Costos de envío</li>
-                                </ul>
-                                <p className="text-amber-900 mt-2 text-sm">
-                                    La devolución de tu dinero se efectúa en el mismo método de
-                                    pago que utilizaste. El tiempo estimado para tu reembolso es
-                                    de <strong>30 días</strong>.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="mt-6">
-                            <h4 className="font-bold text-gray-800 text-lg mb-3">
-                                Cómo devolver o cambiar los productos
-                            </h4>
-                            <p className="mb-3">
-                                Para devolver y cambiar los productos defectuosos o un pedido
-                                incorrecto necesitará realizar el siguiente procedimiento:
-                            </p>
-                            <ol className="list-decimal pl-6 space-y-2">
-                                <li>
-                                    Enviar un correo a{" "}
-                                    <a
-                                        href="mailto:mineralzac@hotmail.com"
-                                        className="text-main-color hover:underline font-medium"
-                                    >
-                                        mineralzac@hotmail.com
-                                    </a>{" "}
-                                    explicando las razones de la devolución o cambio.
-                                </li>
-                                <li>En caso de productos dañados, enviar fotos de los mismos.</li>
-                                <li>
-                                    Una copia de su e-mail de confirmación de pedido indicando su
-                                    número de pedido.
-                                </li>
-                            </ol>
-                            <p className="mt-3">
-                                Después de la revisión y confirmación, nuestro servicio de
-                                atención a clientes le indicará la empresa por la que realizará
-                                la devolución, y le proporcionará una guía para realizar el
-                                envío de devolución.
-                            </p>
-
-                            <div className="bg-gray-100 p-4 rounded-lg mt-4 text-sm">
-                                <p className="font-semibold mb-2">
-                                    Tiempos estimados para cambios:
-                                </p>
-                                <ul className="space-y-1 text-gray-700">
-                                    <li>• Recepción de envío de devolución: hasta 5 días</li>
-                                    <li>• Procesamiento de elementos devueltos: 5 días laborables</li>
-                                    <li>• Envío de nuevos productos: hasta 5 días laborales</li>
-                                </ul>
-                            </div>
+                                }
+                            />
                         </div>
                     </Section>
 
@@ -628,6 +548,45 @@ export default function TermsTemplate() {
                             restantes disposiciones de los mencionados Términos y Condiciones.
                         </p>
                     </Section>
+
+                    {/* Políticas Relacionadas */}
+                    <div className="mt-12 pt-8 border-t border-gray-200">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                            Políticas y Avisos Relacionados
+                        </h3>
+                        <div className="grid sm:grid-cols-3 gap-4">
+                            <RelatedLink
+                                href="/shipping"
+                                title="Políticas de Envío"
+                                description="Tiempos y costos de entrega"
+                                icon={
+                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                    </svg>
+                                }
+                            />
+                            <RelatedLink
+                                href="/returns"
+                                title="Cambios y Devoluciones"
+                                description="Procedimientos y condiciones"
+                                icon={
+                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                }
+                            />
+                            <RelatedLink
+                                href="/privacy"
+                                title="Aviso de Privacidad"
+                                description="Protección de datos personales"
+                                icon={
+                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                }
+                            />
+                        </div>
+                    </div>
 
                     {/* Back to top */}
                     <div className="text-center mt-12 pt-8 border-t border-gray-200">
