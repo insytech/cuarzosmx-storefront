@@ -27,7 +27,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="w-full bg-main-color text-white">
+    <footer className="w-full bg-main-color-dark text-white">
       {/* Main Content */}
       <div className="content-container max-w-7xl mx-auto px-4 lg:px-8">
         <div className="py-10 sm:py-10 lg:py-10">

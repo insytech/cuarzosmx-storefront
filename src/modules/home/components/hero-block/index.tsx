@@ -28,7 +28,10 @@ export default function HeroBlock() {
     }, [])
 
     const mainBanner = banners.find(b => b.position === 'main')
-    const rightBanners = banners.filter(b => b.position.startsWith('right_'))
+    const topLeftBanner = banners.find(b => b.position === 'top_left')
+    const topRightBanner = banners.find(b => b.position === 'top_right')
+    const bottomLeftBanner = banners.find(b => b.position === 'bottom_left')
+    const bottomRightBanner = banners.find(b => b.position === 'bottom_right')
 
     if (loading) {
         return (
@@ -88,52 +91,46 @@ export default function HeroBlock() {
 
             {/* Columna Central: 25% en desktop, 100% en móvil */}
             <div className="w-full lg:w-1/4 min-h-[180px] flex flex-col gap-2">
-                {/* Sección superior */}
+                {/* Superior Izquierda */}
                 <div className="aspect-square flex items-center justify-center relative">
-                    {(() => {
-                        const banner = rightBanners.find(b => b.position === 'right_1')
-                        return banner ? (
-                            <LocalizedClientLink href={banner.link_url || '#'} className="w-full h-full">
-                                <img
-                                    src={banner.image_url}
-                                    alt={banner.title}
-                                    className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
-                                />
-                            </LocalizedClientLink>
-                        ) : (
+                    {topLeftBanner ? (
+                        <LocalizedClientLink href={topLeftBanner.link_url || '#'} className="w-full h-full">
                             <img
-                                src="/promo/promo-2.webp"
-                                alt="Promo 2"
+                                src={topLeftBanner.image_url}
+                                alt={topLeftBanner.title}
                                 className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
                             />
-                        )
-                    })()}
+                        </LocalizedClientLink>
+                    ) : (
+                        <img
+                            src="/promo/promo-2.webp"
+                            alt="Superior Izquierda"
+                            className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
                         <Button className="bg-white text-main-color-dark px-4 py-2 rounded-large shadow-lg hover:bg-gray-100">
                             Comprar Ahora
                         </Button>
                     </div>
                 </div>
-                {/* Sección inferior */}
+                {/* Inferior Izquierda */}
                 <div className="aspect-square flex items-center justify-center relative">
-                    {(() => {
-                        const banner = rightBanners.find(b => b.position === 'right_3')
-                        return banner ? (
-                            <LocalizedClientLink href={banner.link_url || '#'} className="w-full h-full">
-                                <img
-                                    src={banner.image_url}
-                                    alt={banner.title}
-                                    className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
-                                />
-                            </LocalizedClientLink>
-                        ) : (
+                    {bottomLeftBanner ? (
+                        <LocalizedClientLink href={bottomLeftBanner.link_url || '#'} className="w-full h-full">
                             <img
-                                src="/promo/promo-6.webp"
-                                alt="Promo 3"
+                                src={bottomLeftBanner.image_url}
+                                alt={bottomLeftBanner.title}
                                 className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
                             />
-                        )
-                    })()}
+                        </LocalizedClientLink>
+                    ) : (
+                        <img
+                            src="/promo/promo-6.webp"
+                            alt="Inferior Izquierda"
+                            className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
                         <Button className="bg-white text-main-color-dark px-4 py-2 rounded-large shadow-lg hover:bg-gray-100">
                             Descubre Más
@@ -144,52 +141,46 @@ export default function HeroBlock() {
 
             {/* Columna Derecha: 25% en desktop, 100% en móvil */}
             <div className="w-full lg:w-1/4 min-h-[180px] flex flex-col gap-2">
-                {/* Sección superior */}
+                {/* Superior Derecha */}
                 <div className="aspect-square flex items-center justify-center relative">
-                    {(() => {
-                        const banner = rightBanners.find(b => b.position === 'right_2')
-                        return banner ? (
-                            <LocalizedClientLink href={banner.link_url || '#'} className="w-full h-full">
-                                <img
-                                    src={banner.image_url}
-                                    alt={banner.title}
-                                    className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
-                                />
-                            </LocalizedClientLink>
-                        ) : (
+                    {topRightBanner ? (
+                        <LocalizedClientLink href={topRightBanner.link_url || '#'} className="w-full h-full">
                             <img
-                                src="/promo/promo-4.webp"
-                                alt="Promo 4"
+                                src={topRightBanner.image_url}
+                                alt={topRightBanner.title}
                                 className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
                             />
-                        )
-                    })()}
+                        </LocalizedClientLink>
+                    ) : (
+                        <img
+                            src="/promo/promo-4.webp"
+                            alt="Superior Derecha"
+                            className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
                         <Button className="bg-white text-main-color-dark px-4 py-2 rounded-large shadow-lg hover:bg-gray-100">
                             Oferta Especial
                         </Button>
                     </div>
                 </div>
-                {/* Sección inferior */}
-                <div className="aspect-square flex items-center justify-center  relative">
-                    {(() => {
-                        const banner = rightBanners.find(b => b.position === 'right_4')
-                        return banner ? (
-                            <LocalizedClientLink href={banner.link_url || '#'} className="w-full h-full">
-                                <img
-                                    src={banner.image_url}
-                                    alt={banner.title}
-                                    className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
-                                />
-                            </LocalizedClientLink>
-                        ) : (
+                {/* Inferior Derecha */}
+                <div className="aspect-square flex items-center justify-center relative">
+                    {bottomRightBanner ? (
+                        <LocalizedClientLink href={bottomRightBanner.link_url || '#'} className="w-full h-full">
                             <img
-                                src="/promo/promo-5.webp"
-                                alt="Promo 5"
+                                src={bottomRightBanner.image_url}
+                                alt={bottomRightBanner.title}
                                 className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
                             />
-                        )
-                    })()}
+                        </LocalizedClientLink>
+                    ) : (
+                        <img
+                            src="/promo/promo-5.webp"
+                            alt="Inferior Derecha"
+                            className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
                         <Button className="bg-white text-main-color-dark px-4 py-2 rounded-large shadow-lg hover:bg-gray-100">
                             Ver Detalles

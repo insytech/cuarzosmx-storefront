@@ -53,7 +53,7 @@ export type Banner = {
   image_url: string
   image_key?: string
   link_url?: string
-  position: 'main' | 'right_1' | 'right_2' | 'right_3' | 'right_4'
+  position: 'main' | 'top_left' | 'top_right' | 'bottom_left' | 'bottom_right'
   is_active: boolean
   sort_order: number
   created_at: string
