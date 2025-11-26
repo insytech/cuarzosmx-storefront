@@ -80,32 +80,32 @@ export default function HeroBlock() {
             {/* Columna Izquierda: 50% en desktop, 100% en móvil */}
             <LocalizedClientLink
                 href={mainBanner?.link_url || "/store"}
-                className="w-full lg:w-1/2 aspect-square flex items-center justify-center relative"
+                className="w-full lg:w-1/2 aspect-square flex items-center justify-center relative overflow-hidden rounded-lg group"
             >
                 <img
                     src={mainBanner?.image_url || "/promo/promo-1.webp"}
                     alt={mainBanner?.title || "Promo 1"}
-                    className="w-full h-full object-cover rounded-lg transition-all duration-500 hover:shadow-2xl hover:brightness-105"
+                    className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-105"
                 />
             </LocalizedClientLink>
 
             {/* Columna Central: 25% en desktop, 100% en móvil */}
             <div className="w-full lg:w-1/4 min-h-[180px] flex flex-col gap-2">
                 {/* Superior Izquierda */}
-                <div className="aspect-square flex items-center justify-center relative">
+                <div className="aspect-square flex items-center justify-center relative overflow-hidden rounded-lg group">
                     {topLeftBanner ? (
                         <LocalizedClientLink href={topLeftBanner.link_url || '#'} className="w-full h-full">
                             <img
                                 src={topLeftBanner.image_url}
                                 alt={topLeftBanner.title}
-                                className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                                className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                             />
                         </LocalizedClientLink>
                     ) : (
                         <img
                             src="/promo/promo-2.webp"
                             alt="Superior Izquierda"
-                            className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                            className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                         />
                     )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
@@ -115,20 +115,20 @@ export default function HeroBlock() {
                     </div>
                 </div>
                 {/* Inferior Izquierda */}
-                <div className="aspect-square flex items-center justify-center relative">
+                <div className="aspect-square flex items-center justify-center relative overflow-hidden rounded-lg group">
                     {bottomLeftBanner ? (
                         <LocalizedClientLink href={bottomLeftBanner.link_url || '#'} className="w-full h-full">
                             <img
                                 src={bottomLeftBanner.image_url}
                                 alt={bottomLeftBanner.title}
-                                className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                                className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                             />
                         </LocalizedClientLink>
                     ) : (
                         <img
                             src="/promo/promo-6.webp"
                             alt="Inferior Izquierda"
-                            className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                            className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                         />
                     )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
@@ -142,20 +142,20 @@ export default function HeroBlock() {
             {/* Columna Derecha: 25% en desktop, 100% en móvil */}
             <div className="w-full lg:w-1/4 min-h-[180px] flex flex-col gap-2">
                 {/* Superior Derecha */}
-                <div className="aspect-square flex items-center justify-center relative">
+                <div className="aspect-square flex items-center justify-center relative overflow-hidden rounded-lg group">
                     {topRightBanner ? (
                         <LocalizedClientLink href={topRightBanner.link_url || '#'} className="w-full h-full">
                             <img
                                 src={topRightBanner.image_url}
                                 alt={topRightBanner.title}
-                                className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                                className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                             />
                         </LocalizedClientLink>
                     ) : (
                         <img
                             src="/promo/promo-4.webp"
                             alt="Superior Derecha"
-                            className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                            className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                         />
                     )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
@@ -165,20 +165,20 @@ export default function HeroBlock() {
                     </div>
                 </div>
                 {/* Inferior Derecha */}
-                <div className="aspect-square flex items-center justify-center relative">
+                <div className="aspect-square flex items-center justify-center relative overflow-hidden rounded-lg group">
                     {bottomRightBanner ? (
                         <LocalizedClientLink href={bottomRightBanner.link_url || '#'} className="w-full h-full">
                             <img
                                 src={bottomRightBanner.image_url}
                                 alt={bottomRightBanner.title}
-                                className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                                className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                             />
                         </LocalizedClientLink>
                     ) : (
                         <img
                             src="/promo/promo-5.webp"
                             alt="Inferior Derecha"
-                            className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-102 hover:shadow-lg hover:brightness-110"
+                            className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                         />
                     )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
