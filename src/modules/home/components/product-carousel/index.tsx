@@ -1,14 +1,23 @@
 import { Heading } from "@medusajs/ui"
 import { HttpTypes } from "@medusajs/types"
 import ProductPreview from "@modules/products/components/product-preview"
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
 interface ProductCarouselProps {
     title: string
+    subtitle?: string
     products: HttpTypes.StoreProduct[]
     region: HttpTypes.StoreRegion
+    viewAllLink?: string
 }
 
-export default function ProductCarousel({ title, products, region }: ProductCarouselProps) {
+export default function ProductCarousel({
+    title,
+    subtitle,
+    products,
+    region,
+    viewAllLink
+}: ProductCarouselProps) {
     if (!products || products.length === 0) {
         return null
     }
@@ -29,7 +38,7 @@ export default function ProductCarousel({ title, products, region }: ProductCaro
                         <div className="h-1 w-16 bg-main-color rounded-full" />
                     </div>
                     <p className="text-gray-700 text-base md:text-lg mt-6 max-w-2xl mx-auto">
-                        Descubre nuestros productos más populares y esenciales espirituales
+                        {subtitle || "Descubre nuestros productos más populares y esenciales espirituales"}
                     </p>
                 </div>
 
@@ -51,6 +60,21 @@ export default function ProductCarousel({ title, products, region }: ProductCaro
                         />
                     ))}
                 </div>
+
+                {/* Link Ver todos */}
+                {viewAllLink && (
+                    <div className="text-center mt-10">
+                        <LocalizedClientLink
+                            href={viewAllLink}
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-main-color text-white font-medium rounded-full hover:bg-main-color-dark transition-colors"
+                        >
+                            Ver todos
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </LocalizedClientLink>
+                    </div>
+                )}
             </div>
         </section>
     )

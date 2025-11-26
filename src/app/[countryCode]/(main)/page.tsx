@@ -7,8 +7,13 @@ import InterstitialBanner from "@modules/home/components/interstitial-banner"
 import EditorialBlock from "@modules/home/components/editorial-block"
 import LifestyleBlock from "@modules/home/components/lifestyle-block"
 import CategoryGrid from "@modules/home/components/category-grid"
-import { listProducts } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
+import {
+  getFeaturedProducts,
+  getNewArrivals,
+  getBestSellers,
+  getRecommendedProducts,
+} from "@lib/data/home-products"
 
 export const metadata: Metadata = {
   title: "Inicio | Cristales, Cuarzos y Joyería Artesanal en México",
@@ -35,13 +40,14 @@ export default async function Home(props: {
     return null
   }
 
-  const { response: { products } } = await listProducts({
-    countryCode,
-    queryParams: {
-      limit: 20,
-      fields: "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags"
-    }
-  })
+  // Obtener productos para cada sección en paralelo
+  const [featuredSection, newArrivalsSection, bestSellersSection, recommendedSection] =
+    await Promise.all([
+      getFeaturedProducts(countryCode, 4),
+      getNewArrivals(countryCode, 4),
+      getBestSellers(countryCode, 4),
+      getRecommendedProducts(countryCode, 4),
+    ])
 
   return (
     <>
@@ -51,28 +57,34 @@ export default async function Home(props: {
       {/* 2.1. Banner de Características */}
       <FeaturesBanner />
 
-      {/* 3. Carrusel de Productos (Bloque 1) */}
+      {/* 3. Productos Destacados */}
       <ProductCarousel
-        title="Productos Destacados"
-        products={products || []}
+        title={featuredSection.title}
+        subtitle={featuredSection.subtitle}
+        products={featuredSection.products}
         region={region}
+        viewAllLink={featuredSection.viewAllLink}
       />
 
-      {/* 4. Carrusel de Productos (Bloque 2) */}
+      {/* 4. Nuevos Ingresos */}
       <ProductCarousel
-        title="Nuevos Ingresos"
-        products={products?.slice(4, 8) || []}
+        title={newArrivalsSection.title}
+        subtitle={newArrivalsSection.subtitle}
+        products={newArrivalsSection.products}
         region={region}
+        viewAllLink={newArrivalsSection.viewAllLink}
       />
 
       {/* 5. Banner CTA */}
       <InterstitialBanner />
 
-      {/* 6. Carrusel de Productos (Bloque 3) */}
+      {/* 6. Más Vendidos */}
       <ProductCarousel
-        title="Más Vendidos"
-        products={products?.slice(8, 12) || []}
+        title={bestSellersSection.title}
+        subtitle={bestSellersSection.subtitle}
+        products={bestSellersSection.products}
         region={region}
+        viewAllLink={bestSellersSection.viewAllLink}
       />
 
       {/* 7. Banner con Texto Superpuesto */}
@@ -84,11 +96,13 @@ export default async function Home(props: {
       {/* 9. Bloque Editorial */}
       <EditorialBlock />
 
-      {/* 10. Carrusel de Productos (Bloque 4) */}
+      {/* 10. Recomendados para Ti */}
       <ProductCarousel
-        title="Recomendados para Ti"
-        products={products?.slice(12, 16) || []}
+        title={recommendedSection.title}
+        subtitle={recommendedSection.subtitle}
+        products={recommendedSection.products}
         region={region}
+        viewAllLink={recommendedSection.viewAllLink}
       />
     </>
   )
