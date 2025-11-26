@@ -1,7 +1,9 @@
 import { BlogPost as BlogPostType } from "../../../types/global"
 import BlogContent from "./blog-content"
-import { formatDate, getImageUrl } from "@util/blog-utils"
+import { formatDate, getImageUrl, getExcerpt } from "@util/blog-utils"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import ArticleSchema from "@modules/common/components/article-schema"
+import BreadcrumbSchema from "@modules/common/components/breadcrumb-schema"
 
 interface BlogPostProps {
     post: BlogPostType | null
@@ -79,8 +81,26 @@ const BlogPost = ({ post, isLoading, error }: BlogPostProps) => {
         )
     }
 
+    // Breadcrumb items para Schema.org
+    const breadcrumbItems = [
+        { name: "Inicio", url: "/" },
+        { name: "Blog", url: "/blog" },
+        { name: post.title, url: `/blog/${post.url_slug}` },
+    ]
+
     return (
         <article className="max-w-4xl mx-auto">
+            {/* Schema.org JSON-LD */}
+            <ArticleSchema
+                title={post.title}
+                description={getExcerpt(post.body_markdown, 160)}
+                url={`/blog/${post.url_slug}`}
+                image={post.thumbnail_url ? getImageUrl(post.thumbnail_url) ?? undefined : undefined}
+                datePublished={post.created_at}
+                dateModified={post.updated_at}
+            />
+            <BreadcrumbSchema items={breadcrumbItems} />
+
             {/* Breadcrumb */}
             <nav className="mb-6">
                 <ol className="flex items-center gap-2 text-sm text-gray-500">

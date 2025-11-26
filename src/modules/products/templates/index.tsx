@@ -11,6 +11,8 @@ import { notFound } from "next/navigation"
 import ProductActionsWrapper from "./product-actions-wrapper"
 import { HttpTypes } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import ProductSchema from "@modules/common/components/product-schema"
+import BreadcrumbSchema from "@modules/common/components/breadcrumb-schema"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -27,8 +29,27 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     return notFound()
   }
 
+  // Breadcrumb items para Schema.org
+  const breadcrumbItems = [
+    { name: "Inicio", url: "/" },
+    { name: "Tienda", url: "/store" },
+    ...(product.collection
+      ? [
+        {
+          name: product.collection.title,
+          url: `/collections/${product.collection.handle}`,
+        },
+      ]
+      : []),
+    { name: product.title, url: `/products/${product.handle}` },
+  ]
+
   return (
     <>
+      {/* Schema.org JSON-LD */}
+      <ProductSchema product={product} url={`/products/${product.handle}`} />
+      <BreadcrumbSchema items={breadcrumbItems} />
+
       {/* Breadcrumb */}
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 py-4">

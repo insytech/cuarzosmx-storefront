@@ -29,8 +29,7 @@ export async function generateStaticParams() {
   const countryCodes = await listRegions().then(
     (regions: StoreRegion[]) =>
       regions
-        ?.map((r) => r.countries?.map((c) => c.iso_2))
-        .flat()
+        ?.flatMap((r) => r.countries?.map((c) => c.iso_2))
         .filter(Boolean) as string[]
   )
 
@@ -40,12 +39,11 @@ export async function generateStaticParams() {
 
   const staticParams = countryCodes
     ?.map((countryCode: string) =>
-      collectionHandles.map((handle: string | undefined) => ({
+      flatMaplectionHandles.map((handle: string | undefined) => ({
         countryCode,
         handle,
       }))
-    )
-    .flat()
+    ).flat()
 
   return staticParams
 }
@@ -58,12 +56,25 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     notFound()
   }
 
-  const metadata = {
-    title: `${collection.title} | Medusa Store`,
-    description: `${collection.title} collection`,
-  } as Metadata
+  const description = `Descubre la colección ${collection.title}. Cristales, cuarzos y joyería artesanal de alta calidad en CuarzosMX.`
 
-  return metadata
+  return {
+    title: collection.title,
+    description,
+    openGraph: {
+      title: `${collection.title} | CuarzosMX`,
+      description,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${collection.title} | CuarzosMX`,
+      description,
+    },
+    alternates: {
+      canonical: `/collections/${params.handle}`,
+    },
+  }
 }
 
 export default async function CollectionPage(props: Props) {

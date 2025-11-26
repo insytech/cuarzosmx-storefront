@@ -11,8 +11,15 @@ import { listProducts } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
 
 export const metadata: Metadata = {
-  title: "CuarzosMX - Joyería Única de Cuarzo",
-  description: "Descubre joyería única de cuarzo de alta calidad. Piezas artesanales que reflejan tu esencia.",
+  title: "Inicio | Cristales, Cuarzos y Joyería Artesanal en México",
+  description:
+    "Explora nuestra colección de cristales, cuarzos y joyería artesanal. Amatistas, cuarzo rosa, obsidiana y más. Envíos a todo México con garantía de calidad.",
+  openGraph: {
+    title: "CuarzosMX - Cristales, Cuarzos y Joyería Artesanal",
+    description:
+      "Explora nuestra colección de cristales, cuarzos y joyería artesanal. Piezas únicas con envíos a todo México.",
+    type: "website",
+  },
 }
 
 export default async function Home(props: {

@@ -1,0 +1,30 @@
+{
+    "name": "CuarzosMX - Cristales, Cuarzos y Joyería Artesanal",
+    "short_name": "CuarzosMX",
+    "description": "Tienda en línea de cristales, cuarzos y joyería artesanal en México",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#9C72AF",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/favicon.webp",
+            "sizes": "192x192",
+            "type": "image/webp",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/favicon.webp",
+            "sizes": "512x512",
+            "type": "image/webp",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "shopping",
+        "lifestyle"
+    ],
+    "lang": "es-MX",
+    "dir": "ltr"
+}

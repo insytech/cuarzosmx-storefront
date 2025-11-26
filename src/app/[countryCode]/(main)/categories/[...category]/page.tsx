@@ -23,7 +23,7 @@ export async function generateStaticParams() {
   }
 
   const countryCodes = await listRegions().then((regions: StoreRegion[]) =>
-    regions?.map((r) => r.countries?.map((c) => c.iso_2)).flat()
+    regions?.flatMap((r) => r.countries?.map((c) => c.iso_2))
   )
 
   const categoryHandles = product_categories.map(
@@ -31,13 +31,12 @@ export async function generateStaticParams() {
   )
 
   const staticParams = countryCodes
-    ?.map((countryCode: string | undefined) =>
+    ?.flatMap((countryCode: string | undefined) =>
       categoryHandles.map((handle: any) => ({
         countryCode,
         category: [handle],
       }))
     )
-    .flat()
 
   return staticParams
 }
@@ -47,15 +46,25 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   try {
     const productCategory = await getCategoryByHandle(params.category)
 
-    const title = productCategory.name + " | Medusa Store"
-
-    const description = productCategory.description ?? `${title} category.`
+    const title = productCategory.name
+    const description = productCategory.description ??
+      `Explora nuestra colección de ${productCategory.name}. Cristales, cuarzos y joyería artesanal de alta calidad en CuarzosMX.`
 
     return {
-      title: `${title} | Medusa Store`,
+      title: title,
       description,
+      openGraph: {
+        title: `${title} | CuarzosMX`,
+        description,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: `${title} | CuarzosMX`,
+        description,
+      },
       alternates: {
-        canonical: `${params.category.join("/")}`,
+        canonical: `/categories/${params.category.join("/")}`,
       },
     }
   } catch (error) {

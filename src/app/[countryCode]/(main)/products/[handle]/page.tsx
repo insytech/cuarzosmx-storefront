@@ -11,7 +11,7 @@ type Props = {
 export async function generateStaticParams() {
   try {
     const countryCodes = await listRegions().then((regions) =>
-      regions?.map((r) => r.countries?.map((c) => c.iso_2)).flat()
+      regions?.flatMap((r) => r.countries?.map((c) => c.iso_2))
     )
 
     if (!countryCodes) {
@@ -42,8 +42,7 @@ export async function generateStaticParams() {
       .filter((param) => param.handle)
   } catch (error) {
     console.error(
-      `Failed to generate static paths for product pages: ${
-        error instanceof Error ? error.message : "Unknown error"
+      `Failed to generate static paths for product pages: ${error instanceof Error ? error.message : "Unknown error"
       }.`
     )
     return []
@@ -68,13 +67,35 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     notFound()
   }
 
+  const productDescription = product.description ||
+    `Compra ${product.title} en CuarzosMX. Cristales y joyería artesanal de alta calidad con envío a todo México.`
+
   return {
-    title: `${product.title} | Medusa Store`,
-    description: `${product.title}`,
+    title: product.title,
+    description: productDescription,
     openGraph: {
-      title: `${product.title} | Medusa Store`,
-      description: `${product.title}`,
+      title: `${product.title} | CuarzosMX`,
+      description: productDescription,
+      type: "website",
+      images: product.thumbnail
+        ? [
+          {
+            url: product.thumbnail,
+            width: 800,
+            height: 800,
+            alt: product.title,
+          },
+        ]
+        : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${product.title} | CuarzosMX`,
+      description: productDescription,
       images: product.thumbnail ? [product.thumbnail] : [],
+    },
+    alternates: {
+      canonical: `/products/${handle}`,
     },
   }
 }
