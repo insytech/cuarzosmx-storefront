@@ -27,9 +27,18 @@ export default function Footer() {
   }
 
   return (
-    <footer className="w-full bg-main-color-dark text-white">
+    <footer className="w-full text-white relative overflow-hidden">
+      {/* Gradient background - main-color to main-color-dark */}
+      <div className="absolute inset-0 bg-gradient-to-br from-main-color via-main-color-dark to-[#3a1a4a]" />
+
+      {/* Subtle light glow effect - top */}
+      <div className="absolute -top-14 left-1/4 w-96 h-48 bg-white/10 rounded-full blur-[80px]" />
+
+      {/* Subtle light glow effect - right */}
+      <div className="absolute top-1/2 -right-6 w-64 h-64 bg-main-color-light/15 rounded-full blur-[60px]" />
+
       {/* Main Content */}
-      <div className="content-container max-w-7xl mx-auto px-4 lg:px-8">
+      <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
         <div className="py-10 sm:py-10 lg:py-10">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
 
@@ -430,7 +439,7 @@ export default function Footer() {
       </div>
 
       {/* Decorative Separator */}
-      <div className="w-full">
+      <div className="w-full relative z-10">
         <div className="content-container max-w-7xl mx-auto px-4 lg:px-8">
           <div className="flex items-center gap-4">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/30 to-white/10" />
@@ -447,8 +456,8 @@ export default function Footer() {
       </div>
 
       {/* Copyright Section */}
-      <div className="bg-main-color-dark/30">
-        <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 py-2 ">
+      <div className=" relative z-10">
+        <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Copyright Text */}
             <div className="text-center md:text-left">

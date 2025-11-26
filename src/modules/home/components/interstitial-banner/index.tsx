@@ -26,7 +26,7 @@ export default function InterstitialBanner() {
                     {signos.map((signo) => (
                         <a
                             key={signo.nombre}
-                            href="/"
+                            href={`/collections/${signo.nombre.toLowerCase()}`}
                             className="relative w-36 h-36 rounded-lg shadow-lg overflow-hidden flex items-center justify-center group focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
                             tabIndex={0}
                         >
