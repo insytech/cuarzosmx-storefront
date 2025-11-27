@@ -2,6 +2,9 @@ const checkEnvVariables = require("./check-env-variables")
 
 checkEnvVariables()
 
+// Origen de medios legado (p. ej., https://media.cuarzos.mx o https://legacy.cuarzos.mx)
+const LEGACY_MEDIA_ORIGIN = process.env.LEGACY_MEDIA_ORIGIN
+
 /**
  * @type {import('next').NextConfig}
  */
@@ -59,7 +62,46 @@ const nextConfig = {
         protocol: "https",
         hostname: "cdn.shopify.com",
       },
+      // WordPress legacy media from previous site
+      {
+        protocol: "https",
+        hostname: "cuarzos.mx",
+        pathname: "/wp-content/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.cuarzos.mx",
+        pathname: "/wp-content/**",
+      },
+      // Host legado configurable para servir /wp-content/ tras la migración
+      ...(LEGACY_MEDIA_ORIGIN
+        ? (() => {
+          try {
+            const u = new URL(LEGACY_MEDIA_ORIGIN)
+            return [
+              {
+                protocol: u.protocol.replace(":", ""),
+                hostname: u.hostname,
+                pathname: "/wp-content/**",
+              },
+            ]
+          } catch {
+            return []
+          }
+        })()
+        : []),
     ],
+  },
+  // Rewrites para proxy de medios legados
+  async rewrites() {
+    if (!LEGACY_MEDIA_ORIGIN) return []
+    const base = LEGACY_MEDIA_ORIGIN.replace(/\/$/, "")
+    return [
+      {
+        source: "/wp-content/:path*",
+        destination: `${base}/wp-content/:path*`,
+      },
+    ]
   },
   // Headers de seguridad
   async headers() {
