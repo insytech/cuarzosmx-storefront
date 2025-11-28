@@ -81,18 +81,73 @@ export const MercadoPagoContainer = ({
   selectedPaymentOptionId,
   paymentInfoMap,
   disabled = false,
-  paymentSession,
+  cartId,
 }: Omit<PaymentContainerProps, "children"> & {
-  paymentSession?: any
+  cartId?: string
 }) => {
-  // Get preferenceId from backend-generated payment session
-  // The @nicogorga/medusa-payment-mercadopago module returns session_id
-  const preferenceId = paymentSession?.data?.id || paymentSession?.data?.session_id
-  const hasError = (!preferenceId || paymentSession?.provider_id !== paymentProviderId) && selectedPaymentOptionId === paymentProviderId
+  const [preferenceId, setPreferenceId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  console.log('MercadoPagoContainer - Payment Session:', paymentSession)
-  console.log('MercadoPagoContainer - Preference ID:', preferenceId)
-  console.log('MercadoPagoContainer - Has Error:', hasError)
+  // Create MercadoPago preference when this payment method is selected
+  useEffect(() => {
+    const createPreference = async () => {
+      if (selectedPaymentOptionId !== paymentProviderId || !cartId) {
+        return
+      }
+
+      // Don't create a new preference if we already have one
+      if (preferenceId) {
+        return
+      }
+
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+        const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        }
+        
+        if (publishableKey) {
+          headers["x-publishable-api-key"] = publishableKey
+        }
+        
+        const response = await fetch(`${backendUrl}/store/mercadopago-preference`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ cart_id: cartId }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || "Error creating MercadoPago preference")
+        }
+
+        const data = await response.json()
+        console.log('MercadoPago preference created:', data)
+        setPreferenceId(data.preference_id)
+      } catch (err: any) {
+        console.error('Error creating MercadoPago preference:', err)
+        setError(err.message || "Error al crear preferencia de MercadoPago")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    createPreference()
+  }, [selectedPaymentOptionId, paymentProviderId, cartId, preferenceId])
+
+  // Reset preference when payment method changes away from MercadoPago
+  useEffect(() => {
+    if (selectedPaymentOptionId !== paymentProviderId) {
+      setPreferenceId(null)
+      setError(null)
+    }
+  }, [selectedPaymentOptionId, paymentProviderId])
 
   return (
     <PaymentContainer
@@ -106,23 +161,32 @@ export const MercadoPagoContainer = ({
           <Text className="txt-medium-plus text-ui-fg-base mb-1">
             Completa tu pago con Mercado Pago:
           </Text>
-          {hasError ? (
+          {error ? (
             <div className="text-center py-4 border border-red-200 rounded-md bg-red-50">
               <Text className="text-sm text-red-600 mb-2">
                 Error al configurar Mercado Pago
               </Text>
               <Text className="text-xs text-red-500">
-                Verifica la configuración del backend y las credenciales de Mercado Pago
+                {error}
               </Text>
+            </div>
+          ) : isLoading ? (
+            <div className="text-center py-4">
+              <Text className="text-sm text-ui-fg-subtle">
+                Preparando opciones de pago...
+              </Text>
+              <div className="mt-2 flex justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-ui-fg-base" />
+              </div>
             </div>
           ) : preferenceId ? (
             <div style={{ width: '300px', margin: '20px auto' }}>
               <Wallet
                 initialization={{ preferenceId }}
                 onReady={() => console.log('Mercado Pago Wallet is ready')}
-                onError={(error) => {
-                  console.error('Mercado Pago error:', error)
-                  // You could set an error state here if needed
+                onError={(walletError) => {
+                  console.error('Mercado Pago Wallet error:', walletError)
+                  setError("Error al cargar el botón de Mercado Pago")
                 }}
               />
             </div>

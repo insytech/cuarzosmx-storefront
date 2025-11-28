@@ -468,3 +468,38 @@ export async function listCartOptions() {
     cache: "force-cache",
   })
 }
+
+/**
+ * Creates a MercadoPago preference for the Wallet Brick integration
+ * @param cartId - The ID of the cart to create a preference for
+ * @returns The preference data including preference_id, init_point, and sandbox_init_point
+ */
+export async function createMercadoPagoPreference(cartId?: string) {
+  const id = cartId || (await getCartId())
+
+  if (!id) {
+    throw new Error("No cart ID provided when creating MercadoPago preference")
+  }
+
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  const backendUrl = process.env.MEDUSA_BACKEND_URL || process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+
+  const response = await fetch(`${backendUrl}/store/mercadopago-preference`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+    body: JSON.stringify({ cart_id: id }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.message || "Error creating MercadoPago preference")
+  }
+
+  return response.json()
+}

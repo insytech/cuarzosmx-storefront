@@ -50,7 +50,8 @@ const Payment = ({
   const setPaymentMethod = async (method: string) => {
     setError(null)
     setSelectedPaymentMethod(method)
-    if (isStripeFunc(method) || isMercadoPago(method)) {
+    // Only create payment session for Stripe, MercadoPago uses its own preference endpoint
+    if (isStripeFunc(method)) {
       await initiatePaymentSession(cart, {
         provider_id: method,
       })
@@ -85,30 +86,25 @@ const Payment = ({
       const shouldInputCard =
         isStripeFunc(selectedPaymentMethod) && !activeSession
 
-      const shouldCreateMercadoPagoSession =
-        isMercadoPago(selectedPaymentMethod) && !activeSession
-
       const checkActiveSession =
         activeSession?.provider_id === selectedPaymentMethod
 
-      if (!checkActiveSession) {
+      // For Stripe, create payment session if needed
+      if (isStripeFunc(selectedPaymentMethod) && !checkActiveSession) {
         await initiatePaymentSession(cart, {
           provider_id: selectedPaymentMethod,
         })
       }
 
-      // For MercadoPago, ensure preferenceId or session_id exists
+      // For MercadoPago, the Wallet Brick handles the payment directly
+      // User will be redirected to MercadoPago to complete payment
       if (isMercadoPago(selectedPaymentMethod)) {
-        const updatedCart = await retrieveCart(cart.id)
-        const mercadoPagoSession = updatedCart?.payment_collection?.payment_sessions?.find(
-          (s: any) => s.provider_id === selectedPaymentMethod && s.status === "pending"
-        )
-        if (!mercadoPagoSession?.data?.preferenceId && !mercadoPagoSession?.data?.session_id) {
-          throw new Error("MercadoPago preference not created. Please check backend configuration.")
-        }
+        // MercadoPago Wallet Brick handles the redirect, no need to do anything here
+        // The preference is already created by MercadoPagoContainer
+        return
       }
 
-      if (!shouldInputCard && !shouldCreateMercadoPagoSession) {
+      if (!shouldInputCard) {
         return router.push(
           `${pathname}?${createQueryString("step", "review")}`,
           {
@@ -179,7 +175,7 @@ const Payment = ({
                         paymentProviderId={paymentMethod.id}
                         selectedPaymentOptionId={selectedPaymentMethod}
                         paymentInfoMap={paymentInfoMap}
-                        paymentSession={activeSession}
+                        cartId={cart?.id}
                       />
                     ) : (
                       <PaymentContainer
@@ -213,21 +209,24 @@ const Payment = ({
             data-testid="payment-method-error-message"
           />
 
-          <Button
-            size="large"
-            className="mt-6 !bg-main-color hover:!bg-main-color-dark"
-            onClick={handleSubmit}
-            isLoading={isLoading}
-            disabled={
-              (isStripe && !cardComplete) ||
-              (!selectedPaymentMethod && !paidByGiftcard)
-            }
-            data-testid="submit-payment-button"
-          >
-            {!activeSession && (isStripeFunc(selectedPaymentMethod) || isMercadoPago(selectedPaymentMethod))
-              ? "Procesar pago"
-              : "Continuar a revisar"}
-          </Button>
+          {/* Don't show submit button for MercadoPago as the Wallet Brick handles the redirect */}
+          {!isMercadoPago(selectedPaymentMethod) && (
+            <Button
+              size="large"
+              className="mt-6 !bg-main-color hover:!bg-main-color-dark"
+              onClick={handleSubmit}
+              isLoading={isLoading}
+              disabled={
+                (isStripe && !cardComplete) ||
+                (!selectedPaymentMethod && !paidByGiftcard)
+              }
+              data-testid="submit-payment-button"
+            >
+              {!activeSession && isStripeFunc(selectedPaymentMethod)
+                ? "Procesar pago"
+                : "Continuar a revisar"}
+            </Button>
+          )}
         </div>
 
         <div className={isOpen ? "hidden" : "block"}>
