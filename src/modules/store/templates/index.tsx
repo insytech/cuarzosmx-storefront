@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import Image from "next/image"
 
 import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
 import RefinementList from "@modules/store/components/refinement-list"
@@ -24,8 +25,20 @@ const StoreTemplate = ({
   return (
     <>
       {/* Hero Section */}
-      <div className="w-full bg-gradient-to-r from-main-color to-main-color-dark py-12 md:py-16">
-        <div className="content-container max-w-7xl mx-auto px-4 lg:px-8">
+      <div className="w-full relative overflow-hidden py-16 md:py-20">
+        {/* Background Image */}
+        <Image
+          src="/inicio-1.webp"
+          alt="Tienda de cuarzos"
+          fill
+          className="object-cover object-center"
+          priority
+        />
+        {/* Overlay con gradiente */}
+        <div className="absolute inset-0 bg-gradient-to-r from-main-color/90 via-main-color-dark/80 to-purple-900/70" />
+
+        {/* Content */}
+        <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-white/80 mb-4">
             <LocalizedClientLink href="/" className="hover:text-white transition-colors">
@@ -43,7 +56,7 @@ const StoreTemplate = ({
 
           {/* Title */}
           <h1
-            className="font-serenity text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3"
+            className="font-serenity text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg"
             data-testid="store-page-title"
           >
             {searchQuery ? (
@@ -56,7 +69,7 @@ const StoreTemplate = ({
           </h1>
 
           {/* Description */}
-          <p className="text-white/90 text-base md:text-lg max-w-3xl">
+          <p className="text-white/90 text-base md:text-lg max-w-3xl drop-shadow-md">
             {searchQuery ? (
               "Mostrando productos que coinciden con tu búsqueda."
             ) : (
@@ -68,7 +81,7 @@ const StoreTemplate = ({
           {searchQuery && (
             <LocalizedClientLink
               href="/store"
-              className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-full text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-full text-sm font-medium transition-colors backdrop-blur-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

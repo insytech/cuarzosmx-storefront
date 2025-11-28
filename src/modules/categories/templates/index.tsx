@@ -46,7 +46,8 @@ export default function CategoryTemplate({
     if (categorias.includes(handle.toLowerCase())) {
       return `/categorias/${handle.toUpperCase()}.webp`
     }
-    return null
+    // Imagen por defecto para categorías sin imagen específica
+    return '/inicio-2.webp'
   }
 
   const backgroundImage = getCategoryImage(category.handle)
@@ -56,21 +57,15 @@ export default function CategoryTemplate({
       {/* Hero Section */}
       <div className="w-full relative overflow-hidden py-16 md:py-20">
         {/* Background Image */}
-        {backgroundImage ? (
-          <>
-            <Image
-              src={backgroundImage}
-              alt={category.name}
-              fill
-              className="object-cover object-center"
-              priority
-            />
-            {/* Overlay con gradiente */}
-            <div className="absolute inset-0 bg-gradient-to-r from-main-color/90 via-main-color-dark/80 to-purple-900/70" />
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-main-color via-main-color-dark to-purple-900" />
-        )}
+        <Image
+          src={backgroundImage}
+          alt={category.name}
+          fill
+          className="object-cover object-center"
+          priority
+        />
+        {/* Overlay con gradiente */}
+        <div className="absolute inset-0 bg-gradient-to-r from-main-color/90 via-main-color-dark/80 to-purple-900/70" />
         {/* Content */}
         <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
           {/* Breadcrumb */}
