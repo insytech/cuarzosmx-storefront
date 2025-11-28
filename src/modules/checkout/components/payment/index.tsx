@@ -1,7 +1,7 @@
 "use client"
 
 import { RadioGroup } from "@headlessui/react"
-import { isStripe as isStripeFunc, isMercadoPago, paymentInfoMap } from "@lib/constants"
+import { isStripe as isStripeFunc, isMercadoPago, isMercadoCredito, paymentInfoMap } from "@lib/constants"
 import { initiatePaymentSession, retrieveCart, completeMercadoPagoOrder } from "@lib/data/cart"
 import { CheckCircleSolid, CreditCard } from "@medusajs/icons"
 import { Button, Container, Heading, Text, clx } from "@medusajs/ui"
@@ -9,6 +9,7 @@ import ErrorMessage from "@modules/checkout/components/error-message"
 import PaymentContainer, {
   MercadoPagoContainer,
   MercadoPagoPaymentBrickContainer,
+  MercadoCreditoContainer,
   StripeCardContainer,
 } from "@modules/checkout/components/payment-container"
 import Divider from "@modules/common/components/divider"
@@ -237,6 +238,19 @@ const Payment = ({
                     )}
                   </div>
                 ))}
+                
+                {/* Add Mercado Crédito option if MercadoPago is available */}
+                {availablePaymentMethods.some(pm => isMercadoPago(pm.id)) && (
+                  <MercadoCreditoContainer
+                    paymentProviderId="mercado_credito"
+                    selectedPaymentOptionId={selectedPaymentMethod}
+                    paymentInfoMap={paymentInfoMap}
+                    cart={cart}
+                    onPaymentSuccess={() => {
+                      console.log("Mercado Crédito payment initiated")
+                    }}
+                  />
+                )}
               </RadioGroup>
             </>
           )}
@@ -260,8 +274,8 @@ const Payment = ({
             data-testid="payment-method-error-message"
           />
 
-          {/* Don't show submit button for MercadoPago as the Wallet Brick handles the redirect */}
-          {!isMercadoPago(selectedPaymentMethod) && (
+          {/* Don't show submit button for MercadoPago or MercadoCredito as they handle the redirect */}
+          {!isMercadoPago(selectedPaymentMethod) && !isMercadoCredito(selectedPaymentMethod) && (
             <Button
               size="large"
               className="mt-6 !bg-main-color hover:!bg-main-color-dark"

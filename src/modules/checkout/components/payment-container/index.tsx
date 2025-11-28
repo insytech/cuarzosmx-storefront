@@ -765,3 +765,157 @@ export const MercadoPagoPaymentBrickContainer = ({
     </PaymentContainer>
   )
 }
+
+// Mercado Crédito Container - Uses Credits Brick for "buy now, pay later" with Mercado Pago
+export const MercadoCreditoContainer = ({
+  paymentProviderId,
+  selectedPaymentOptionId,
+  paymentInfoMap,
+  disabled = false,
+  cart,
+  onPaymentSuccess,
+}: Omit<PaymentContainerProps, "children"> & {
+  cart: HttpTypes.StoreCart | null
+  onPaymentSuccess?: () => void
+}) => {
+  const [preferenceId, setPreferenceId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const isSelected = selectedPaymentOptionId === paymentProviderId
+
+  // Create MercadoPago preference when this payment method is selected
+  useEffect(() => {
+    const createPreference = async () => {
+      if (!isSelected || !cart?.id) {
+        return
+      }
+
+      // Don't create a new preference if we already have one
+      if (preferenceId) {
+        return
+      }
+
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+        const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        }
+        
+        if (publishableKey) {
+          headers["x-publishable-api-key"] = publishableKey
+        }
+        
+        const response = await fetch(`${backendUrl}/store/mercadopago-preference`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ cart_id: cart.id }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || "Error creating MercadoPago preference")
+        }
+
+        const data = await response.json()
+        console.log('MercadoPago Credits preference created:', data)
+        setPreferenceId(data.preference_id)
+      } catch (err: any) {
+        console.error('Error creating MercadoPago Credits preference:', err)
+        setError(err.message || "Error al crear preferencia de Mercado Crédito")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    createPreference()
+  }, [isSelected, cart?.id, preferenceId])
+
+  // Reset preference when payment method changes
+  useEffect(() => {
+    if (!isSelected) {
+      setPreferenceId(null)
+      setError(null)
+    }
+  }, [isSelected])
+
+  return (
+    <PaymentContainer
+      paymentProviderId={paymentProviderId}
+      selectedPaymentOptionId={selectedPaymentOptionId}
+      paymentInfoMap={paymentInfoMap}
+      disabled={disabled}
+    >
+      {isSelected && (
+        <div className="my-4 transition-all duration-150 ease-in-out">
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <Text className="text-sm font-semibold text-blue-800 mb-2">
+              Compra en hasta 12 pagos sin tarjeta de crédito
+            </Text>
+            <ol className="list-decimal list-inside space-y-1 text-sm text-blue-700">
+              <li>Conoce el límite disponible de tu Línea de Crédito y selecciona la cantidad de pagos.</li>
+              <li>Confirma tu pago, se acredita al instante y está 100% protegido.</li>
+              <li>Paga mes a mes desde la app de Mercado Pago con el medio que prefieras.</li>
+            </ol>
+          </div>
+          
+          {error ? (
+            <div className="text-center py-4 border border-red-200 rounded-md bg-red-50">
+              <Text className="text-sm text-red-600 mb-2">
+                Error al configurar Mercado Crédito
+              </Text>
+              <Text className="text-xs text-red-500">
+                {error}
+              </Text>
+            </div>
+          ) : isLoading ? (
+            <div className="text-center py-4">
+              <Text className="text-sm text-ui-fg-subtle">
+                Preparando opciones de pago...
+              </Text>
+              <div className="mt-2 flex justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-ui-fg-base" />
+              </div>
+            </div>
+          ) : preferenceId ? (
+            <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <Text className="text-sm text-gray-600 mb-3">
+                Te llevaremos a Mercado Pago para completar tu compra
+              </Text>
+              <Text className="text-xs text-gray-500">
+                Si aún no tienes la Línea de Crédito, actívala al momento de pagar.
+              </Text>
+              <div style={{ width: '280px', margin: '16px auto 0' }}>
+                <Wallet
+                  initialization={{ 
+                    preferenceId,
+                    redirectMode: 'self'
+                  }}
+                  onReady={() => console.log('Mercado Crédito Wallet is ready')}
+                  onError={(walletError) => {
+                    console.error('Mercado Crédito Wallet error:', walletError)
+                    setError("Error al cargar el botón de Mercado Crédito")
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <Text className="text-sm text-ui-fg-subtle">
+                Preparando opciones de pago...
+              </Text>
+              <div className="mt-2 flex justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-ui-fg-base" />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </PaymentContainer>
+  )
+}

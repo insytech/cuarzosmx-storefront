@@ -35,6 +35,11 @@ export const paymentInfoMap: Record<
     title: "Pago con tarjeta",
     icon: <CreditCard />,
   },
+  // Virtual payment method for Mercado Crédito (rendered separately)
+  mercado_credito: {
+    title: "Hasta 12 pagos sin tarjeta con Mercado Pago",
+    icon: <img src="/icon-mp.png" alt="Mercado Pago" className="h-4 w-4" />,
+  },
   // Add more payment providers here
 }
 
@@ -50,6 +55,9 @@ export const isManual = (providerId?: string) => {
 }
 export const isMercadoPago = (providerId?: string) => {
   return providerId?.startsWith("pp_mercadopago")
+}
+export const isMercadoCredito = (providerId?: string) => {
+  return providerId === "mercado_credito"
 }
 
 // Add currencies that don't need to be divided by 100
