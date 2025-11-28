@@ -339,6 +339,14 @@ export default function Footer() {
                         Aviso de Privacidad
                       </LocalizedClientLink>
                     </li>
+                    <li>
+                      <LocalizedClientLink
+                        href="/cookies"
+                        className="hover:text-main-color-dark transition-colors duration-200"
+                      >
+                        Política de Cookies
+                      </LocalizedClientLink>
+                    </li>
                   </ul>
                 </div>
               </div>

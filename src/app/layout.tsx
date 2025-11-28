@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import "styles/globals.css"
+import CookieConsentWrapper from "@modules/common/components/cookie-consent-wrapper"
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzosmx.com"
 
@@ -138,7 +139,9 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         />
       </head>
       <body>
-        <main className="relative">{props.children}</main>
+        <CookieConsentWrapper>
+          <main className="relative">{props.children}</main>
+        </CookieConsentWrapper>
       </body>
     </html>
   )
