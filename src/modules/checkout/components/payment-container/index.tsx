@@ -36,7 +36,8 @@ const PaymentContainer: React.FC<PaymentContainerProps> = ({
   disabled = false,
   children,
 }) => {
-  const isDevelopment = process.env.NODE_ENV === "development"
+  const isSelected = selectedPaymentOptionId === paymentProviderId
+  const isTransfer = isManual(paymentProviderId)
 
   return (
     <RadioGroupOption
@@ -47,29 +48,42 @@ const PaymentContainer: React.FC<PaymentContainerProps> = ({
         "flex flex-col gap-y-2 text-small-regular cursor-pointer py-4 border rounded-lg px-6 mb-2 transition-all",
         {
           "border-main-color bg-main-color-light/20 shadow-sm":
-            selectedPaymentOptionId === paymentProviderId,
+            isSelected,
           "border-gray-200 hover:border-main-color/50 hover:bg-gray-50":
-            selectedPaymentOptionId !== paymentProviderId,
+            !isSelected,
         }
       )}
     >
       <div className="flex items-center justify-between ">
         <div className="flex items-center gap-x-4">
-          <Radio checked={selectedPaymentOptionId === paymentProviderId} />
+          <Radio checked={isSelected} />
           <Text className="text-base-regular text-gray-700">
             {paymentInfoMap[paymentProviderId]?.title || paymentProviderId}
           </Text>
-          {isManual(paymentProviderId) && isDevelopment && (
-            <PaymentTest className="hidden small:block" />
-          )}
         </div>
         <span className="justify-self-end text-ui-fg-base">
           {paymentInfoMap[paymentProviderId]?.icon}
         </span>
       </div>
-      {isManual(paymentProviderId) && isDevelopment && (
-        <PaymentTest className="small:hidden text-[10px]" />
+
+      {/* Show bank transfer instructions when selected */}
+      {isTransfer && isSelected && (
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <Text className="text-sm font-semibold text-blue-800 mb-2">
+            Instrucciones para transferencia bancaria
+          </Text>
+          <div className="space-y-2 text-sm text-blue-700">
+            {/* <p><strong>Banco:</strong> BBVA México</p>
+            <p><strong>Nombre:</strong> Cuarzos MX S.A. de C.V.</p>
+            <p><strong>CLABE:</strong> 012345678901234567</p>
+            <p><strong>Cuenta:</strong> 1234567890</p> */}
+          </div>
+          <Text className="text-xs text-blue-600 mt-3">
+            Una vez realizada la transferencia, envía tu comprobante a <strong>ventas@cuarzos.mx</strong> con tu número de pedido.
+          </Text>
+        </div>
       )}
+
       {children}
     </RadioGroupOption>
   )
@@ -108,15 +122,15 @@ export const MercadoPagoContainer = ({
       try {
         const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
         const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
-        
+
         const headers: Record<string, string> = {
           "Content-Type": "application/json",
         }
-        
+
         if (publishableKey) {
           headers["x-publishable-api-key"] = publishableKey
         }
-        
+
         const response = await fetch(`${backendUrl}/store/mercadopago-preference`, {
           method: "POST",
           headers,
@@ -404,7 +418,7 @@ export const MercadoPagoCardContainer = ({
 
       console.log("Pago exitoso:", result)
       setCardComplete(true)
-      
+
       if (onPaymentSuccess) {
         onPaymentSuccess(result.payment_id)
       }
@@ -500,7 +514,7 @@ export const MercadoPagoPaymentBrickContainer = ({
 
   const initialization = useMemo(() => {
     console.log("CardPayment initialization:", { amount, email: cart?.email })
-    return { 
+    return {
       amount,
       payer: {
         email: cart?.email || "",
@@ -540,18 +554,18 @@ export const MercadoPagoPaymentBrickContainer = ({
 
     try {
       console.log("Card data tokenized - FULL formData:", JSON.stringify(formData, null, 2))
-      
+
       const installments = formData.installments || 1
       const paymentMethodId = formData.payment_method_id
       const issuerId = formData.issuer_id
-      
+
       // Default values
       let totalWithFinancing = amount
       let installmentAmount = amount / installments
       let financingCost = 0
       let paymentType = 'credit_card' // default, will be updated
       let availableInstallmentOptions: any[] = []
-      
+
       // Fetch installment info from our API (this tells us card type too)
       if (paymentMethodId) {
         try {
@@ -569,20 +583,20 @@ export const MercadoPagoPaymentBrickContainer = ({
               issuer_id: issuerId,
             }),
           })
-          
+
           if (response.ok) {
             const data = await response.json()
             console.log("Installments API response:", data)
-            
+
             availableInstallmentOptions = data.installment_options || []
-            
+
             // Determine if this is a debit card based on installment options
             // Debit cards typically only have 1 installment option
             if (availableInstallmentOptions.length === 1 && availableInstallmentOptions[0]?.installments === 1) {
               paymentType = 'debit_card'
               console.log("Detected debit card - only 1 installment available")
             }
-            
+
             // Find the selected installment option for financing info
             if (installments > 1) {
               const selectedOption = data.installment_options?.find(
@@ -603,7 +617,7 @@ export const MercadoPagoPaymentBrickContainer = ({
           // Continue with fallback calculation
         }
       }
-      
+
       console.log("Final financing calculation:", {
         originalAmount: amount,
         totalWithFinancing,
@@ -612,7 +626,7 @@ export const MercadoPagoPaymentBrickContainer = ({
         financingCost,
         paymentType
       })
-      
+
       const cardData = {
         token: formData.token,
         payment_method_id: paymentMethodId,
@@ -631,11 +645,11 @@ export const MercadoPagoPaymentBrickContainer = ({
         installment_amount: installmentAmount,
         financing_cost: financingCost,
       }
-      
+
       // Log formData keys to help debug what MercadoPago sends
       console.log("formData keys:", Object.keys(formData))
       console.log("Card data ready for review:", cardData)
-      
+
       if (onCardDataReady) {
         onCardDataReady(cardData)
       }
@@ -656,10 +670,10 @@ export const MercadoPagoPaymentBrickContainer = ({
   const handleError = useCallback((error: any) => {
     // Log error details for debugging
     console.log("MercadoPago CardPayment error object:", JSON.stringify(error))
-    
+
     // Get error message
     const errorMessage = error?.message || error?.cause?.[0]?.description || ""
-    
+
     // List of internal errors that should be ignored (not shown to user)
     const internalErrors = [
       "empty_installments",
@@ -669,17 +683,17 @@ export const MercadoPagoPaymentBrickContainer = ({
       "expirationDate container not found",
       "securityCode container not found",
     ]
-    
+
     // Check if this is an internal error that should be ignored
-    const isInternalError = !errorMessage || 
-                           Object.keys(error || {}).length === 0 ||
-                           internalErrors.some(e => errorMessage.includes(e))
-    
+    const isInternalError = !errorMessage ||
+      Object.keys(error || {}).length === 0 ||
+      internalErrors.some(e => errorMessage.includes(e))
+
     if (isInternalError) {
       console.log("Ignoring internal CardPayment brick error:", errorMessage)
       return
     }
-    
+
     console.error("MercadoPago CardPayment error:", errorMessage)
     setError(errorMessage || "Error en el formulario de pago")
     if (onPaymentError) {
@@ -690,7 +704,7 @@ export const MercadoPagoPaymentBrickContainer = ({
   // Handler for bin changes - captures installment options when card number is entered
   const handleBinChange = useCallback((binData: any) => {
     console.log("onBinChange callback data:", JSON.stringify(binData, null, 2))
-    
+
     // MercadoPago returns installment options with the bin data
     // Each option has: installments, installment_amount, total_amount
     if (binData?.payerCosts || binData?.payer_costs) {
