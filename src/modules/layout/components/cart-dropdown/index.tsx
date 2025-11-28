@@ -213,7 +213,7 @@ const CartDropdown = ({
                     <LocalizedClientLink href="/store">
                       <>
                         <span className="sr-only">Ir a la página de todos los productos</span>
-                        <Button className="w-full bg-main-color hover:bg-main-color/90 text-white" onClick={close}>Explorar productos</Button>
+                        <Button className="w-full bg-main-color hover:bg-main-color/90 text-white border-main-color-dark" onClick={close}>Explorar productos</Button>
                       </>
                     </LocalizedClientLink>
                   </div>

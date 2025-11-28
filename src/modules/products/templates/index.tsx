@@ -88,7 +88,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
           {/* Left Column - Images */}
           <div className="order-1">
-            <ImageGallery images={product?.images || []} />
+            <ImageGallery images={product?.images || []} thumbnail={product?.thumbnail} />
           </div>
 
           {/* Right Column - Product Details */}
