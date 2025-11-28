@@ -3,6 +3,7 @@ import { retrieveCustomer } from "@lib/data/customer"
 import PaymentWrapper from "@modules/checkout/components/payment-wrapper"
 import CheckoutForm from "@modules/checkout/templates/checkout-form"
 import CheckoutSummary from "@modules/checkout/templates/checkout-summary"
+import { FinancingProvider } from "@modules/checkout/context/financing-context"
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
 
@@ -20,11 +21,13 @@ export default async function Checkout() {
   const customer = await retrieveCustomer()
 
   return (
-    <div className="grid grid-cols-1 small:grid-cols-[1fr_400px] content-container gap-x-12 gap-y-8 py-8 small:py-12">
-      <PaymentWrapper cart={cart}>
-        <CheckoutForm cart={cart} customer={customer} />
-      </PaymentWrapper>
-      <CheckoutSummary cart={cart} />
-    </div>
+    <FinancingProvider>
+      <div className="grid grid-cols-1 small:grid-cols-[1fr_400px] content-container gap-x-12 gap-y-8 py-8 small:py-12">
+        <PaymentWrapper cart={cart}>
+          <CheckoutForm cart={cart} customer={customer} />
+        </PaymentWrapper>
+        <CheckoutSummary cart={cart} />
+      </div>
+    </FinancingProvider>
   )
 }

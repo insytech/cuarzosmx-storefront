@@ -473,12 +473,15 @@ export const MercadoPagoPaymentBrickContainer = ({
   const [isReady, setIsReady] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Store installment options when bin changes
+  const [installmentOptions, setInstallmentOptions] = useState<any[]>([])
 
   // Reset when payment method changes
   useEffect(() => {
     if (selectedPaymentOptionId !== paymentProviderId) {
       setError(null)
       setIsReady(false)
+      setInstallmentOptions([])
     }
   }, [selectedPaymentOptionId, paymentProviderId])
 
@@ -536,21 +539,83 @@ export const MercadoPagoPaymentBrickContainer = ({
     setError(null)
 
     try {
-      console.log("Card data tokenized:", formData)
+      console.log("Card data tokenized - FULL formData:", JSON.stringify(formData, null, 2))
       
-      // Instead of processing payment now, save the card data for the review step
-      // The token is valid for a limited time, so we store it
+      const installments = formData.installments || 1
+      const paymentMethodId = formData.payment_method_id
+      const issuerId = formData.issuer_id
+      
+      // Default values
+      let totalWithFinancing = amount
+      let installmentAmount = amount / installments
+      let financingCost = 0
+      
+      // If more than 1 installment, fetch the real financing costs from our API
+      if (installments > 1 && paymentMethodId) {
+        try {
+          console.log("Fetching installment costs from API...")
+          const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+          const response = await fetch(`${backendUrl}/store/mercadopago-installments`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+            },
+            body: JSON.stringify({
+              payment_method_id: paymentMethodId,
+              amount: amount,
+              issuer_id: issuerId,
+            }),
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            console.log("Installments API response:", data)
+            
+            // Find the selected installment option
+            const selectedOption = data.installment_options?.find(
+              (opt: any) => opt.installments === installments
+            )
+            
+            if (selectedOption) {
+              totalWithFinancing = selectedOption.total_amount
+              installmentAmount = selectedOption.installment_amount
+              financingCost = selectedOption.financing_cost
+              console.log("Found installment option from API:", selectedOption)
+            }
+          } else {
+            console.warn("Failed to fetch installment costs, using fallback")
+          }
+        } catch (apiError) {
+          console.warn("Error fetching installment costs:", apiError)
+          // Continue with fallback calculation
+        }
+      }
+      
+      console.log("Final financing calculation:", {
+        originalAmount: amount,
+        totalWithFinancing,
+        installments,
+        installmentAmount,
+        financingCost
+      })
+      
       const cardData = {
         token: formData.token,
-        payment_method_id: formData.payment_method_id,
-        installments: formData.installments,
-        issuer_id: formData.issuer_id,
+        payment_method_id: paymentMethodId,
+        installments: installments,
+        issuer_id: issuerId,
         payer: formData.payer,
         cart_id: cart.id,
-        // Include transaction_amount from formData
-        transaction_amount: formData.transaction_amount || amount,
+        // Base transaction amount (original price without financing)
+        transaction_amount: amount,
         // Store card info for display (masked)
         card_last_four: formData.token?.substring(formData.token.length - 4) || "****",
+        // Additional info for UX
+        payment_type_id: formData.payment_type_id || 'credit_card',
+        total_financed_amount: totalWithFinancing,
+        installment_amount: installmentAmount,
+        financing_cost: financingCost,
       }
       
       console.log("Card data ready for review:", cardData)
@@ -570,20 +635,32 @@ export const MercadoPagoPaymentBrickContainer = ({
     } finally {
       setIsProcessing(false)
     }
-  }, [cart, onCardDataReady, onPaymentError])
+  }, [cart, onCardDataReady, onPaymentError, amount])
 
   const handleError = useCallback((error: any) => {
     // Log error details for debugging
     console.log("MercadoPago CardPayment error object:", JSON.stringify(error))
     
-    // Ignore empty errors and internal brick errors during initialization
+    // Get error message
     const errorMessage = error?.message || error?.cause?.[0]?.description || ""
+    
+    // List of internal errors that should be ignored (not shown to user)
+    const internalErrors = [
+      "empty_installments",
+      "The integration with Secure Fields failed",
+      "Secure Fields",
+      "cardNumber container not found",
+      "expirationDate container not found",
+      "securityCode container not found",
+    ]
+    
+    // Check if this is an internal error that should be ignored
     const isInternalError = !errorMessage || 
-                           errorMessage === "empty_installments" ||
-                           Object.keys(error || {}).length === 0
+                           Object.keys(error || {}).length === 0 ||
+                           internalErrors.some(e => errorMessage.includes(e))
     
     if (isInternalError) {
-      console.log("Ignoring internal CardPayment brick error")
+      console.log("Ignoring internal CardPayment brick error:", errorMessage)
       return
     }
     
@@ -593,6 +670,19 @@ export const MercadoPagoPaymentBrickContainer = ({
       onPaymentError(error)
     }
   }, [onPaymentError])
+
+  // Handler for bin changes - captures installment options when card number is entered
+  const handleBinChange = useCallback((binData: any) => {
+    console.log("onBinChange callback data:", JSON.stringify(binData, null, 2))
+    
+    // MercadoPago returns installment options with the bin data
+    // Each option has: installments, installment_amount, total_amount
+    if (binData?.payerCosts || binData?.payer_costs) {
+      const payerCosts = binData.payerCosts || binData.payer_costs
+      console.log("Installment options received:", payerCosts)
+      setInstallmentOptions(payerCosts)
+    }
+  }, [])
 
   // Don't render the brick if amount is invalid
   const canShowBrick = amount > 0 && selectedPaymentOptionId === paymentProviderId
@@ -630,6 +720,7 @@ export const MercadoPagoPaymentBrickContainer = ({
                   onReady={onReady}
                   onSubmit={onSubmit}
                   onError={handleError}
+                  onBinChange={handleBinChange}
                 />
                 {isProcessing && (
                   <div className="mt-2 text-center text-sm text-gray-500">

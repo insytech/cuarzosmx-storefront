@@ -77,6 +77,13 @@ const Review = ({
           issuer_id: mercadoPagoCardData.issuer_id,
           payer: mercadoPagoCardData.payer,
           transaction_amount: mercadoPagoCardData.transaction_amount,
+          // Include financing data for order metadata
+          financing_data: {
+            total_financed_amount: mercadoPagoCardData.total_financed_amount,
+            installment_amount: mercadoPagoCardData.installment_amount,
+            financing_cost: mercadoPagoCardData.financing_cost,
+            installments: mercadoPagoCardData.installments,
+          },
         }),
       })
 
@@ -88,6 +95,22 @@ const Review = ({
       }
 
       console.log("Pago exitoso:", result)
+
+      // Save financing data to sessionStorage for the confirmation page
+      if (mercadoPagoCardData.financing_cost && mercadoPagoCardData.financing_cost > 0) {
+        try {
+          sessionStorage.setItem("order_financing_data", JSON.stringify({
+            total_financed_amount: mercadoPagoCardData.total_financed_amount,
+            installment_amount: mercadoPagoCardData.installment_amount,
+            financing_cost: mercadoPagoCardData.financing_cost,
+            installments: mercadoPagoCardData.installments,
+            original_amount: mercadoPagoCardData.transaction_amount,
+          }))
+          console.log("Financing data saved for confirmation page")
+        } catch (e) {
+          console.error("Error saving financing data:", e)
+        }
+      }
 
       // Clear card data from sessionStorage
       if (onPaymentComplete) {

@@ -4,6 +4,7 @@ import ItemsPreviewTemplate from "@modules/cart/templates/preview"
 import DiscountCode from "@modules/checkout/components/discount-code"
 import CartTotals from "@modules/common/components/cart-totals"
 import Divider from "@modules/common/components/divider"
+import FinancingCostDisplay from "./financing-cost-display"
 
 const CheckoutSummary = ({ cart }: { cart: any }) => {
   return (
@@ -17,6 +18,7 @@ const CheckoutSummary = ({ cart }: { cart: any }) => {
         </Heading>
         <div className="border-t border-gray-100 pt-4">
           <CartTotals totals={cart} />
+          <FinancingCostDisplay />
         </div>
         <div className="border-t border-gray-100 mt-4 pt-4">
           <ItemsPreviewTemplate cart={cart} />

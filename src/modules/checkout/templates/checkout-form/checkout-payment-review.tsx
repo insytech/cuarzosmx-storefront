@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Payment, { MercadoPagoCardData } from "@modules/checkout/components/payment"
 import Review from "@modules/checkout/components/review"
+import { useFinancing } from "@modules/checkout/context/financing-context"
 
 const MERCADOPAGO_CARD_DATA_KEY = "mercadopago_card_data"
 
@@ -16,6 +17,7 @@ export default function CheckoutPaymentReview({
   // State to hold MercadoPago card data between Payment and Review steps
   const [mercadoPagoCardData, setMercadoPagoCardData] = useState<MercadoPagoCardData | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
+  const { setFinancingInfo, clearFinancingInfo } = useFinancing()
 
   // Load card data from sessionStorage on mount (to persist across server re-renders)
   useEffect(() => {
@@ -28,9 +30,12 @@ export default function CheckoutPaymentReview({
         if (parsed.cart_id === cart?.id) {
           console.log("Loaded MercadoPago card data from sessionStorage:", parsed)
           setMercadoPagoCardData(parsed)
+          // Update financing context
+          updateFinancingFromCardData(parsed)
         } else {
           // Different cart, clear old data
           sessionStorage.removeItem(MERCADOPAGO_CARD_DATA_KEY)
+          clearFinancingInfo()
         }
       }
     } catch (e) {
@@ -38,18 +43,58 @@ export default function CheckoutPaymentReview({
     }
   }, [cart?.id])
 
+  // Update financing context from card data
+  const updateFinancingFromCardData = (cardData: MercadoPagoCardData | null) => {
+    console.log("updateFinancingFromCardData called with:", cardData)
+    if (cardData && cardData.transaction_amount && cardData.installments) {
+      const installments = cardData.installments || 1
+      const hasMultipleInstallments = installments > 1
+      
+      // Use financing_cost from API if available, otherwise calculate
+      const financingCost = cardData.financing_cost ?? 
+        ((cardData.total_financed_amount || cardData.transaction_amount) - cardData.transaction_amount)
+      const totalFinanced = cardData.total_financed_amount || (cardData.transaction_amount + financingCost)
+      const hasFinancingCost = financingCost > 0
+      
+      const financingInfo = {
+        // Show financing section if user selected multiple installments
+        hasFinancing: hasMultipleInstallments,
+        hasFinancingCost, // Whether there's an actual financing fee
+        originalAmount: cardData.transaction_amount,
+        totalFinancedAmount: totalFinanced,
+        financingCost: financingCost,
+        installments: installments,
+        installmentAmount: cardData.installment_amount || (totalFinanced / installments),
+        paymentType: cardData.payment_type_id || 'credit_card',
+      }
+      console.log("Setting financing info:", financingInfo)
+      setFinancingInfo(financingInfo)
+    } else {
+      console.log("Clearing financing info - cardData incomplete:", {
+        hasCardData: !!cardData,
+        total_financed_amount: cardData?.total_financed_amount,
+        transaction_amount: cardData?.transaction_amount
+      })
+      clearFinancingInfo()
+    }
+  }
+
   // Handle card data change - also save to sessionStorage
   const handleMercadoPagoCardDataChange = (cardData: MercadoPagoCardData | null) => {
     console.log("Setting MercadoPago card data:", cardData)
     setMercadoPagoCardData(cardData)
+    
     if (cardData) {
       try {
         sessionStorage.setItem(MERCADOPAGO_CARD_DATA_KEY, JSON.stringify(cardData))
+        // Update financing context
+        updateFinancingFromCardData(cardData)
       } catch (e) {
         console.error("Error saving card data to sessionStorage:", e)
       }
     } else {
       sessionStorage.removeItem(MERCADOPAGO_CARD_DATA_KEY)
+      clearFinancingInfo()
     }
   }
 
@@ -57,6 +102,7 @@ export default function CheckoutPaymentReview({
   const clearCardData = () => {
     setMercadoPagoCardData(null)
     sessionStorage.removeItem(MERCADOPAGO_CARD_DATA_KEY)
+    clearFinancingInfo()
   }
 
   return (

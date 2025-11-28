@@ -25,6 +25,11 @@ export type MercadoPagoCardData = {
   cart_id: string
   transaction_amount: number
   card_last_four?: string
+  // Additional info for better UX
+  payment_type_id?: string // 'credit_card' | 'debit_card'
+  total_financed_amount?: number // Total amount including financing costs
+  installment_amount?: number // Amount per installment
+  financing_cost?: number // Cost of financing (total - original)
 }
 
 const Payment = ({
@@ -287,12 +292,12 @@ const Payment = ({
                   data-testid="payment-method-summary"
                 >
                   {hasMercadoPagoCardData 
-                    ? "Mercado Pago"
+                    ? `Tarjeta de ${mercadoPagoCardData?.payment_type_id === 'debit_card' ? 'Débito' : 'Crédito'}`
                     : (paymentInfoMap[activeSession?.provider_id]?.title ||
                       activeSession?.provider_id)}
                 </Text>
               </div>
-              <div className="flex flex-col w-1/3">
+              <div className="flex flex-col w-2/3">
                 <Text className="txt-medium-plus text-gray-800 mb-1 font-semibold">
                   Detalles del pago
                 </Text>
@@ -305,23 +310,36 @@ const Payment = ({
                       ? paymentInfoMap["pp_mercadopago_mercadopago"]?.icon || <CreditCard />
                       : (paymentInfoMap[selectedPaymentMethod]?.icon || <CreditCard />)}
                   </Container>
-                  <Text>
-                    {hasMercadoPagoCardData
-                      ? (() => {
-                          const cardType = mercadoPagoCardData?.payment_method_id?.toUpperCase() || "Tarjeta"
-                          const installments = mercadoPagoCardData?.installments || 1
-                          const amount = mercadoPagoCardData?.transaction_amount || 0
-                          
-                          if (installments > 1) {
-                            const installmentAmount = (amount / installments).toFixed(2)
-                            return `${cardType} - ${installments}x $${installmentAmount} MXN`
-                          }
-                          return `${cardType} - Pago de contado`
-                        })()
-                      : (isStripeFunc(selectedPaymentMethod) && cardBrand
-                        ? cardBrand
-                        : "Se mostrará otro paso")}
-                  </Text>
+                  <div className="flex flex-col">
+                    <Text>
+                      {hasMercadoPagoCardData
+                        ? (() => {
+                            const cardType = mercadoPagoCardData?.payment_method_id?.toUpperCase() || "Tarjeta"
+                            const installments = mercadoPagoCardData?.installments || 1
+                            const installmentAmount = mercadoPagoCardData?.installment_amount || 0
+                            const totalFinanced = mercadoPagoCardData?.total_financed_amount || 0
+                            const originalAmount = mercadoPagoCardData?.transaction_amount || 0
+                            
+                            if (installments > 1) {
+                              const hasFinancingCost = totalFinanced > originalAmount
+                              return (
+                                <>
+                                  {cardType} - {installments}x ${installmentAmount.toFixed(2)} MXN
+                                  {hasFinancingCost && (
+                                    <span className="text-xs text-gray-400 ml-1">
+                                      (Total: ${totalFinanced.toFixed(2)})
+                                    </span>
+                                  )}
+                                </>
+                              )
+                            }
+                            return `${cardType} - Pago de contado`
+                          })()
+                        : (isStripeFunc(selectedPaymentMethod) && cardBrand
+                          ? cardBrand
+                          : "Se mostrará otro paso")}
+                    </Text>
+                  </div>
                 </div>
               </div>
             </div>
