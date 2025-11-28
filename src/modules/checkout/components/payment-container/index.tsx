@@ -1,7 +1,8 @@
 import { Radio as RadioGroupOption } from "@headlessui/react"
 import { Text, clx } from "@medusajs/ui"
-import React, { useContext, useEffect, useMemo, useState, type JSX } from "react"
-import { initMercadoPago, Wallet } from "@mercadopago/sdk-react"
+import React, { useCallback, useContext, useEffect, useMemo, useState, type JSX } from "react"
+import { HttpTypes } from "@medusajs/types"
+import { initMercadoPago, Wallet, CardPayment, Payment as MercadoPagoPayment } from "@mercadopago/sdk-react"
 
 import Radio from "@modules/common/components/radio"
 
@@ -328,6 +329,314 @@ export const StripeCardContainerES = ({
         ) : (
           <SkeletonCardDetails />
         ))}
+    </PaymentContainer>
+  )
+}
+
+export const MercadoPagoCardContainer = ({
+  paymentProviderId,
+  selectedPaymentOptionId,
+  paymentInfoMap,
+  disabled,
+  cart,
+  setCardComplete,
+  setError,
+  onPaymentSuccess,
+}: Omit<PaymentContainerProps, "children"> & {
+  cart: HttpTypes.StoreCart | null
+  setCardComplete: (complete: boolean) => void
+  setError: (error: string | null) => void
+  onPaymentSuccess?: (paymentId: string) => void
+}) => {
+  const [isReady, setIsReady] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  const initialization = useMemo(() => {
+    if (!cart) return { amount: 0 }
+    return {
+      amount: cart.total ? cart.total / 100 : 0,
+    }
+  }, [cart])
+
+  const customization = useMemo(() => ({
+    visual: {
+      style: {
+        theme: "default" as const,
+      },
+    },
+    paymentMethods: {
+      maxInstallments: 12,
+    },
+  }), [])
+
+  const onReady = useCallback(() => {
+    setIsReady(true)
+  }, [])
+
+  const onSubmit = useCallback(async (formData: any) => {
+    if (!cart?.id) {
+      setError("No se encontró el carrito")
+      return Promise.reject(new Error("No cart"))
+    }
+
+    setIsProcessing(true)
+    setError(null)
+
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+      const response = await fetch(`${backendUrl}/store/mercadopago-card-payment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+        },
+        body: JSON.stringify({
+          cart_id: cart.id,
+          ...formData
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || result.error || "Error procesando el pago")
+      }
+
+      console.log("Pago exitoso:", result)
+      setCardComplete(true)
+      
+      if (onPaymentSuccess) {
+        onPaymentSuccess(result.payment_id)
+      }
+
+      return Promise.resolve()
+    } catch (error: any) {
+      console.error("Error en pago:", error)
+      setError(error.message || "Error procesando el pago")
+      setCardComplete(false)
+      return Promise.reject(error)
+    } finally {
+      setIsProcessing(false)
+    }
+  }, [cart, setError, setCardComplete, onPaymentSuccess])
+
+  const onError = useCallback((error: any) => {
+    console.error("MercadoPago CardPayment error:", error)
+    setError(error?.message || "Error en el formulario de pago")
+    setCardComplete(false)
+  }, [setError, setCardComplete])
+
+  return (
+    <PaymentContainer
+      paymentProviderId={paymentProviderId}
+      selectedPaymentOptionId={selectedPaymentOptionId}
+      paymentInfoMap={paymentInfoMap}
+      disabled={disabled}
+    >
+      {selectedPaymentOptionId === paymentProviderId && (
+        <div className="my-4 transition-all duration-150 ease-in-out">
+          {!isReady && <SkeletonCardDetails />}
+          <div className={!isReady ? "hidden" : ""}>
+            <CardPayment
+              initialization={initialization}
+              customization={customization}
+              onReady={onReady}
+              onSubmit={onSubmit}
+              onError={onError}
+            />
+            {isProcessing && (
+              <div className="mt-2 text-center text-sm text-gray-500">
+                Procesando pago...
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </PaymentContainer>
+  )
+}
+
+// Payment Brick Container - Includes all payment methods (cards, wallet, etc.)
+export const MercadoPagoPaymentBrickContainer = ({
+  paymentProviderId,
+  selectedPaymentOptionId,
+  paymentInfoMap,
+  disabled,
+  cart,
+  onPaymentSuccess,
+  onPaymentError,
+}: Omit<PaymentContainerProps, "children"> & {
+  cart: HttpTypes.StoreCart | null
+  onPaymentSuccess?: (paymentData: any) => void
+  onPaymentError?: (error: any) => void
+}) => {
+  const [isReady, setIsReady] = useState(false)
+  const [preferenceId, setPreferenceId] = useState<string | null>(null)
+  const [isLoadingPreference, setIsLoadingPreference] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Create preference for wallet payments
+  useEffect(() => {
+    const createPreference = async () => {
+      if (selectedPaymentOptionId !== paymentProviderId || !cart?.id || preferenceId) {
+        return
+      }
+
+      setIsLoadingPreference(true)
+      setError(null)
+
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+        const response = await fetch(`${backendUrl}/store/mercadopago-preference`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+          },
+          body: JSON.stringify({ cart_id: cart.id }),
+        })
+
+        if (!response.ok) {
+          throw new Error("Error al crear preferencia")
+        }
+
+        const data = await response.json()
+        setPreferenceId(data.preference_id)
+      } catch (err: any) {
+        console.error("Error creating preference:", err)
+        setError(err.message)
+      } finally {
+        setIsLoadingPreference(false)
+      }
+    }
+
+    createPreference()
+  }, [selectedPaymentOptionId, paymentProviderId, cart?.id, preferenceId])
+
+  // Reset when payment method changes
+  useEffect(() => {
+    if (selectedPaymentOptionId !== paymentProviderId) {
+      setPreferenceId(null)
+      setError(null)
+      setIsReady(false)
+    }
+  }, [selectedPaymentOptionId, paymentProviderId])
+
+  const initialization = useMemo(() => {
+    if (!cart || !preferenceId) return { amount: 0 }
+    return {
+      amount: cart.total ? cart.total / 100 : 0,
+      preferenceId: preferenceId,
+    }
+  }, [cart, preferenceId])
+
+  const customization = useMemo(() => ({
+    paymentMethods: {
+      creditCard: "all",
+      debitCard: "all",
+      mercadoPago: "all",
+      maxInstallments: 12,
+    },
+    visual: {
+      style: {
+        theme: "default" as const,
+      },
+    },
+  }), [])
+
+  const onReady = useCallback(() => {
+    setIsReady(true)
+  }, [])
+
+  const onSubmit = useCallback(async ({ selectedPaymentMethod, formData }: { selectedPaymentMethod: string, formData: any }) => {
+    if (!cart?.id) {
+      return Promise.reject(new Error("No cart"))
+    }
+
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+      const response = await fetch(`${backendUrl}/store/mercadopago-card-payment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+        },
+        body: JSON.stringify({
+          cart_id: cart.id,
+          payment_method: selectedPaymentMethod,
+          ...formData
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || result.error || "Error procesando el pago")
+      }
+
+      console.log("Pago exitoso:", result)
+      
+      if (onPaymentSuccess) {
+        onPaymentSuccess(result)
+      }
+
+      return Promise.resolve()
+    } catch (error: any) {
+      console.error("Error en pago:", error)
+      if (onPaymentError) {
+        onPaymentError(error)
+      }
+      return Promise.reject(error)
+    }
+  }, [cart, onPaymentSuccess, onPaymentError])
+
+  const handleError = useCallback((error: any) => {
+    console.error("MercadoPago Payment Brick error:", error)
+    setError(error?.message || "Error en el formulario de pago")
+    if (onPaymentError) {
+      onPaymentError(error)
+    }
+  }, [onPaymentError])
+
+  return (
+    <PaymentContainer
+      paymentProviderId={paymentProviderId}
+      selectedPaymentOptionId={selectedPaymentOptionId}
+      paymentInfoMap={paymentInfoMap}
+      disabled={disabled}
+    >
+      {selectedPaymentOptionId === paymentProviderId && (
+        <div className="my-4 transition-all duration-150 ease-in-out">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <Text className="text-sm text-red-600">{error}</Text>
+            </div>
+          )}
+          {(isLoadingPreference || !preferenceId) && !error ? (
+            <div className="text-center py-4">
+              <Text className="text-sm text-gray-500">
+                Preparando opciones de pago...
+              </Text>
+              <div className="mt-2 flex justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-800" />
+              </div>
+            </div>
+          ) : preferenceId && (
+            <>
+              {!isReady && <SkeletonCardDetails />}
+              <div className={!isReady ? "hidden" : ""}>
+                <MercadoPagoPayment
+                  initialization={initialization}
+                  customization={customization}
+                  onReady={onReady}
+                  onSubmit={onSubmit}
+                  onError={handleError}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </PaymentContainer>
   )
 }

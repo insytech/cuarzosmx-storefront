@@ -8,6 +8,7 @@ import { Button, Container, Heading, Text, clx } from "@medusajs/ui"
 import ErrorMessage from "@modules/checkout/components/error-message"
 import PaymentContainer, {
   MercadoPagoContainer,
+  MercadoPagoPaymentBrickContainer,
   StripeCardContainer,
 } from "@modules/checkout/components/payment-container"
 import Divider from "@modules/common/components/divider"
@@ -171,11 +172,20 @@ const Payment = ({
                         setCardComplete={setCardComplete}
                       />
                     ) : isMercadoPago(paymentMethod.id) ? (
-                      <MercadoPagoContainer
+                      <MercadoPagoPaymentBrickContainer
                         paymentProviderId={paymentMethod.id}
                         selectedPaymentOptionId={selectedPaymentMethod}
                         paymentInfoMap={paymentInfoMap}
-                        cartId={cart?.id}
+                        cart={cart}
+                        onPaymentSuccess={(paymentData) => {
+                          console.log("Pago MercadoPago exitoso:", paymentData)
+                          // Navigate to order confirmation or handle success
+                          router.push(`${pathname}?${createQueryString("step", "review")}`)
+                        }}
+                        onPaymentError={(error) => {
+                          console.error("Error de pago:", error)
+                          setError(error.message || "Error en el pago")
+                        }}
                       />
                     ) : (
                       <PaymentContainer
