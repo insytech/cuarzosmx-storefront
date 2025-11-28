@@ -456,18 +456,18 @@ export const MercadoPagoCardContainer = ({
   )
 }
 
-// Payment Brick Container - Uses CardPayment for direct card payments
+// Payment Brick Container - Uses CardPayment for tokenization, payment is processed in review step
 export const MercadoPagoPaymentBrickContainer = ({
   paymentProviderId,
   selectedPaymentOptionId,
   paymentInfoMap,
   disabled,
   cart,
-  onPaymentSuccess,
+  onCardDataReady,
   onPaymentError,
 }: Omit<PaymentContainerProps, "children"> & {
   cart: HttpTypes.StoreCart | null
-  onPaymentSuccess?: (paymentData: any) => void
+  onCardDataReady?: (cardData: any) => void
   onPaymentError?: (error: any) => void
 }) => {
   const [isReady, setIsReady] = useState(false)
@@ -510,6 +510,9 @@ export const MercadoPagoPaymentBrickContainer = ({
       style: {
         theme: "default" as const,
       },
+      texts: {
+        formSubmit: "Continuar",
+      },
     },
     paymentMethods: {
       maxInstallments: 12,
@@ -533,37 +536,33 @@ export const MercadoPagoPaymentBrickContainer = ({
     setError(null)
 
     try {
-      console.log("Processing payment with formData:", formData)
-      const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
-      const response = await fetch(`${backendUrl}/store/mercadopago-card-payment`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
-        },
-        body: JSON.stringify({
-          cart_id: cart.id,
-          ...formData
-        }),
-      })
-
-      const result = await response.json()
-      console.log("Payment response:", result)
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || result.error || "Error procesando el pago")
-      }
-
-      console.log("Pago exitoso:", result)
+      console.log("Card data tokenized:", formData)
       
-      if (onPaymentSuccess) {
-        onPaymentSuccess(result)
+      // Instead of processing payment now, save the card data for the review step
+      // The token is valid for a limited time, so we store it
+      const cardData = {
+        token: formData.token,
+        payment_method_id: formData.payment_method_id,
+        installments: formData.installments,
+        issuer_id: formData.issuer_id,
+        payer: formData.payer,
+        cart_id: cart.id,
+        // Include transaction_amount from formData
+        transaction_amount: formData.transaction_amount || amount,
+        // Store card info for display (masked)
+        card_last_four: formData.token?.substring(formData.token.length - 4) || "****",
+      }
+      
+      console.log("Card data ready for review:", cardData)
+      
+      if (onCardDataReady) {
+        onCardDataReady(cardData)
       }
 
       return Promise.resolve()
     } catch (error: any) {
-      console.error("Error en pago:", error)
-      setError(error.message || "Error procesando el pago")
+      console.error("Error en tokenización:", error)
+      setError(error.message || "Error procesando los datos de la tarjeta")
       if (onPaymentError) {
         onPaymentError(error)
       }
@@ -571,7 +570,7 @@ export const MercadoPagoPaymentBrickContainer = ({
     } finally {
       setIsProcessing(false)
     }
-  }, [cart, onPaymentSuccess, onPaymentError])
+  }, [cart, onCardDataReady, onPaymentError])
 
   const handleError = useCallback((error: any) => {
     // Log error details for debugging

@@ -15,12 +15,28 @@ import Divider from "@modules/common/components/divider"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState, useId } from "react"
 
+// Type for MercadoPago card data
+export type MercadoPagoCardData = {
+  token: string
+  payment_method_id: string
+  installments: number
+  issuer_id: string
+  payer: any
+  cart_id: string
+  transaction_amount: number
+  card_last_four?: string
+}
+
 const Payment = ({
   cart,
   availablePaymentMethods,
+  onMercadoPagoCardDataChange,
+  mercadoPagoCardData,
 }: {
   cart: any
   availablePaymentMethods: any[]
+  onMercadoPagoCardDataChange?: (cardData: MercadoPagoCardData | null) => void
+  mercadoPagoCardData?: MercadoPagoCardData | null
 }) => {
   const radioGroupId = useId()
   const activeSession = cart.payment_collection?.payment_sessions?.find(
@@ -67,8 +83,10 @@ const Payment = ({
   const paidByGiftcard =
     cart?.gift_cards && cart?.gift_cards?.length > 0 && cart?.total === 0
 
+  // Payment is ready if there's an active session OR if we have MercadoPago card data
+  const hasMercadoPagoCardData = mercadoPagoCardData !== null && mercadoPagoCardData !== undefined
   const paymentReady =
-    (activeSession && cart?.shipping_methods.length !== 0) || paidByGiftcard
+    ((activeSession || hasMercadoPagoCardData) && cart?.shipping_methods.length !== 0) || paidByGiftcard
 
   const createQueryString = useCallback(
     (name: string, value: string) => {
@@ -81,6 +99,10 @@ const Payment = ({
   )
 
   const handleEdit = () => {
+    // Clear MercadoPago card data when editing
+    if (onMercadoPagoCardDataChange && hasMercadoPagoCardData) {
+      onMercadoPagoCardDataChange(null)
+    }
     router.push(`${pathname}?${createQueryString("step", "payment")}`, {
       scroll: false,
     })
@@ -182,27 +204,19 @@ const Payment = ({
                         selectedPaymentOptionId={selectedPaymentMethod}
                         paymentInfoMap={paymentInfoMap}
                         cart={cart}
-                        onPaymentSuccess={async (paymentData) => {
-                          console.log("Pago MercadoPago exitoso:", paymentData)
-                          setIsLoading(true)
-                          try {
-                            // Complete the order after successful payment
-                            const result = await completeMercadoPagoOrder(
-                              cart?.id, 
-                              paymentData.payment_id,
-                              paymentMethod.id // Pass the provider ID
-                            )
-                            if (result.success && result.redirectUrl) {
-                              router.push(result.redirectUrl)
-                            } else {
-                              setError(result.error || "Error al completar el pedido")
-                            }
-                          } catch (err: any) {
-                            console.error("Error completing order:", err)
-                            setError(err.message || "Error al completar el pedido")
-                          } finally {
-                            setIsLoading(false)
+                        onCardDataReady={(cardData) => {
+                          console.log("Datos de tarjeta listos:", cardData)
+                          setCardComplete(true)
+                          setCardBrand(cardData.payment_method_id?.toUpperCase() || "Tarjeta")
+                          // Notify parent component about card data
+                          if (onMercadoPagoCardDataChange) {
+                            onMercadoPagoCardDataChange(cardData)
                           }
+                          // Navigate to review step
+                          router.push(
+                            `${pathname}?${createQueryString("step", "review")}`,
+                            { scroll: false }
+                          )
                         }}
                         onPaymentError={(error) => {
                           console.error("Error de pago:", error)
@@ -262,7 +276,7 @@ const Payment = ({
         </div>
 
         <div className={isOpen ? "hidden" : "block"}>
-          {cart && paymentReady && activeSession ? (
+          {cart && paymentReady && (activeSession || hasMercadoPagoCardData) ? (
             <div className="flex items-start gap-x-1 w-full">
               <div className="flex flex-col w-1/3">
                 <Text className="txt-medium-plus text-gray-800 mb-1 font-semibold">
@@ -272,8 +286,10 @@ const Payment = ({
                   className="txt-medium text-gray-500"
                   data-testid="payment-method-summary"
                 >
-                  {paymentInfoMap[activeSession?.provider_id]?.title ||
-                    activeSession?.provider_id}
+                  {hasMercadoPagoCardData 
+                    ? "Mercado Pago"
+                    : (paymentInfoMap[activeSession?.provider_id]?.title ||
+                      activeSession?.provider_id)}
                 </Text>
               </div>
               <div className="flex flex-col w-1/3">
@@ -285,14 +301,26 @@ const Payment = ({
                   data-testid="payment-details-summary"
                 >
                   <Container className="flex items-center h-7 w-fit p-2 bg-ui-button-neutral-hover">
-                    {paymentInfoMap[selectedPaymentMethod]?.icon || (
-                      <CreditCard />
-                    )}
+                    {hasMercadoPagoCardData 
+                      ? paymentInfoMap["pp_mercadopago_mercadopago"]?.icon || <CreditCard />
+                      : (paymentInfoMap[selectedPaymentMethod]?.icon || <CreditCard />)}
                   </Container>
                   <Text>
-                    {isStripeFunc(selectedPaymentMethod) && cardBrand
-                      ? cardBrand
-                      : "Se mostrará otro paso"}
+                    {hasMercadoPagoCardData
+                      ? (() => {
+                          const cardType = mercadoPagoCardData?.payment_method_id?.toUpperCase() || "Tarjeta"
+                          const installments = mercadoPagoCardData?.installments || 1
+                          const amount = mercadoPagoCardData?.transaction_amount || 0
+                          
+                          if (installments > 1) {
+                            const installmentAmount = (amount / installments).toFixed(2)
+                            return `${cardType} - ${installments}x $${installmentAmount} MXN`
+                          }
+                          return `${cardType} - Pago de contado`
+                        })()
+                      : (isStripeFunc(selectedPaymentMethod) && cardBrand
+                        ? cardBrand
+                        : "Se mostrará otro paso")}
                   </Text>
                 </div>
               </div>
