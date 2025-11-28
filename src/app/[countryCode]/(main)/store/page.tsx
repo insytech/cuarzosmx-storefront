@@ -28,6 +28,10 @@ type Params = {
     sortBy?: SortOptions
     page?: string
     q?: string
+    minPrice?: string
+    maxPrice?: string
+    categories?: string
+    inStock?: string
   }>
   params: Promise<{
     countryCode: string
@@ -37,7 +41,7 @@ type Params = {
 export default async function StorePage(props: Params) {
   const params = await props.params;
   const searchParams = await props.searchParams;
-  const { sortBy, page, q } = searchParams
+  const { sortBy, page, q, minPrice, maxPrice, categories, inStock } = searchParams
 
   return (
     <StoreTemplate
@@ -45,6 +49,10 @@ export default async function StorePage(props: Params) {
       page={page}
       countryCode={params.countryCode}
       searchQuery={q}
+      minPrice={minPrice ? parseInt(minPrice) : undefined}
+      maxPrice={maxPrice ? parseInt(maxPrice) : undefined}
+      categories={categories?.split(",").filter(Boolean)}
+      inStock={inStock === "true"}
     />
   )
 }

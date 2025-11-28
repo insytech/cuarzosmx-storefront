@@ -24,6 +24,10 @@ export default async function PaginatedProducts({
   productsIds,
   countryCode,
   searchQuery,
+  minPrice,
+  maxPrice,
+  categoryIds,
+  inStock,
 }: {
   sortBy?: SortOptions
   page: number
@@ -32,16 +36,23 @@ export default async function PaginatedProducts({
   productsIds?: string[]
   countryCode: string
   searchQuery?: string
+  minPrice?: number
+  maxPrice?: number
+  categoryIds?: string[]
+  inStock?: boolean
 }) {
   const queryParams: PaginatedProductsParams = {
-    limit: 12,
+    limit: 100, // Fetch more to filter client-side for price and stock
   }
 
   if (collectionId) {
     queryParams.collection_id = [collectionId]
   }
 
-  if (categoryId) {
+  // Usar categoryIds del filtro o el categoryId individual
+  if (categoryIds && categoryIds.length > 0) {
+    queryParams.category_id = categoryIds
+  } else if (categoryId) {
     queryParams.category_id = [categoryId]
   }
 
@@ -65,18 +76,56 @@ export default async function PaginatedProducts({
   }
 
   const {
-    response: { products, count },
+    response: { products: allProducts },
   } = await listProductsWithSort({
-    page,
+    page: 1,
     queryParams,
     sortBy,
     countryCode,
   })
 
-  const totalPages = Math.ceil(count / PRODUCT_LIMIT)
+  // Aplicar filtros adicionales del lado del cliente
+  let filteredProducts = allProducts
+
+  // Filtro de precio
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    filteredProducts = filteredProducts.filter(product => {
+      const price = product.variants?.[0]?.calculated_price?.calculated_amount
+      if (!price) return false
+      
+      // El precio viene en centavos, convertir a pesos
+      const priceInPesos = price / 100
+      
+      if (minPrice !== undefined && priceInPesos < minPrice) return false
+      if (maxPrice !== undefined && priceInPesos > maxPrice) return false
+      
+      return true
+    })
+  }
+
+  // Filtro de disponibilidad
+  if (inStock) {
+    filteredProducts = filteredProducts.filter(product => {
+      const variant = product.variants?.[0]
+      if (!variant) return false
+      
+      // Si no maneja inventario, está disponible
+      if (!variant.manage_inventory) return true
+      
+      // Si tiene inventario > 0, está disponible
+      return (variant.inventory_quantity || 0) > 0
+    })
+  }
+
+  const totalFiltered = filteredProducts.length
+  const totalPages = Math.ceil(totalFiltered / PRODUCT_LIMIT)
+
+  // Paginar los productos filtrados
+  const startIndex = (page - 1) * PRODUCT_LIMIT
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + PRODUCT_LIMIT)
 
   // Si no hay resultados
-  if (products.length === 0) {
+  if (paginatedProducts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="w-20 h-20 mb-6 rounded-full bg-main-color-light flex items-center justify-center">
@@ -90,7 +139,9 @@ export default async function PaginatedProducts({
         <p className="text-gray-500 mb-6 max-w-md">
           {searchQuery
             ? `No hay productos que coincidan con "${searchQuery}". Intenta con otros términos o explora nuestras categorías.`
-            : "Pronto agregaremos más productos a nuestra tienda."}
+            : minPrice || maxPrice || inStock || (categoryIds && categoryIds.length > 0)
+              ? "No hay productos que coincidan con los filtros seleccionados. Prueba ajustando los filtros."
+              : "Pronto agregaremos más productos a nuestra tienda."}
         </p>
         <LocalizedClientLink
           href="/store"
@@ -107,15 +158,15 @@ export default async function PaginatedProducts({
       {/* Contador de resultados */}
       <div className="mb-6 flex items-center justify-between">
         <p className="text-sm text-gray-600">
-          Mostrando <span className="font-medium">{products.length}</span> de <span className="font-medium">{count}</span> productos
+          Mostrando <span className="font-medium">{paginatedProducts.length}</span> de <span className="font-medium">{totalFiltered}</span> productos
         </p>
       </div>
 
       <ul
-        className="grid grid-cols-2 w-full sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+        className="grid grid-cols-2 w-full sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6"
         data-testid="products-list"
       >
-        {products.map((p) => {
+        {paginatedProducts.map((p) => {
           return (
             <li key={p.id}>
               <ProductPreview product={p} region={region} />

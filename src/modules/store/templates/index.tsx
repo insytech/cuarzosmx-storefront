@@ -5,22 +5,36 @@ import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-g
 import RefinementList from "@modules/store/components/refinement-list"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import ActiveFilters from "@modules/store/components/active-filters"
+import MobileFilters from "@modules/store/components/mobile-filters"
+import { listCategories } from "@lib/data/categories"
 
 import PaginatedProducts from "./paginated-products"
 
-const StoreTemplate = ({
+const StoreTemplate = async ({
   sortBy,
   page,
   countryCode,
   searchQuery,
+  minPrice,
+  maxPrice,
+  categories: categoryIds,
+  inStock,
 }: {
   sortBy?: SortOptions
   page?: string
   countryCode: string
   searchQuery?: string
+  minPrice?: number
+  maxPrice?: number
+  categories?: string[]
+  inStock?: boolean
 }) => {
   const pageNumber = page ? parseInt(page) : 1
   const sort = sortBy || "created_at"
+
+  // Obtener categorías para el filtro
+  const categories = await listCategories()
 
   return (
     <>
@@ -95,24 +109,34 @@ const StoreTemplate = ({
       {/* Main Content */}
       <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 py-8 md:py-12">
         <div className="flex flex-col lg:flex-row lg:items-start gap-8">
-          {/* Filters Sidebar */}
-          <div className="lg:w-64 flex-shrink-0">
-            <RefinementList sortBy={sort} />
+          {/* Filters Sidebar - Hidden on mobile */}
+          <div className="hidden lg:block lg:w-72 flex-shrink-0">
+            <RefinementList sortBy={sort} categories={categories} />
           </div>
 
           {/* Products Grid */}
           <div className="flex-1">
+            {/* Active Filters */}
+            <ActiveFilters categories={categories} />
+            
             <Suspense fallback={<SkeletonProductGrid />}>
               <PaginatedProducts
                 sortBy={sort}
                 page={pageNumber}
                 countryCode={countryCode}
                 searchQuery={searchQuery}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                categoryIds={categoryIds}
+                inStock={inStock}
               />
             </Suspense>
           </div>
         </div>
       </div>
+
+      {/* Mobile Filters Drawer */}
+      <MobileFilters sortBy={sort} categories={categories} />
     </>
   )
 }
