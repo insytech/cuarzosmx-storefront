@@ -16,9 +16,9 @@ const OrderDetails = ({ order, showStatus }: OrderDetailsProps) => {
   return (
     <div>
       <Text>
-        We have sent the order confirmation details to{" "}
+        Hemos enviado los detalles de confirmación del pedido a{" "}
         <span
-          className="text-ui-fg-medium-plus font-semibold"
+          className="text-main-color font-semibold"
           data-testid="order-email"
         >
           {order.email}
@@ -26,28 +26,28 @@ const OrderDetails = ({ order, showStatus }: OrderDetailsProps) => {
         .
       </Text>
       <Text className="mt-2">
-        Order date:{" "}
+        Fecha del pedido:{" "}
         <span data-testid="order-date">
-          {new Date(order.created_at).toDateString()}
+          {new Date(order.created_at).toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </span>
       </Text>
-      <Text className="mt-2 text-ui-fg-interactive">
-        Order number: <span data-testid="order-id">{order.display_id}</span>
+      <Text className="mt-2 text-main-color">
+        Número de pedido: <span data-testid="order-id">{order.display_id}</span>
       </Text>
 
       <div className="flex items-center text-compact-small gap-x-4 mt-4">
         {showStatus && (
           <>
             <Text>
-              Order status:{" "}
-              <span className="text-ui-fg-subtle " data-testid="order-status">
+              Estado del pedido:{" "}
+              <span className="text-gray-600" data-testid="order-status">
                 {formatStatus(order.fulfillment_status)}
               </span>
             </Text>
             <Text>
-              Payment status:{" "}
+              Estado del pago:{" "}
               <span
-                className="text-ui-fg-subtle "
+                className="text-gray-600"
                 sata-testid="order-payment-status"
               >
                 {formatStatus(order.payment_status)}

@@ -34,29 +34,29 @@ const Addresses = ({
   )
 
   const handleEdit = () => {
-    router.push(pathname + "?step=address")
+    router.push(`${pathname}?step=address`)
   }
 
   const [message, formAction] = useActionState(setAddresses, null)
 
   return (
-    <div className="bg-white">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <div className="flex flex-row items-center justify-between mb-6">
         <Heading
           level="h2"
-          className="flex flex-row text-3xl-regular gap-x-2 items-baseline"
+          className="flex flex-row text-xl font-semibold gap-x-2 items-center text-gray-800"
         >
-          Shipping Address
-          {!isOpen && <CheckCircleSolid />}
+          Dirección de Envío
+          {!isOpen && <CheckCircleSolid className="text-main-color w-5 h-5" />}
         </Heading>
         {!isOpen && cart?.shipping_address && (
           <Text>
             <button
               onClick={handleEdit}
-              className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
+              className="text-main-color hover:text-main-color-dark font-medium text-sm"
               data-testid="edit-address-button"
             >
-              Edit
+              Editar
             </button>
           </Text>
         )}
@@ -75,16 +75,16 @@ const Addresses = ({
               <div>
                 <Heading
                   level="h2"
-                  className="text-3xl-regular gap-x-4 pb-6 pt-8"
+                  className="text-3xl-regular gap-x-4 pb-6 pt-8 text-gray-800"
                 >
-                  Billing address
+                  Dirección de Facturación
                 </Heading>
 
                 <BillingAddress cart={cart} />
               </div>
             )}
-            <SubmitButton className="mt-6" data-testid="submit-address-button">
-              Continue to delivery
+            <SubmitButton className="mt-6 !bg-main-color hover:!bg-main-color-dark" data-testid="submit-address-button">
+              Continuar al envío
             </SubmitButton>
             <ErrorMessage error={message} data-testid="address-error-message" />
           </div>
@@ -92,15 +92,15 @@ const Addresses = ({
       ) : (
         <div>
           <div className="text-small-regular">
-            {cart && cart.shipping_address ? (
+            {cart?.shipping_address ? (
               <div className="flex items-start gap-x-8">
                 <div className="flex items-start gap-x-1 w-full">
                   <div
                     className="flex flex-col w-1/3"
                     data-testid="shipping-address-summary"
                   >
-                    <Text className="txt-medium-plus text-ui-fg-base mb-1">
-                      Shipping Address
+                    <Text className="txt-medium-plus text-gray-800 mb-1 font-semibold">
+                      Dirección de Envío
                     </Text>
                     <Text className="txt-medium text-ui-fg-subtle">
                       {cart.shipping_address.first_name}{" "}
@@ -123,8 +123,8 @@ const Addresses = ({
                     className="flex flex-col w-1/3 "
                     data-testid="shipping-contact-summary"
                   >
-                    <Text className="txt-medium-plus text-ui-fg-base mb-1">
-                      Contact
+                    <Text className="txt-medium-plus text-gray-800 mb-1 font-semibold">
+                      Contacto
                     </Text>
                     <Text className="txt-medium text-ui-fg-subtle">
                       {cart.shipping_address.phone}
@@ -138,13 +138,13 @@ const Addresses = ({
                     className="flex flex-col w-1/3"
                     data-testid="billing-address-summary"
                   >
-                    <Text className="txt-medium-plus text-ui-fg-base mb-1">
-                      Billing Address
+                    <Text className="txt-medium-plus text-gray-800 mb-1 font-semibold">
+                      Dirección de Facturación
                     </Text>
 
                     {sameAsBilling ? (
-                      <Text className="txt-medium text-ui-fg-subtle">
-                        Billing- and delivery address are the same.
+                      <Text className="txt-medium text-gray-500">
+                        Igual que la dirección de envío.
                       </Text>
                     ) : (
                       <>
@@ -176,7 +176,6 @@ const Addresses = ({
           </div>
         </div>
       )}
-      <Divider className="mt-8" />
     </div>
   )
 }

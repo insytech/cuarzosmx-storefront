@@ -44,7 +44,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         <MercadoPagoPaymentButton notReady={notReady} data-testid={dataTestId} />
       )
     default:
-      return <Button disabled>Select a payment method</Button>
+      return <Button disabled className="!bg-main-color opacity-50">Selecciona un método de pago</Button>
   }
 }
 
@@ -142,8 +142,9 @@ const StripePaymentButton = ({
         size="large"
         isLoading={submitting}
         data-testid={dataTestId}
+        className="!bg-main-color hover:!bg-main-color-dark"
       >
-        Place order
+        Realizar pedido
       </Button>
       <ErrorMessage
         error={errorMessage}
@@ -181,8 +182,9 @@ const ManualTestPaymentButton = ({ notReady }: { notReady: boolean }) => {
         onClick={handlePayment}
         size="large"
         data-testid="submit-order-button"
+        className="!bg-main-color hover:!bg-main-color-dark"
       >
-        Place order
+        Realizar pedido
       </Button>
       <ErrorMessage
         error={errorMessage}
@@ -220,6 +222,7 @@ const MercadoPagoPaymentButton = ({ notReady }: { notReady: boolean }) => {
         onClick={handlePayment}
         size="large"
         data-testid="mercadopago-submit-order-button"
+        className="!bg-main-color hover:!bg-main-color-dark"
       >
         Continuar con Mercado Pago
       </Button>
