@@ -31,7 +31,7 @@ export const paymentInfoMap: Record<
     icon: <CreditCard />,
   },
   pp_mercadopago_mercadopago: {
-    title: "Mercado Pago",
+    title: "Pago con tarjeta",
     icon: <CreditCard />,
   },
   // Add more payment providers here

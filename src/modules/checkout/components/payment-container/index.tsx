@@ -549,9 +549,11 @@ export const MercadoPagoPaymentBrickContainer = ({
       let totalWithFinancing = amount
       let installmentAmount = amount / installments
       let financingCost = 0
+      let paymentType = 'credit_card' // default, will be updated
+      let availableInstallmentOptions: any[] = []
       
-      // If more than 1 installment, fetch the real financing costs from our API
-      if (installments > 1 && paymentMethodId) {
+      // Fetch installment info from our API (this tells us card type too)
+      if (paymentMethodId) {
         try {
           console.log("Fetching installment costs from API...")
           const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
@@ -572,16 +574,26 @@ export const MercadoPagoPaymentBrickContainer = ({
             const data = await response.json()
             console.log("Installments API response:", data)
             
-            // Find the selected installment option
-            const selectedOption = data.installment_options?.find(
-              (opt: any) => opt.installments === installments
-            )
+            availableInstallmentOptions = data.installment_options || []
             
-            if (selectedOption) {
-              totalWithFinancing = selectedOption.total_amount
-              installmentAmount = selectedOption.installment_amount
-              financingCost = selectedOption.financing_cost
-              console.log("Found installment option from API:", selectedOption)
+            // Determine if this is a debit card based on installment options
+            // Debit cards typically only have 1 installment option
+            if (availableInstallmentOptions.length === 1 && availableInstallmentOptions[0]?.installments === 1) {
+              paymentType = 'debit_card'
+              console.log("Detected debit card - only 1 installment available")
+            }
+            
+            // Find the selected installment option for financing info
+            if (installments > 1) {
+              const selectedOption = data.installment_options?.find(
+                (opt: any) => opt.installments === installments
+              )
+              if (selectedOption) {
+                totalWithFinancing = selectedOption.total_amount
+                installmentAmount = selectedOption.installment_amount
+                financingCost = selectedOption.financing_cost
+                console.log("Found installment option from API:", selectedOption)
+              }
             }
           } else {
             console.warn("Failed to fetch installment costs, using fallback")
@@ -597,7 +609,8 @@ export const MercadoPagoPaymentBrickContainer = ({
         totalWithFinancing,
         installments,
         installmentAmount,
-        financingCost
+        financingCost,
+        paymentType
       })
       
       const cardData = {
@@ -611,13 +624,16 @@ export const MercadoPagoPaymentBrickContainer = ({
         transaction_amount: amount,
         // Store card info for display (masked)
         card_last_four: formData.token?.substring(formData.token.length - 4) || "****",
-        // Additional info for UX
-        payment_type_id: formData.payment_type_id || 'credit_card',
+        // Use the payment type we determined from installment options
+        // Or from formData if MercadoPago sent it directly
+        payment_type_id: formData.payment_type_id || formData.payment_type || paymentType,
         total_financed_amount: totalWithFinancing,
         installment_amount: installmentAmount,
         financing_cost: financingCost,
       }
       
+      // Log formData keys to help debug what MercadoPago sends
+      console.log("formData keys:", Object.keys(formData))
       console.log("Card data ready for review:", cardData)
       
       if (onCardDataReady) {
