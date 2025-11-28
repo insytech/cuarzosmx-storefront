@@ -26,8 +26,19 @@ export default function ReturnsTemplate() {
     return (
         <div className="w-full">
             {/* Hero Section */}
-            <section className="w-full bg-main-color py-16 md:py-24">
-                <div className="content-container max-w-7xl mx-auto px-4 lg:px-8">
+            <section className="w-full bg-main-color py-16 md:py-24 relative overflow-hidden">
+                {/* Icono decorativo de devolución */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-10">
+                    <svg className="w-64 h-64 md:w-96 md:h-96 text-white" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </div>
+                <div className="absolute left-0 bottom-0 -translate-x-1/3 translate-y-1/4 opacity-5">
+                    <svg className="w-48 h-48 md:w-72 md:h-72 text-white" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+                    </svg>
+                </div>
+                <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
                     <div className="text-center">
                         <Heading
                             level="h1"

@@ -41,8 +41,19 @@ export default function ContactTemplate() {
     return (
         <div className="w-full">
             {/* Hero Section */}
-            <section className="w-full bg-main-color py-16 md:py-24">
-                <div className="content-container max-w-7xl mx-auto px-4 lg:px-8">
+            <section className="w-full bg-main-color py-16 md:py-24 relative overflow-hidden">
+                {/* Icono decorativo de contacto */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-10">
+                    <svg className="w-64 h-64 md:w-96 md:h-96 text-white" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                </div>
+                <div className="absolute left-0 bottom-0 -translate-x-1/3 translate-y-1/4 opacity-5">
+                    <svg className="w-48 h-48 md:w-72 md:h-72 text-white" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
                     <div className="text-center">
                         <Heading
                             level="h1"

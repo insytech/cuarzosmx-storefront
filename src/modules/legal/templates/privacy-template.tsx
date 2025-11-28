@@ -26,8 +26,19 @@ export default function PrivacyTemplate() {
     return (
         <div className="w-full">
             {/* Hero Section */}
-            <section className="w-full bg-main-color py-16 md:py-24">
-                <div className="content-container max-w-7xl mx-auto px-4 lg:px-8">
+            <section className="w-full bg-main-color py-16 md:py-24 relative overflow-hidden">
+                {/* Icono decorativo de escudo */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-10">
+                    <svg className="w-64 h-64 md:w-96 md:h-96 text-white" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                <div className="absolute left-0 bottom-0 -translate-x-1/3 translate-y-1/4 opacity-5">
+                    <svg className="w-48 h-48 md:w-72 md:h-72 text-white" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
                     <div className="text-center">
                         <Heading
                             level="h1"

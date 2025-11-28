@@ -26,8 +26,19 @@ export default function ShippingTemplate() {
     return (
         <div className="w-full">
             {/* Hero Section */}
-            <section className="w-full bg-main-color py-16 md:py-24">
-                <div className="content-container max-w-7xl mx-auto px-4 lg:px-8">
+            <section className="w-full bg-main-color py-16 md:py-24 relative overflow-hidden">
+                {/* Icono decorativo de envío */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-10">
+                    <svg className="w-64 h-64 md:w-96 md:h-96 text-white" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                        <path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                    </svg>
+                </div>
+                <div className="absolute left-0 bottom-0 -translate-x-1/3 translate-y-1/4 opacity-5">
+                    <svg className="w-48 h-48 md:w-72 md:h-72 text-white" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                </div>
+                <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
                     <div className="text-center">
                         <Heading
                             level="h1"

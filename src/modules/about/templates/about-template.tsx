@@ -6,8 +6,22 @@ export default function AboutTemplate() {
     return (
         <div className="w-full">
             {/* Hero Section */}
-            <section className="w-full bg-main-color py-16 md:py-24">
-                <div className="content-container max-w-7xl mx-auto px-4 lg:px-8">
+            <section className="w-full bg-main-color py-16 md:py-24 relative overflow-hidden">
+                {/* Icono decorativo de fondo */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-10">
+                    <svg className="w-64 h-64 md:w-96 md:h-96 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                </div>
+                <div className="absolute left-0 bottom-0 -translate-x-1/3 translate-y-1/4 opacity-5">
+                    <svg className="w-48 h-48 md:w-72 md:h-72 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                </div>
+                <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
                     <div className="text-center">
                         <Heading
                             level="h1"
