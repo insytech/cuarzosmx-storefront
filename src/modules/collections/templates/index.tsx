@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import Image from "next/image"
 
 import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
 import RefinementList from "@modules/store/components/refinement-list"
@@ -21,11 +22,42 @@ export default function CollectionTemplate({
   const pageNumber = page ? parseInt(page) : 1
   const sort = sortBy || "created_at"
 
+  // Obtener la imagen del signo zodiacal basado en el handle de la colección
+  const getCollectionImage = (handle: string) => {
+    const signos = [
+      'acuario', 'aries', 'cancer', 'capricornio', 'escorpio',
+      'geminis', 'leo', 'libra', 'piscis', 'sagitario', 'tauro', 'virgo'
+    ]
+    if (signos.includes(handle.toLowerCase())) {
+      return `/signos/${handle.toUpperCase()}.webp`
+    }
+    return null
+  }
+
+  const backgroundImage = getCollectionImage(collection.handle)
+
   return (
     <>
       {/* Hero Section */}
-      <div className="w-full bg-gradient-to-r from-main-color to-main-color-dark py-12 md:py-16">
-        <div className="content-container max-w-7xl mx-auto px-4 lg:px-8">
+      <div className="w-full relative overflow-hidden py-16 md:py-20">
+        {/* Background Image */}
+        {backgroundImage ? (
+          <>
+            <Image
+              src={backgroundImage}
+              alt={collection.title}
+              fill
+              className="object-cover object-center"
+              priority
+            />
+            {/* Overlay con gradiente */}
+            <div className="absolute inset-0 bg-gradient-to-r from-main-color/90 via-main-color-dark/80 to-purple-900/70" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-main-color via-main-color-dark to-purple-900" />
+        )}
+        {/* Content */}
+        <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-white/80 mb-4">
             <LocalizedClientLink href="/" className="hover:text-white transition-colors">
@@ -44,13 +76,13 @@ export default function CollectionTemplate({
           </nav>
 
           {/* Title */}
-          <h1 className="font-serenity text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3">
+          <h1 className="font-serenity text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg">
             {collection.title}
           </h1>
 
           {/* Description */}
           {collection.metadata?.description && (
-            <p className="text-white/90 text-base md:text-lg max-w-3xl">
+            <p className="text-white/90 text-base md:text-lg max-w-3xl drop-shadow-md">
               {collection.metadata.description as string}
             </p>
           )}
