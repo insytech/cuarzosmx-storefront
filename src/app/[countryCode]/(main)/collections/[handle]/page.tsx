@@ -38,12 +38,12 @@ export async function generateStaticParams() {
   )
 
   const staticParams = countryCodes
-    ?.map((countryCode: string) =>
-      flatMaplectionHandles.map((handle: string | undefined) => ({
+    ?.flatMap((countryCode: string) =>
+      collectionHandles.map((handle: string | undefined) => ({
         countryCode,
         handle,
       }))
-    ).flat()
+    )
 
   return staticParams
 }
