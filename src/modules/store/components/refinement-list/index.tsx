@@ -32,7 +32,7 @@ const RefinementList = ({ sortBy, categories = [], 'data-testid': dataTestId }: 
   const createQueryString = useCallback(
     (params: Record<string, string | undefined>) => {
       const newParams = new URLSearchParams(searchParams.toString())
-      
+
       Object.entries(params).forEach(([key, value]) => {
         if (value === undefined || value === "" || value === "false") {
           newParams.delete(key)

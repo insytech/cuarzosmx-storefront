@@ -92,13 +92,13 @@ export default async function PaginatedProducts({
     filteredProducts = filteredProducts.filter(product => {
       const price = product.variants?.[0]?.calculated_price?.calculated_amount
       if (!price) return false
-      
+
       // El precio viene en centavos, convertir a pesos
       const priceInPesos = price / 100
-      
+
       if (minPrice !== undefined && priceInPesos < minPrice) return false
       if (maxPrice !== undefined && priceInPesos > maxPrice) return false
-      
+
       return true
     })
   }
@@ -108,10 +108,10 @@ export default async function PaginatedProducts({
     filteredProducts = filteredProducts.filter(product => {
       const variant = product.variants?.[0]
       if (!variant) return false
-      
+
       // Si no maneja inventario, está disponible
       if (!variant.manage_inventory) return true
-      
+
       // Si tiene inventario > 0, está disponible
       return (variant.inventory_quantity || 0) > 0
     })

@@ -118,7 +118,7 @@ const StoreTemplate = async ({
           <div className="flex-1">
             {/* Active Filters */}
             <ActiveFilters categories={categories} />
-            
+
             <Suspense fallback={<SkeletonProductGrid />}>
               <PaginatedProducts
                 sortBy={sort}

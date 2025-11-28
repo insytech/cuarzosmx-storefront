@@ -75,8 +75,8 @@ export default function CategoryFilter({
                             <label
                                 key={category.id}
                                 className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all ${isSelected
-                                        ? "bg-main-color-light/50 border border-main-color/30"
-                                        : "hover:bg-gray-50"
+                                    ? "bg-main-color-light/50 border border-main-color/30"
+                                    : "hover:bg-gray-50"
                                     }`}
                             >
                                 <input

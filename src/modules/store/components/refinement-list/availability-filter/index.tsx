@@ -42,8 +42,8 @@ export default function AvailabilityFilter({
                 <div className="mt-3">
                     <label
                         className={`flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer transition-all ${inStockOnly
-                                ? "bg-green-50 border border-green-200"
-                                : "hover:bg-gray-50"
+                            ? "bg-green-50 border border-green-200"
+                            : "hover:bg-gray-50"
                             }`}
                     >
                         <div className="relative">

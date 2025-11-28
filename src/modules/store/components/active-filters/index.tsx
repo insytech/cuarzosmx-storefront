@@ -23,7 +23,7 @@ export default function ActiveFilters({ categories = [] }: ActiveFiltersProps) {
 
     const removeFilter = useCallback((key: string, value?: string) => {
         const params = new URLSearchParams(searchParams.toString())
-        
+
         if (key === "categories" && value) {
             const currentCategories = params.get("categories")?.split(",").filter(Boolean) || []
             const newCategories = currentCategories.filter(id => id !== value)
@@ -35,7 +35,7 @@ export default function ActiveFilters({ categories = [] }: ActiveFiltersProps) {
         } else {
             params.delete(key)
         }
-        
+
         params.delete("page") // Reset page
         router.push(`${pathname}?${params.toString()}`, { scroll: false })
     }, [searchParams, pathname, router])
@@ -62,7 +62,7 @@ export default function ActiveFilters({ categories = [] }: ActiveFiltersProps) {
     return (
         <div className="mb-6 flex flex-wrap items-center gap-2">
             <span className="text-sm text-gray-500 mr-1">Filtros:</span>
-            
+
             {/* Precio */}
             {(minPrice || maxPrice) && (
                 <button

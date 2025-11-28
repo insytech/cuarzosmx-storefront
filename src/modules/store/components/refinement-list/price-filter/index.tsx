@@ -100,8 +100,8 @@ export default function PriceFilter({
                                 key={idx}
                                 onClick={() => handleRangeClick(range.min, range.max)}
                                 className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${isRangeActive(range.min, range.max)
-                                        ? "bg-main-color text-white font-medium"
-                                        : "text-gray-600 hover:bg-gray-100"
+                                    ? "bg-main-color text-white font-medium"
+                                    : "text-gray-600 hover:bg-gray-100"
                                     }`}
                             >
                                 {range.label}
