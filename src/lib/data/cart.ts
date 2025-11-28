@@ -512,9 +512,9 @@ export async function createMercadoPagoPreference(cartId?: string) {
  * @returns The order confirmation URL or null if failed
  */
 export async function completeMercadoPagoOrder(
-  cartId?: string, 
+  cartId?: string,
   paymentId?: string,
-  providerId: string = "pp_mercadopago_mercadopago"
+  providerId = "pp_mercadopago_mercadopago"
 ) {
   const id = cartId || (await getCartId())
 
@@ -531,12 +531,12 @@ export async function completeMercadoPagoOrder(
   try {
     // First, get the cart to check if payment session exists
     const cart = await retrieveCart(id)
-    
+
     // Create payment session if it doesn't exist
     const hasPaymentSession = cart?.payment_collection?.payment_sessions?.some(
       (session: any) => session.provider_id === providerId
     )
-    
+
     if (!hasPaymentSession) {
       console.log("Creating payment session for MercadoPago...")
       await sdk.store.payment
@@ -577,7 +577,7 @@ export async function completeMercadoPagoOrder(
       revalidateTag(orderCacheTag)
 
       removeCartId()
-      
+
       // Return the redirect URL instead of redirecting directly
       return {
         success: true,

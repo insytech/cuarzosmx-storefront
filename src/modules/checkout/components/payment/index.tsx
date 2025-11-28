@@ -238,7 +238,7 @@ const Payment = ({
                     )}
                   </div>
                 ))}
-                
+
                 {/* Add Mercado Crédito option if MercadoPago is available */}
                 {availablePaymentMethods.some(pm => isMercadoPago(pm.id)) && (
                   <MercadoCreditoContainer
@@ -305,7 +305,7 @@ const Payment = ({
                   className="txt-medium text-gray-500"
                   data-testid="payment-method-summary"
                 >
-                  {hasMercadoPagoCardData 
+                  {hasMercadoPagoCardData
                     ? `Tarjeta de ${mercadoPagoCardData?.payment_type_id === 'debit_card' ? 'Débito' : 'Crédito'}`
                     : (paymentInfoMap[activeSession?.provider_id]?.title ||
                       activeSession?.provider_id)}
@@ -320,35 +320,35 @@ const Payment = ({
                   data-testid="payment-details-summary"
                 >
                   <Container className="flex items-center h-7 w-fit p-2 bg-ui-button-neutral-hover">
-                    {hasMercadoPagoCardData 
-                      ? paymentInfoMap["pp_mercadopago_mercadopago"]?.icon || <CreditCard />
+                    {hasMercadoPagoCardData
+                      ? paymentInfoMap.pp_mercadopago_mercadopago?.icon || <CreditCard />
                       : (paymentInfoMap[selectedPaymentMethod]?.icon || <CreditCard />)}
                   </Container>
                   <div className="flex flex-col">
                     <Text>
                       {hasMercadoPagoCardData
                         ? (() => {
-                            const cardType = mercadoPagoCardData?.payment_method_id?.toUpperCase() || "Tarjeta"
-                            const installments = mercadoPagoCardData?.installments || 1
-                            const installmentAmount = mercadoPagoCardData?.installment_amount || 0
-                            const totalFinanced = mercadoPagoCardData?.total_financed_amount || 0
-                            const originalAmount = mercadoPagoCardData?.transaction_amount || 0
-                            
-                            if (installments > 1) {
-                              const hasFinancingCost = totalFinanced > originalAmount
-                              return (
-                                <>
-                                  {cardType} - {installments}x ${installmentAmount.toFixed(2)} MXN
-                                  {hasFinancingCost && (
-                                    <span className="text-xs text-gray-400 ml-1">
-                                      (Total: ${totalFinanced.toFixed(2)})
-                                    </span>
-                                  )}
-                                </>
-                              )
-                            }
-                            return `${cardType} - Pago de contado`
-                          })()
+                          const cardType = mercadoPagoCardData?.payment_method_id?.toUpperCase() || "Tarjeta"
+                          const installments = mercadoPagoCardData?.installments || 1
+                          const installmentAmount = mercadoPagoCardData?.installment_amount || 0
+                          const totalFinanced = mercadoPagoCardData?.total_financed_amount || 0
+                          const originalAmount = mercadoPagoCardData?.transaction_amount || 0
+
+                          if (installments > 1) {
+                            const hasFinancingCost = totalFinanced > originalAmount
+                            return (
+                              <>
+                                {cardType} - {installments}x ${installmentAmount.toFixed(2)} MXN
+                                {hasFinancingCost && (
+                                  <span className="text-xs text-gray-400 ml-1">
+                                    (Total: ${totalFinanced.toFixed(2)})
+                                  </span>
+                                )}
+                              </>
+                            )
+                          }
+                          return `${cardType} - Pago de contado`
+                        })()
                         : (isStripeFunc(selectedPaymentMethod) && cardBrand
                           ? cardBrand
                           : "Se mostrará otro paso")}

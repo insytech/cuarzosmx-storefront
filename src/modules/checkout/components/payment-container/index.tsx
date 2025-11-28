@@ -802,15 +802,15 @@ export const MercadoCreditoContainer = ({
       try {
         const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
         const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
-        
+
         const headers: Record<string, string> = {
           "Content-Type": "application/json",
         }
-        
+
         if (publishableKey) {
           headers["x-publishable-api-key"] = publishableKey
         }
-        
+
         const response = await fetch(`${backendUrl}/store/mercadopago-preference`, {
           method: "POST",
           headers,
@@ -863,7 +863,7 @@ export const MercadoCreditoContainer = ({
               <li>Paga mes a mes desde la app de Mercado Pago con el medio que prefieras.</li>
             </ol>
           </div>
-          
+
           {error ? (
             <div className="text-center py-4 border border-red-200 rounded-md bg-red-50">
               <Text className="text-sm text-red-600 mb-2">
@@ -892,7 +892,7 @@ export const MercadoCreditoContainer = ({
               </Text>
               <div style={{ width: '280px', margin: '16px auto 0' }}>
                 <Wallet
-                  initialization={{ 
+                  initialization={{
                     preferenceId,
                     redirectMode: 'self'
                   }}
