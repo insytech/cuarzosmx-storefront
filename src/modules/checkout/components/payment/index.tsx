@@ -2,7 +2,7 @@
 
 import { RadioGroup } from "@headlessui/react"
 import { isStripe as isStripeFunc, isMercadoPago, paymentInfoMap } from "@lib/constants"
-import { initiatePaymentSession, retrieveCart } from "@lib/data/cart"
+import { initiatePaymentSession, retrieveCart, completeMercadoPagoOrder } from "@lib/data/cart"
 import { CheckCircleSolid, CreditCard } from "@medusajs/icons"
 import { Button, Container, Heading, Text, clx } from "@medusajs/ui"
 import ErrorMessage from "@modules/checkout/components/error-message"
@@ -51,11 +51,16 @@ const Payment = ({
   const setPaymentMethod = async (method: string) => {
     setError(null)
     setSelectedPaymentMethod(method)
-    // Only create payment session for Stripe, MercadoPago uses its own preference endpoint
+    // Create payment session for Stripe only
+    // MercadoPago creates the session after successful payment
     if (isStripeFunc(method)) {
-      await initiatePaymentSession(cart, {
-        provider_id: method,
-      })
+      try {
+        await initiatePaymentSession(cart, {
+          provider_id: method,
+        })
+      } catch (err: any) {
+        console.error("Error creating payment session:", err)
+      }
     }
   }
 
@@ -177,10 +182,27 @@ const Payment = ({
                         selectedPaymentOptionId={selectedPaymentMethod}
                         paymentInfoMap={paymentInfoMap}
                         cart={cart}
-                        onPaymentSuccess={(paymentData) => {
+                        onPaymentSuccess={async (paymentData) => {
                           console.log("Pago MercadoPago exitoso:", paymentData)
-                          // Navigate to order confirmation or handle success
-                          router.push(`${pathname}?${createQueryString("step", "review")}`)
+                          setIsLoading(true)
+                          try {
+                            // Complete the order after successful payment
+                            const result = await completeMercadoPagoOrder(
+                              cart?.id, 
+                              paymentData.payment_id,
+                              paymentMethod.id // Pass the provider ID
+                            )
+                            if (result.success && result.redirectUrl) {
+                              router.push(result.redirectUrl)
+                            } else {
+                              setError(result.error || "Error al completar el pedido")
+                            }
+                          } catch (err: any) {
+                            console.error("Error completing order:", err)
+                            setError(err.message || "Error al completar el pedido")
+                          } finally {
+                            setIsLoading(false)
+                          }
                         }}
                         onPaymentError={(error) => {
                           console.error("Error de pago:", error)

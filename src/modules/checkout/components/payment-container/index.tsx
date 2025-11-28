@@ -456,7 +456,7 @@ export const MercadoPagoCardContainer = ({
   )
 }
 
-// Payment Brick Container - Includes all payment methods (cards, wallet, etc.)
+// Payment Brick Container - Uses CardPayment for direct card payments
 export const MercadoPagoPaymentBrickContainer = ({
   paymentProviderId,
   selectedPaymentOptionId,
@@ -471,89 +471,69 @@ export const MercadoPagoPaymentBrickContainer = ({
   onPaymentError?: (error: any) => void
 }) => {
   const [isReady, setIsReady] = useState(false)
-  const [preferenceId, setPreferenceId] = useState<string | null>(null)
-  const [isLoadingPreference, setIsLoadingPreference] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Create preference for wallet payments
-  useEffect(() => {
-    const createPreference = async () => {
-      if (selectedPaymentOptionId !== paymentProviderId || !cart?.id || preferenceId) {
-        return
-      }
-
-      setIsLoadingPreference(true)
-      setError(null)
-
-      try {
-        const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
-        const response = await fetch(`${backendUrl}/store/mercadopago-preference`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
-          },
-          body: JSON.stringify({ cart_id: cart.id }),
-        })
-
-        if (!response.ok) {
-          throw new Error("Error al crear preferencia")
-        }
-
-        const data = await response.json()
-        setPreferenceId(data.preference_id)
-      } catch (err: any) {
-        console.error("Error creating preference:", err)
-        setError(err.message)
-      } finally {
-        setIsLoadingPreference(false)
-      }
-    }
-
-    createPreference()
-  }, [selectedPaymentOptionId, paymentProviderId, cart?.id, preferenceId])
 
   // Reset when payment method changes
   useEffect(() => {
     if (selectedPaymentOptionId !== paymentProviderId) {
-      setPreferenceId(null)
       setError(null)
       setIsReady(false)
     }
   }, [selectedPaymentOptionId, paymentProviderId])
 
+  // Calculate amount - MedusaJS stores prices in cents, MercadoPago expects pesos
+  const amount = useMemo(() => {
+    if (!cart?.total) return 0
+    // Debug: log the raw total to understand the format
+    console.log("Cart total raw value:", cart.total, "Type:", typeof cart.total)
+    // If total is already in pesos (e.g., 400), use it directly
+    // If total is in cents (e.g., 40000), divide by 100
+    // MedusaJS v2 typically stores in cents
+    const totalInPesos = cart.total > 10000 ? cart.total / 100 : cart.total
+    console.log("Amount for MercadoPago:", totalInPesos)
+    return totalInPesos
+  }, [cart?.total])
+
   const initialization = useMemo(() => {
-    if (!cart || !preferenceId) return { amount: 0 }
-    return {
-      amount: cart.total ? cart.total / 100 : 0,
-      preferenceId: preferenceId,
+    console.log("CardPayment initialization:", { amount, email: cart?.email })
+    return { 
+      amount,
+      payer: {
+        email: cart?.email || "",
+      }
     }
-  }, [cart, preferenceId])
+  }, [amount, cart?.email])
 
   const customization = useMemo(() => ({
-    paymentMethods: {
-      creditCard: "all",
-      debitCard: "all",
-      mercadoPago: "all",
-      maxInstallments: 12,
-    },
     visual: {
       style: {
         theme: "default" as const,
       },
     },
+    paymentMethods: {
+      maxInstallments: 12,
+      minInstallments: 1,
+    },
   }), [])
 
   const onReady = useCallback(() => {
+    console.log("CardPayment Brick is ready")
     setIsReady(true)
   }, [])
 
-  const onSubmit = useCallback(async ({ selectedPaymentMethod, formData }: { selectedPaymentMethod: string, formData: any }) => {
+  const onSubmit = useCallback(async (formData: any) => {
     if (!cart?.id) {
-      return Promise.reject(new Error("No cart"))
+      const err = new Error("No se encontró el carrito")
+      if (onPaymentError) onPaymentError(err)
+      return Promise.reject(err)
     }
 
+    setIsProcessing(true)
+    setError(null)
+
     try {
+      console.log("Processing payment with formData:", formData)
       const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
       const response = await fetch(`${backendUrl}/store/mercadopago-card-payment`, {
         method: "POST",
@@ -563,12 +543,12 @@ export const MercadoPagoPaymentBrickContainer = ({
         },
         body: JSON.stringify({
           cart_id: cart.id,
-          payment_method: selectedPaymentMethod,
           ...formData
         }),
       })
 
       const result = await response.json()
+      console.log("Payment response:", result)
 
       if (!response.ok || !result.success) {
         throw new Error(result.message || result.error || "Error procesando el pago")
@@ -583,20 +563,40 @@ export const MercadoPagoPaymentBrickContainer = ({
       return Promise.resolve()
     } catch (error: any) {
       console.error("Error en pago:", error)
+      setError(error.message || "Error procesando el pago")
       if (onPaymentError) {
         onPaymentError(error)
       }
       return Promise.reject(error)
+    } finally {
+      setIsProcessing(false)
     }
   }, [cart, onPaymentSuccess, onPaymentError])
 
   const handleError = useCallback((error: any) => {
-    console.error("MercadoPago Payment Brick error:", error)
-    setError(error?.message || "Error en el formulario de pago")
+    // Log error details for debugging
+    console.log("MercadoPago CardPayment error object:", JSON.stringify(error))
+    
+    // Ignore empty errors and internal brick errors during initialization
+    const errorMessage = error?.message || error?.cause?.[0]?.description || ""
+    const isInternalError = !errorMessage || 
+                           errorMessage === "empty_installments" ||
+                           Object.keys(error || {}).length === 0
+    
+    if (isInternalError) {
+      console.log("Ignoring internal CardPayment brick error")
+      return
+    }
+    
+    console.error("MercadoPago CardPayment error:", errorMessage)
+    setError(errorMessage || "Error en el formulario de pago")
     if (onPaymentError) {
       onPaymentError(error)
     }
   }, [onPaymentError])
+
+  // Don't render the brick if amount is invalid
+  const canShowBrick = amount > 0 && selectedPaymentOptionId === paymentProviderId
 
   return (
     <PaymentContainer
@@ -612,26 +612,31 @@ export const MercadoPagoPaymentBrickContainer = ({
               <Text className="text-sm text-red-600">{error}</Text>
             </div>
           )}
-          {(isLoadingPreference || !preferenceId) && !error ? (
+          {!canShowBrick ? (
             <div className="text-center py-4">
               <Text className="text-sm text-gray-500">
-                Preparando opciones de pago...
+                Cargando opciones de pago...
               </Text>
               <div className="mt-2 flex justify-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-800" />
               </div>
             </div>
-          ) : preferenceId && (
+          ) : (
             <>
               {!isReady && <SkeletonCardDetails />}
               <div className={!isReady ? "hidden" : ""}>
-                <MercadoPagoPayment
+                <CardPayment
                   initialization={initialization}
                   customization={customization}
                   onReady={onReady}
                   onSubmit={onSubmit}
                   onError={handleError}
                 />
+                {isProcessing && (
+                  <div className="mt-2 text-center text-sm text-gray-500">
+                    Procesando pago...
+                  </div>
+                )}
               </div>
             </>
           )}

@@ -503,3 +503,97 @@ export async function createMercadoPagoPreference(cartId?: string) {
 
   return response.json()
 }
+
+/**
+ * Completes the order after a successful MercadoPago payment
+ * @param cartId - The ID of the cart to complete
+ * @param paymentId - The MercadoPago payment ID for reference
+ * @param providerId - The payment provider ID (e.g., pp_mercadopago_mercadopago)
+ * @returns The order confirmation URL or null if failed
+ */
+export async function completeMercadoPagoOrder(
+  cartId?: string, 
+  paymentId?: string,
+  providerId: string = "pp_mercadopago_mercadopago"
+) {
+  const id = cartId || (await getCartId())
+
+  if (!id) {
+    throw new Error("No cart ID found when completing MercadoPago order")
+  }
+
+  console.log("Completing MercadoPago order:", { cartId: id, paymentId, providerId })
+
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  try {
+    // First, get the cart to check if payment session exists
+    const cart = await retrieveCart(id)
+    
+    // Create payment session if it doesn't exist
+    const hasPaymentSession = cart?.payment_collection?.payment_sessions?.some(
+      (session: any) => session.provider_id === providerId
+    )
+    
+    if (!hasPaymentSession) {
+      console.log("Creating payment session for MercadoPago...")
+      await sdk.store.payment
+        .initiatePaymentSession(cart!, { provider_id: providerId }, {}, headers)
+        .catch((err) => {
+          console.error("Error creating payment session:", err)
+          // Continue anyway, the payment was already processed
+        })
+    }
+
+    // Log cart state before completing
+    const refreshedCart = await retrieveCart(id)
+    console.log("Cart state before complete:", {
+      items: refreshedCart?.items?.length,
+      shipping_methods: refreshedCart?.shipping_methods?.length,
+      payment_collection: refreshedCart?.payment_collection?.id,
+      payment_sessions: refreshedCart?.payment_collection?.payment_sessions?.length
+    })
+
+    // Complete the cart
+    const cartRes = await sdk.store.cart
+      .complete(id, {}, headers)
+      .then(async (cartRes) => {
+        const cartCacheTag = await getCacheTag("carts")
+        revalidateTag(cartCacheTag)
+        return cartRes
+      })
+      .catch((err) => {
+        console.error("Error completing cart:", err)
+        throw err
+      })
+
+    if (cartRes?.type === "order") {
+      const countryCode =
+        cartRes.order.shipping_address?.country_code?.toLowerCase()
+
+      const orderCacheTag = await getCacheTag("orders")
+      revalidateTag(orderCacheTag)
+
+      removeCartId()
+      
+      // Return the redirect URL instead of redirecting directly
+      return {
+        success: true,
+        redirectUrl: `/${countryCode}/order/${cartRes?.order.id}/confirmed`
+      }
+    }
+
+    return {
+      success: false,
+      error: "No se pudo completar el pedido"
+    }
+  } catch (error: any) {
+    console.error("Error completing MercadoPago order:", error)
+    return {
+      success: false,
+      error: error.message || "Error al completar el pedido"
+    }
+  }
+}
