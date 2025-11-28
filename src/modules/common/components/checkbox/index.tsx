@@ -17,16 +17,9 @@ const CheckboxWithLabel: React.FC<CheckboxProps> = ({
   'data-testid': dataTestId
 }) => {
   return (
-    <div
-      className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg border border-gray-200 hover:border-main-color/30 transition-colors cursor-pointer"
-      onClick={(e) => {
-        // Prevenir que el click en el checkbox dispare dos veces
-        if ((e.target as HTMLElement).closest('button')) return
-        onChange?.()
-      }}
-    >
+    <div className="flex items-center space-x-2 ">
       <Checkbox
-        className="text-base-regular flex items-center gap-x-2 data-[state=checked]:bg-main-color data-[state=checked]:border-main-color"
+        className="text-base-regular flex items-center gap-x-2"
         id="checkbox"
         role="checkbox"
         type="button"
@@ -38,7 +31,7 @@ const CheckboxWithLabel: React.FC<CheckboxProps> = ({
       />
       <Label
         htmlFor="checkbox"
-        className="!transform-none !txt-medium text-gray-700 cursor-pointer"
+        className="!transform-none !txt-medium"
         size="large"
       >
         {label}
