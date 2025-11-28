@@ -12,7 +12,7 @@ const categorias = [
         nombre: "Decorativos",
         descripcion: "Armoniza tus espacios con estilo",
         imagen: "/categorias/DECORATIVOS.webp",
-        href: "/categories/decorativos"
+        href: "/categories/cuarzos-decorativos"
     },
     {
         nombre: "Figuras",
@@ -24,7 +24,7 @@ const categorias = [
         nombre: "Péndulos",
         descripcion: "Herramientas de conexión espiritual",
         imagen: "/categorias/PENDULOS.webp",
-        href: "/categories/pendulos"
+        href: "/categories/puntas-y-chakras/pendulos"
     },
 ]
 

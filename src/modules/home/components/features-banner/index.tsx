@@ -4,22 +4,22 @@ const features = [
     {
         icon: <HeartIcon className="text-main-color w-14 h-14" />,
         title: "Productos de calidad",
-        description: "Cuarzos y joyería seleccionados cuidadosamente",
+        description: "Cuarzos y joyería seleccionados cuidadosamente para ti",
     },
     {
         icon: <TruckIcon className="text-main-color w-14 h-14" />,
-        title: "Envío en toda la República",
+        title: "Envío Nacional",
         description: "Recibe tu pedido en cualquier estado de México",
     },
     {
         icon: <GlobeAltIcon className="text-main-color w-14 h-14" />,
         title: "Sustentabilidad",
-        description: "Compromiso con el planeta",
+        description: "Compromiso real con el planeta y la naturaleza",
     },
     {
         icon: <SparklesIcon className="text-main-color w-14 h-14" />,
         title: "Energía espiritual",
-        description: "Conecta con la esencia de cada cuarzo",
+        description: "Conecta con la esencia única de cada cuarzo",
     },
 ]
 

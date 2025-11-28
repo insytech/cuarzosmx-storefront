@@ -12,7 +12,7 @@ const intenciones = [
         nombre: "Amor",
         descripcion: "Atrae amor y armonía a tu vida",
         imagen: "/categorias/AMOR.webp",
-        href: "/categories/amor"
+        href: "/categories/amor-y-armonia"
     },
     {
         nombre: "Abundancia",
@@ -24,13 +24,13 @@ const intenciones = [
         nombre: "Paz",
         descripcion: "Calma y serenidad interior",
         imagen: "/categorias/PAZ.webp",
-        href: "/categories/paz"
+        href: "/categories/puntas-y-chakras"
     },
     {
         nombre: "Salud",
         descripcion: "Bienestar físico y mental",
         imagen: "/categorias/SALUD.webp",
-        href: "/categories/salud"
+        href: "/categories/salud-y-tranquilidad"
     },
     {
         nombre: "Joyería",
