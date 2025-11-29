@@ -7,28 +7,48 @@ export default function ContactTemplate() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
+        subject: '',
         message: ''
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitted, setSubmitted] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
         })
+        setError(null)
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsSubmitting(true)
+        setError(null)
 
-        // Simular envío - aquí puedes integrar tu API de contacto
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/contact`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            })
 
-        setIsSubmitting(false)
-        setSubmitted(true)
-        setFormData({ name: '', email: '', message: '' })
+            const data = await response.json()
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Error al enviar el mensaje')
+            }
+
+            setSubmitted(true)
+            setFormData({ name: '', email: '', subject: '', message: '' })
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al enviar el mensaje. Por favor intenta de nuevo.')
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     const whatsappNumbers = [
@@ -88,7 +108,7 @@ export default function ContactTemplate() {
                                         </svg>
                                     </div>
                                     <h3 className="text-xl font-semibold text-green-800 mb-2">¡Mensaje enviado!</h3>
-                                    <p className="text-green-700">Gracias por contactarnos. Te responderemos pronto.</p>
+                                    <p className="text-green-700">Gracias por contactarnos. Te responderemos dentro de las próximas 24-48 horas.</p>
                                     <button
                                         onClick={() => setSubmitted(false)}
                                         className="mt-4 text-main-color hover:underline font-medium"
@@ -98,6 +118,12 @@ export default function ContactTemplate() {
                                 </div>
                             ) : (
                                 <form onSubmit={handleSubmit} className="space-y-6">
+                                    {error && (
+                                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+                                            {error}
+                                        </div>
+                                    )}
+                                    
                                     <div>
                                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                                             Nombre
@@ -127,6 +153,21 @@ export default function ContactTemplate() {
                                             required
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-main-color focus:border-main-color transition-colors duration-200"
                                             placeholder="tu@email.com"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                                            Asunto (opcional)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="subject"
+                                            name="subject"
+                                            value={formData.subject}
+                                            onChange={handleChange}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-main-color focus:border-main-color transition-colors duration-200"
+                                            placeholder="¿Sobre qué quieres hablar?"
                                         />
                                     </div>
 
