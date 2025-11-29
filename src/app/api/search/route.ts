@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { listProducts } from "@lib/data/products"
+import { searchProducts } from "@lib/data/products"
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
@@ -11,26 +11,13 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        // Get all products and filter by query
-        const { response } = await listProducts({
+        const products = await searchProducts({
+            query,
             countryCode,
-            queryParams: {
-                limit: 20,
-            },
+            limit: 50,
         })
 
-        const products = response.products || []
-
-        // Filter products that match the query
-        const queryLower = query.toLowerCase()
-        const filteredProducts = products.filter((product) => {
-            const titleMatch = product.title?.toLowerCase().includes(queryLower)
-            const descriptionMatch = product.description?.toLowerCase().includes(queryLower)
-            const handleMatch = product.handle?.toLowerCase().includes(queryLower)
-            return titleMatch || descriptionMatch || handleMatch
-        })
-
-        return NextResponse.json({ products: filteredProducts })
+        return NextResponse.json({ products })
     } catch (error) {
         console.error("Search error:", error)
         return NextResponse.json(

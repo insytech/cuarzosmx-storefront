@@ -55,7 +55,7 @@ export const listProducts = async ({
 
   return sdk.client
     .fetch<{ products: HttpTypes.StoreProduct[]; count: number }>(
-      `/store/products`,
+      "/store/products",
       {
         method: "GET",
         query: {
@@ -83,6 +83,92 @@ export const listProducts = async ({
         queryParams,
       }
     })
+}
+
+/**
+ * Search products by query string. Uses no-store cache for real-time results.
+ */
+export const searchProducts = async ({
+  query,
+  countryCode,
+  limit = 50,
+}: {
+  query: string
+  countryCode: string
+  limit?: number
+}): Promise<HttpTypes.StoreProduct[]> => {
+  if (!query || query.length < 2) {
+    return []
+  }
+
+  const region = await getRegion(countryCode)
+
+  if (!region) {
+    return []
+  }
+
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  try {
+    // Try Medusa's native search with 'q' parameter
+    const { products } = await sdk.client.fetch<{
+      products: HttpTypes.StoreProduct[]
+      count: number
+    }>("/store/products", {
+      method: "GET",
+      query: {
+        limit,
+        offset: 0,
+        region_id: region.id,
+        fields:
+          "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags",
+        q: query,
+      },
+      headers,
+      cache: "no-store", // No cache for search
+    })
+
+    if (products && products.length > 0) {
+      return products
+    }
+
+    // Fallback: fetch more products and filter locally
+    const { products: allProducts } = await sdk.client.fetch<{
+      products: HttpTypes.StoreProduct[]
+      count: number
+    }>("/store/products", {
+      method: "GET",
+      query: {
+        limit: 200,
+        offset: 0,
+        region_id: region.id,
+        fields:
+          "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags",
+      },
+      headers,
+      cache: "no-store",
+    })
+
+    const queryLower = query.toLowerCase()
+    const filteredProducts = allProducts.filter((product) => {
+      const titleMatch = product.title?.toLowerCase().includes(queryLower)
+      const descriptionMatch = product.description
+        ?.toLowerCase()
+        .includes(queryLower)
+      const handleMatch = product.handle?.toLowerCase().includes(queryLower)
+      const tagsMatch = product.tags?.some((tag) =>
+        tag.value?.toLowerCase().includes(queryLower)
+      )
+      return titleMatch || descriptionMatch || handleMatch || tagsMatch
+    })
+
+    return filteredProducts.slice(0, limit)
+  } catch (error) {
+    console.error("Search error:", error)
+    return []
+  }
 }
 
 /**
