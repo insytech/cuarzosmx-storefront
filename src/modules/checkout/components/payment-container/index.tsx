@@ -890,7 +890,7 @@ export const MercadoCreditoContainer = ({
               <Text className="text-xs text-gray-500">
                 Si aún no tienes la Línea de Crédito, actívala al momento de pagar.
               </Text>
-              <div className="w-full max-w-[200px] mx-auto mt-3">
+              <div className="w-full mx-0 px-0 -translate-x-3 mt-3">
                 <Wallet
                   initialization={{
                     preferenceId,
