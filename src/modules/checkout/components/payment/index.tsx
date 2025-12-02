@@ -1,7 +1,7 @@
 "use client"
 
 import { RadioGroup } from "@headlessui/react"
-import { isStripe as isStripeFunc, isMercadoPago, isMercadoCredito, paymentInfoMap } from "@lib/constants"
+import { isStripe as isStripeFunc, isMercadoPago, isMercadoCredito, isManual, paymentInfoMap } from "@lib/constants"
 import { initiatePaymentSession, retrieveCart, completeMercadoPagoOrder } from "@lib/data/cart"
 import { CheckCircleSolid, CreditCard } from "@medusajs/icons"
 import { Button, Container, Heading, Text, clx } from "@medusajs/ui"
@@ -130,6 +130,13 @@ const Payment = ({
         })
       }
 
+      // For manual payment methods, create payment session if needed
+      if (isManual(selectedPaymentMethod) && !checkActiveSession) {
+        await initiatePaymentSession(cart, {
+          provider_id: selectedPaymentMethod,
+        })
+      }
+
       // For MercadoPago, the Wallet Brick handles the payment directly
       // User will be redirected to MercadoPago to complete payment
       if (isMercadoPago(selectedPaymentMethod)) {
@@ -138,6 +145,7 @@ const Payment = ({
         return
       }
 
+      // Navigate to review step after payment session is created
       if (!shouldInputCard) {
         return router.push(
           `${pathname}?${createQueryString("step", "review")}`,
