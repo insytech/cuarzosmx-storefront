@@ -45,7 +45,7 @@ const PaymentContainer: React.FC<PaymentContainerProps> = ({
       value={paymentProviderId}
       disabled={disabled}
       className={clx(
-        "flex flex-col gap-y-2 text-small-regular cursor-pointer py-4 border rounded-lg px-6 mb-2 transition-all",
+        "flex flex-col gap-y-2 text-small-regular cursor-pointer py-4 border rounded-lg px-3 sm:px-6 mb-2 transition-all",
         {
           "border-main-color bg-main-color-light/20 shadow-sm":
             isSelected,
@@ -195,7 +195,7 @@ export const MercadoPagoContainer = ({
               </div>
             </div>
           ) : preferenceId ? (
-            <div style={{ width: '300px', margin: '20px auto' }}>
+            <div className="w-full max-w-[200px] mx-auto my-3">
               <Wallet
                 initialization={{ preferenceId }}
                 onReady={() => console.log('Mercado Pago Wallet is ready')}
@@ -743,7 +743,7 @@ export const MercadoPagoPaymentBrickContainer = ({
           ) : (
             <>
               {!isReady && <SkeletonCardDetails />}
-              <div className={!isReady ? "hidden" : ""}>
+              <div className={`payment-brick-wrapper w-full overflow-hidden ${!isReady ? "hidden" : ""}`}>
                 <CardPayment
                   initialization={initialization}
                   customization={customization}
@@ -890,7 +890,7 @@ export const MercadoCreditoContainer = ({
               <Text className="text-xs text-gray-500">
                 Si aún no tienes la Línea de Crédito, actívala al momento de pagar.
               </Text>
-              <div style={{ width: '280px', margin: '16px auto 0' }}>
+              <div className="w-full max-w-[200px] mx-auto mt-3">
                 <Wallet
                   initialization={{
                     preferenceId,
