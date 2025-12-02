@@ -14,9 +14,9 @@ const ShippingDetails = ({ order }: ShippingDetailsProps) => {
       <Heading level="h2" className="flex flex-row text-3xl-regular my-6 text-gray-800">
         Envío
       </Heading>
-      <div className="flex items-start gap-x-8">
+      <div className="flex flex-wrap gap-y-6 sm:flex-col sm:gap-y-4">
         <div
-          className="flex flex-col w-1/3"
+          className="flex flex-col w-1/3 sm:w-full"
           data-testid="shipping-address-summary"
         >
           <Text className="txt-medium-plus text-gray-800 mb-1 font-semibold">
@@ -40,7 +40,7 @@ const ShippingDetails = ({ order }: ShippingDetailsProps) => {
         </div>
 
         <div
-          className="flex flex-col w-1/3 "
+          className="flex flex-col w-1/3 sm:w-full"
           data-testid="shipping-contact-summary"
         >
           <Text className="txt-medium-plus text-gray-800 mb-1 font-semibold">Contacto</Text>
@@ -51,7 +51,7 @@ const ShippingDetails = ({ order }: ShippingDetailsProps) => {
         </div>
 
         <div
-          className="flex flex-col w-1/3"
+          className="flex flex-col w-1/3 sm:w-full"
           data-testid="shipping-method-summary"
         >
           <Text className="txt-medium-plus text-gray-800 mb-1 font-semibold">Método</Text>
