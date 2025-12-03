@@ -96,14 +96,25 @@ const Shipping: React.FC<ShippingProps> = ({
       if (promises.length) {
         Promise.allSettled(promises).then((res) => {
           const pricesMap: Record<string, number> = {}
-          res
-            .filter((r) => r.status === "fulfilled")
-            .forEach((p) => (pricesMap[p.value?.id || ""] === p.value?.amount!))
+          
+          // Procesar los resultados de las cotizaciones
+          const fulfilledResults = res.filter((r) => r.status === "fulfilled")
+          for (const result of fulfilledResults) {
+            const { id, amount } = result.value || {}
+            if (id && typeof amount === "number") {
+              pricesMap[id] = amount
+            }
+          }
 
+          console.log("[Shipping] Calculated prices map:", pricesMap)
           setCalculatedPricesMap(pricesMap)
           setIsLoadingPrices(false)
         })
+      } else {
+        setIsLoadingPrices(false)
       }
+    } else {
+      setIsLoadingPrices(false)
     }
 
     if (_pickupMethods?.find((m) => m.id === shippingMethodId)) {
