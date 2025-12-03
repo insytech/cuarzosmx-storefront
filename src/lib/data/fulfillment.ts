@@ -96,7 +96,7 @@ export const getShippingProviderInfo = async (
 
   try {
     const response = await sdk.client.fetch<ShippingProviderInfo>(
-      "/store/shipping-quote",
+      "/store/shipping-provider-info",
       {
         method: "GET",
         query: {

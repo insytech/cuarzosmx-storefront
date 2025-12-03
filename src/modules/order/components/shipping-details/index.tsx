@@ -9,6 +9,10 @@ type ShippingDetailsProps = {
 }
 
 const ShippingDetails = ({ order }: ShippingDetailsProps) => {
+  // Extraer info del proveedor de metadata si está disponible
+  const shippingMethod = (order as any).shipping_methods?.[0]
+  const providerInfo = shippingMethod?.metadata?.provider_info || null
+
   return (
     <div>
       <Heading level="h2" className="flex flex-row text-3xl-regular my-6 text-gray-800">
@@ -56,15 +60,27 @@ const ShippingDetails = ({ order }: ShippingDetailsProps) => {
         >
           <Text className="txt-medium-plus text-gray-800 mb-1 font-semibold">Método</Text>
           <Text className="txt-medium text-gray-600">
-            {(order as any).shipping_methods[0]?.name} (
+            {shippingMethod?.name} (
             {convertToLocale({
-              amount: order.shipping_methods?.[0].total ?? 0,
+              amount: order.shipping_methods?.[0]?.total ?? 0,
               currency_code: order.currency_code,
             })
               .replace(/,/g, "")
               .replace(/\./g, ",")}
             )
           </Text>
+          {/* Mostrar info del proveedor si está disponible */}
+          {providerInfo && (
+            <Text className="txt-small text-gray-500 mt-1">
+              vía {providerInfo.provider?.toUpperCase()}
+              {providerInfo.service && ` - ${providerInfo.service}`}
+              {providerInfo.days && (
+                <span className="ml-1 text-green-600 font-medium">
+                  ({providerInfo.days} {providerInfo.days === 1 ? 'día' : 'días'})
+                </span>
+              )}
+            </Text>
+          )}
         </div>
       </div>
       <Divider className="mt-8" />

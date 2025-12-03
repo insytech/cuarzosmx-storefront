@@ -457,6 +457,24 @@ const Shipping: React.FC<ShippingProps> = ({
                       currency_code: cart?.currency_code,
                     })}
                   </Text>
+                  {/* Mostrar info del proveedor si está disponible */}
+                  {(() => {
+                    const selectedOptionId = cart.shipping_methods?.at(-1)?.shipping_option_id
+                    const providerInfo = selectedOptionId ? providerInfoMap[selectedOptionId] : null
+                    if (providerInfo) {
+                      return (
+                        <Text className="txt-small text-gray-500 mt-1">
+                          vía {providerInfo.provider?.toUpperCase()} - {providerInfo.service}
+                          {providerInfo.days && (
+                            <span className="ml-1 text-main-color">
+                              ({providerInfo.days} {providerInfo.days === 1 ? 'día' : 'días'})
+                            </span>
+                          )}
+                        </Text>
+                      )
+                    }
+                    return null
+                  })()}
                 </div>
               </div>
             )}
