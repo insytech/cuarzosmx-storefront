@@ -2,7 +2,7 @@
 
 import { RadioGroup, Radio } from "@headlessui/react"
 import { setShippingMethod } from "@lib/data/cart"
-import { calculatePriceForShippingOption } from "@lib/data/fulfillment"
+import { calculatePriceForShippingOption, getShippingProviderInfo, ShippingProviderInfo } from "@lib/data/fulfillment"
 import { convertToLocale } from "@lib/util/money"
 import { CheckCircleSolid, Loader } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
@@ -60,6 +60,10 @@ const Shipping: React.FC<ShippingProps> = ({
   const [calculatedPricesMap, setCalculatedPricesMap] = useState<
     Record<string, number>
   >({})
+  // Mapa para guardar info del proveedor por opción
+  const [providerInfoMap, setProviderInfoMap] = useState<
+    Record<string, ShippingProviderInfo>
+  >({})
   const [error, setError] = useState<string | null>(null)
   const [shippingMethodId, setShippingMethodId] = useState<string | null>(
     cart.shipping_methods?.at(-1)?.shipping_option_id || null
@@ -89,14 +93,13 @@ const Shipping: React.FC<ShippingProps> = ({
     setIsLoadingPrices(true)
 
     if (_shippingMethods?.length) {
-      const promises = _shippingMethods
-        .filter((sm) => sm.price_type === "calculated")
-        .map((sm) => calculatePriceForShippingOption(sm.id, cart.id))
+      const calculatedMethods = _shippingMethods.filter((sm) => sm.price_type === "calculated")
+      const promises = calculatedMethods.map((sm) => calculatePriceForShippingOption(sm.id, cart.id))
 
       if (promises.length) {
-        Promise.allSettled(promises).then((res) => {
+        Promise.allSettled(promises).then(async (res) => {
           const pricesMap: Record<string, number> = {}
-          
+
           // Procesar los resultados de las cotizaciones
           const fulfilledResults = res.filter((r) => r.status === "fulfilled")
           for (const result of fulfilledResults) {
@@ -108,6 +111,31 @@ const Shipping: React.FC<ShippingProps> = ({
 
           console.log("[Shipping] Calculated prices map:", pricesMap)
           setCalculatedPricesMap(pricesMap)
+
+          // Obtener información del proveedor para cada opción calculada
+          // Determinar el tipo basado en el nombre de la opción
+          const providerPromises = calculatedMethods.map((sm) => {
+            const nameLower = (sm.name || "").toLowerCase()
+            const type: 'standard' | 'express' =
+              nameLower.includes("express") ||
+                nameLower.includes("rápido") ||
+                nameLower.includes("rapido")
+                ? 'express'
+                : 'standard'
+            return getShippingProviderInfo(cart.id, type, sm.id)
+          })
+
+          const providerResults = await Promise.allSettled(providerPromises)
+          const providersMap: Record<string, ShippingProviderInfo> = {}
+
+          providerResults.forEach((result, index) => {
+            if (result.status === "fulfilled" && result.value?.success) {
+              providersMap[calculatedMethods[index].id] = result.value
+            }
+          })
+
+          console.log("[Shipping] Provider info map:", providersMap)
+          setProviderInfoMap(providersMap)
           setIsLoadingPrices(false)
         })
       } else {
@@ -261,6 +289,8 @@ const Shipping: React.FC<ShippingProps> = ({
                         !isLoadingPrices &&
                         typeof calculatedPricesMap[option.id] !== "number"
 
+                      const providerInfo = providerInfoMap[option.id]
+
                       return (
                         <Radio
                           key={option.id}
@@ -283,9 +313,21 @@ const Shipping: React.FC<ShippingProps> = ({
                             <MedusaRadio
                               checked={option.id === shippingMethodId}
                             />
-                            <span className="text-base-regular text-gray-700">
-                              {option.name}
-                            </span>
+                            <div className="flex flex-col">
+                              <span className="text-base-regular text-gray-700">
+                                {option.name}
+                              </span>
+                              {providerInfo && (
+                                <span className="text-sm text-gray-500">
+                                  {providerInfo.provider?.toUpperCase()} - {providerInfo.service}
+                                  {providerInfo.days && (
+                                    <span className="ml-2 text-main-color font-medium">
+                                      ({providerInfo.days} {providerInfo.days === 1 ? 'día' : 'días'})
+                                    </span>
+                                  )}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <span className="justify-self-end text-gray-600 font-medium">
                             {option.price_type === "flat" ? (

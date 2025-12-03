@@ -15,7 +15,7 @@ export const listCartShippingMethods = async (cartId: string) => {
 
   return sdk.client
     .fetch<HttpTypes.StoreShippingOptionListResponse>(
-      `/store/shipping-options`,
+      "/store/shipping-options",
       {
         method: "GET",
         query: {
@@ -67,4 +67,58 @@ export const calculatePriceForShippingOption = async (
     .catch((e) => {
       return null
     })
+}
+
+export type ShippingProviderInfo = {
+  success: boolean
+  option_id: string
+  cart_id: string
+  provider?: string
+  service?: string
+  price?: number
+  days?: number
+  currency?: string
+  message?: string
+}
+
+/**
+ * Obtiene información del proveedor de envío seleccionado
+ * @param cartId - ID del carrito
+ * @param type - 'standard' o 'express' (preferido)
+ * @param optionId - ID de la opción de envío (fallback)
+ */
+export const getShippingProviderInfo = async (
+  cartId: string,
+  type?: 'standard' | 'express',
+  optionId?: string
+): Promise<ShippingProviderInfo | null> => {
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  try {
+    const query: Record<string, string> = {
+      cart_id: cartId,
+    }
+
+    if (type) {
+      query.type = type
+    }
+    if (optionId) {
+      query.option_id = optionId
+    }
+
+    const response = await sdk.client.fetch<ShippingProviderInfo>(
+      "/store/shipping-quote",
+      {
+        method: "GET",
+        query,
+        headers,
+      }
+    )
+    return response
+  } catch (e) {
+    console.error("[getShippingProviderInfo] Error:", e)
+    return null
+  }
 }
