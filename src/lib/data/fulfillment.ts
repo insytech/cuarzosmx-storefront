@@ -71,8 +71,8 @@ export const calculatePriceForShippingOption = async (
 
 export type ShippingProviderInfo = {
   success: boolean
-  option_id: string
-  cart_id: string
+  type: string
+  dest_zip: string
   provider?: string
   service?: string
   price?: number
@@ -83,36 +83,26 @@ export type ShippingProviderInfo = {
 
 /**
  * Obtiene información del proveedor de envío seleccionado
- * @param cartId - ID del carrito
- * @param type - 'standard' o 'express' (preferido)
- * @param optionId - ID de la opción de envío (fallback)
+ * @param destZip - Código postal de destino
+ * @param type - 'standard' o 'express'
  */
 export const getShippingProviderInfo = async (
-  cartId: string,
-  type?: 'standard' | 'express',
-  optionId?: string
+  destZip: string,
+  type: 'standard' | 'express'
 ): Promise<ShippingProviderInfo | null> => {
   const headers = {
     ...(await getAuthHeaders()),
   }
 
   try {
-    const query: Record<string, string> = {
-      cart_id: cartId,
-    }
-
-    if (type) {
-      query.type = type
-    }
-    if (optionId) {
-      query.option_id = optionId
-    }
-
     const response = await sdk.client.fetch<ShippingProviderInfo>(
       "/store/shipping-quote",
       {
         method: "GET",
-        query,
+        query: {
+          dest_zip: destZip,
+          type,
+        },
         headers,
       }
     )

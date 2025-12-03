@@ -112,30 +112,33 @@ const Shipping: React.FC<ShippingProps> = ({
           console.log("[Shipping] Calculated prices map:", pricesMap)
           setCalculatedPricesMap(pricesMap)
 
-          // Obtener información del proveedor para cada opción calculada
-          // Determinar el tipo basado en el nombre de la opción
-          const providerPromises = calculatedMethods.map((sm) => {
-            const nameLower = (sm.name || "").toLowerCase()
-            const type: 'standard' | 'express' =
-              nameLower.includes("express") ||
-                nameLower.includes("rápido") ||
-                nameLower.includes("rapido")
-                ? 'express'
-                : 'standard'
-            return getShippingProviderInfo(cart.id, type, sm.id)
-          })
+          // Obtener información del proveedor si hay código postal
+          const destZip = cart.shipping_address?.postal_code
+          if (destZip) {
+            const providerPromises = calculatedMethods.map((sm) => {
+              const nameLower = (sm.name || "").toLowerCase()
+              const type: 'standard' | 'express' =
+                nameLower.includes("express") ||
+                  nameLower.includes("rápido") ||
+                  nameLower.includes("rapido")
+                  ? 'express'
+                  : 'standard'
+              return getShippingProviderInfo(destZip, type)
+            })
 
-          const providerResults = await Promise.allSettled(providerPromises)
-          const providersMap: Record<string, ShippingProviderInfo> = {}
+            const providerResults = await Promise.allSettled(providerPromises)
+            const providersMap: Record<string, ShippingProviderInfo> = {}
 
-          providerResults.forEach((result, index) => {
-            if (result.status === "fulfilled" && result.value?.success) {
-              providersMap[calculatedMethods[index].id] = result.value
-            }
-          })
+            providerResults.forEach((result, index) => {
+              if (result.status === "fulfilled" && result.value?.success) {
+                providersMap[calculatedMethods[index].id] = result.value
+              }
+            })
 
-          console.log("[Shipping] Provider info map:", providersMap)
-          setProviderInfoMap(providersMap)
+            console.log("[Shipping] Provider info map:", providersMap)
+            setProviderInfoMap(providersMap)
+          }
+
           setIsLoadingPrices(false)
         })
       } else {
