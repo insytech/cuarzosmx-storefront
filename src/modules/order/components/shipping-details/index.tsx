@@ -1,4 +1,5 @@
 import { convertToLocale } from "@lib/util/money"
+import { getShippingProviderInfo } from "@lib/data/fulfillment"
 import { HttpTypes } from "@medusajs/types"
 import { Heading, Text } from "@medusajs/ui"
 
@@ -8,10 +9,36 @@ type ShippingDetailsProps = {
   order: HttpTypes.StoreOrder
 }
 
-const ShippingDetails = ({ order }: ShippingDetailsProps) => {
-  // Extraer info del proveedor de metadata si está disponible
+const ShippingDetails = async ({ order }: ShippingDetailsProps) => {
   const shippingMethod = (order as any).shipping_methods?.[0]
-  const providerInfo = shippingMethod?.metadata?.provider_info || null
+
+  // Intentar obtener info del proveedor desde el endpoint
+  let providerInfo: { provider?: string; service?: string; days?: number } | null = null
+
+  const destZip = order.shipping_address?.postal_code
+  const shippingMethodName = shippingMethod?.name?.toLowerCase() || ""
+
+  if (destZip) {
+    // Determinar el tipo basado en el nombre del método
+    const isExpress = shippingMethodName.includes("express") ||
+      shippingMethodName.includes("rápido") ||
+      shippingMethodName.includes("rapido")
+    const type: 'standard' | 'express' = isExpress ? 'express' : 'standard'
+
+    try {
+      const response = await getShippingProviderInfo(destZip, type)
+      if (response?.success) {
+        providerInfo = {
+          provider: response.provider,
+          service: response.service,
+          days: response.days,
+        }
+      }
+    } catch (e) {
+      // Silenciar error, simplemente no mostramos la info
+      console.log("[ShippingDetails] Could not fetch provider info")
+    }
+  }
 
   return (
     <div>
