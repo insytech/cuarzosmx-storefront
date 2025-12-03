@@ -7,12 +7,17 @@ import {
   Transition,
 } from "@headlessui/react"
 import { convertToLocale } from "@lib/util/money"
+import {
+  calculateBulkDiscount,
+  BULK_DISCOUNT_PERCENTAGE,
+} from "@lib/util/bulk-discount"
 import { HttpTypes } from "@medusajs/types"
 import { Button } from "@medusajs/ui"
 import DeleteButton from "@modules/common/components/delete-button"
 import LineItemOptions from "@modules/common/components/line-item-options"
 import LineItemPrice from "@modules/common/components/line-item-price"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import BulkDiscountBanner from "@modules/common/components/bulk-discount-banner"
 import Thumbnail from "@modules/products/components/thumbnail"
 import { usePathname } from "next/navigation"
 import { Fragment, useEffect, useRef, useState } from "react"
@@ -35,7 +40,13 @@ const CartDropdown = ({
       return acc + item.quantity
     }, 0) || 0
 
+  // El subtotal ya viene ajustado del backend (incluye descuento bulk)
   const subtotal = cartState?.subtotal ?? 0
+
+  // Detectar si hay descuento bulk aplicado por el backend
+  const bulkDiscount = calculateBulkDiscount(cartState ?? null)
+  const hasDiscount = bulkDiscount.hasBackendDiscount && bulkDiscount.discountAmount > 0
+
   const itemRef = useRef<number>(totalItems || 0)
 
   const timedOpen = () => {
@@ -175,21 +186,43 @@ const CartDropdown = ({
                     ))}
                 </div>
                 <div className="p-4 flex flex-col gap-y-4 text-small-regular">
-                  <div className="flex items-center justify-between">
-                    <span className="text-ui-fg-base font-semibold">
-                      Subtotal{" "}
-                      <span className="font-normal">(sin impuestos)</span>
-                    </span>
-                    <span
-                      className="text-large-semi"
-                      data-testid="cart-subtotal"
-                      data-value={subtotal}
-                    >
-                      {convertToLocale({
-                        amount: subtotal,
-                        currency_code: cartState.currency_code,
-                      })}
-                    </span>
+                  {/* Bulk Discount Banner */}
+                  <BulkDiscountBanner cart={cartState} variant="compact" />
+
+                  {/* Subtotal - ya incluye descuento bulk del backend */}
+                  <div className="flex flex-col gap-y-2">
+                    {hasDiscount && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-green-600 flex items-center gap-1">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                          Descuento {BULK_DISCOUNT_PERCENTAGE}% incluido
+                        </span>
+                        <span className="text-green-600 font-medium">
+                          -{convertToLocale({
+                            amount: bulkDiscount.discountAmount,
+                            currency_code: cartState.currency_code,
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-ui-fg-base font-semibold">
+                        Subtotal{" "}
+                        <span className="font-normal">(sin impuestos)</span>
+                      </span>
+                      <span
+                        className="text-large-semi"
+                        data-testid="cart-subtotal"
+                        data-value={subtotal}
+                      >
+                        {convertToLocale({
+                          amount: subtotal,
+                          currency_code: cartState.currency_code,
+                        })}
+                      </span>
+                    </div>
                   </div>
                   <LocalizedClientLink href="/cart" passHref>
                     <Button

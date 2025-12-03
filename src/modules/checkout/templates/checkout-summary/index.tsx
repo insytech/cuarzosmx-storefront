@@ -4,11 +4,15 @@ import ItemsPreviewTemplate from "@modules/cart/templates/preview"
 import DiscountCode from "@modules/checkout/components/discount-code"
 import CartTotals from "@modules/common/components/cart-totals"
 import Divider from "@modules/common/components/divider"
+import BulkDiscountBanner from "@modules/common/components/bulk-discount-banner"
 import FinancingCostDisplay from "./financing-cost-display"
 
 const CheckoutSummary = ({ cart }: { cart: any }) => {
   return (
     <div className="sticky top-4 flex flex-col gap-y-4">
+      {/* Bulk Discount Banner */}
+      <BulkDiscountBanner cart={cart} variant="compact" />
+
       <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <Heading
           level="h2"

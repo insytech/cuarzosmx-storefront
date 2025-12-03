@@ -2,6 +2,7 @@ import ItemsTemplate from "./items"
 import Summary from "./summary"
 import EmptyCartMessage from "../components/empty-cart-message"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import BulkDiscountBanner from "@modules/common/components/bulk-discount-banner"
 import { HttpTypes } from "@medusajs/types"
 
 const CartTemplate = ({
@@ -48,6 +49,11 @@ const CartTemplate = ({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Items Section */}
             <div className="lg:col-span-2">
+              {/* Bulk Discount Banner */}
+              <div className="mb-6">
+                <BulkDiscountBanner cart={cart} variant="full" />
+              </div>
+
               <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
                 <ItemsTemplate cart={cart} />
               </div>

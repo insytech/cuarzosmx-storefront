@@ -1,6 +1,12 @@
 "use client"
 
 import { convertToLocale } from "@lib/util/money"
+import {
+  calculateBulkDiscount,
+  BULK_DISCOUNT_PERCENTAGE,
+  BULK_DISCOUNT_THRESHOLD,
+} from "@lib/util/bulk-discount"
+import { HttpTypes } from "@medusajs/types"
 import React from "react"
 
 type CartTotalsProps = {
@@ -13,6 +19,7 @@ type CartTotalsProps = {
     gift_card_total?: number | null
     currency_code: string
     shipping_subtotal?: number | null
+    items?: HttpTypes.StoreCartLineItem[]
   }
 }
 
@@ -26,6 +33,10 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
     gift_card_total,
     shipping_subtotal,
   } = totals
+
+  // Detectar si hay descuento bulk aplicado (viene del backend)
+  const bulkDiscount = calculateBulkDiscount(totals as HttpTypes.StoreCart)
+  const showBulkDiscount = bulkDiscount.hasBackendDiscount && bulkDiscount.discountAmount > 0
 
   return (
     <div>
@@ -45,7 +56,7 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
               <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
-              Descuento
+              Descuento promoción
             </span>
             <span
               className="font-medium text-green-600"
@@ -53,6 +64,27 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
               data-value={discount_total || 0}
             >
               - {convertToLocale({ amount: discount_total ?? 0, currency_code })}
+            </span>
+          </div>
+        )}
+
+        {/* Descuento por volumen (Bulk Discount) - ya aplicado por backend */}
+        {showBulkDiscount && (
+          <div className="flex items-center justify-between bg-green-50 -mx-2 px-2 py-2 rounded-lg">
+            <span className="text-gray-700 flex items-center gap-1.5">
+              <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-medium">
+                Descuento {BULK_DISCOUNT_PERCENTAGE}% (+{BULK_DISCOUNT_THRESHOLD} productos)
+              </span>
+            </span>
+            <span
+              className="font-bold text-green-600"
+              data-testid="cart-bulk-discount"
+              data-value={bulkDiscount.discountAmount}
+            >
+              - {convertToLocale({ amount: bulkDiscount.discountAmount, currency_code })}
             </span>
           </div>
         )}
@@ -91,7 +123,7 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
         )}
       </div>
 
-      {/* Total */}
+      {/* Total - ya incluye el descuento bulk del backend */}
       <div className="mt-4 pt-4 border-t border-gray-200">
         <div className="flex items-center justify-between">
           <span className="text-lg font-semibold text-gray-900">Total</span>
