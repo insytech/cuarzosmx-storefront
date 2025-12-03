@@ -63,30 +63,12 @@ const PaymentDetails = ({ order }: PaymentDetailsProps) => {
                 <Text className="text-sm font-semibold text-blue-800 mb-2">
                   Información para realizar la transferencia
                 </Text>
-                <Text className="text-sm text-blue-700 mb-3">
-                  Para obtener los datos bancarios, contáctanos por:
-                </Text>
-                <div className="space-y-2">
-                  <Text className="text-sm text-blue-700">
-                    📧 <strong>Email:</strong>{" "}
-                    <a
-                      href="mailto:ventas@cuarzos.mx"
-                      className="text-blue-600 hover:underline"
-                    >
-                      ventas@cuarzos.mx
-                    </a>
-                  </Text>
-                  <Text className="text-sm text-blue-700">
-                    📱 <strong>WhatsApp:</strong>{" "}
-                    <a
-                      href="https://wa.me/52551234567"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      +52 55 1234 5678
-                    </a>
-                  </Text>
+                <div className="space-y-2 text-sm text-blue-700">
+                  <p><strong>Banco:</strong> Banamex</p>
+                  <p><strong>Nombre:</strong> Mario Alberto Trujillo Dueñas</p>
+                  <p><strong>CLABE:</strong> 002930701038297964</p>
+                  <p><strong>Cuenta:</strong> 70103829796</p>
+                  <p><strong>ó para Deposito en Oxxo:</strong> 5206 9877 3441 6596</p>
                 </div>
                 <Text className="text-xs text-blue-600 mt-3">
                   Una vez realizada la transferencia, envía tu comprobante con el número de pedido.
@@ -98,7 +80,7 @@ const PaymentDetails = ({ order }: PaymentDetailsProps) => {
       </div>
 
       <Divider className="mt-8" />
-    </div>
+    </div >
   )
 }
 
