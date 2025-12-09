@@ -64,8 +64,9 @@ export default async function Home(props: {
         viewAllLink={featuredSection.viewAllLink}
       />
 
-      {/* 4. Banner CTA */}
-      <InterstitialBanner />
+
+      {/* 7. Grilla de Categorías */}
+      <CategoryGrid />
 
       {/* 5. Ofertas Especiales (solo se muestra si hay productos con descuento) */}
       <ProductCarousel
@@ -79,8 +80,8 @@ export default async function Home(props: {
       {/* 6. Banner con Texto Superpuesto */}
       <LifestyleBlock />
 
-      {/* 7. Grilla de Categorías */}
-      <CategoryGrid />
+      {/* 4. Banner CTA */}
+      <InterstitialBanner />
 
       {/* 8. Bloque Editorial */}
       <EditorialBlock />
