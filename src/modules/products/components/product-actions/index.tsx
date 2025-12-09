@@ -32,10 +32,7 @@ export default function ProductActions({
   const [options, setOptions] = useState<Record<string, string | undefined>>({})
   const [isAdding, setIsAdding] = useState(false)
   const [quantity, setQuantity] = useState(1)
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
   const countryCode = useParams().countryCode as string
-
-  const DESCRIPTION_LIMIT = 200
 
   // If there is only 1 variant, preselect the options
   useEffect(() => {
@@ -120,28 +117,6 @@ export default function ProductActions({
       <div className="flex flex-col gap-6" ref={actionsRef}>
         {/* Price */}
         <ProductPrice product={product} variant={selectedVariant} />
-
-        {/* Description */}
-        {product.description && (
-          <div className="flex flex-col gap-2">
-            <p
-              className="text-base text-gray-600 leading-relaxed whitespace-pre-line"
-              data-testid="product-description"
-            >
-              {isDescriptionExpanded || product.description.length <= DESCRIPTION_LIMIT
-                ? product.description
-                : `${product.description.slice(0, DESCRIPTION_LIMIT).trim()}...`}
-            </p>
-            {product.description.length > DESCRIPTION_LIMIT && (
-              <button
-                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                className="text-main-color hover:text-main-color-dark text-sm font-medium self-start transition-colors"
-              >
-                {isDescriptionExpanded ? '← Ver menos' : 'Leer más →'}
-              </button>
-            )}
-          </div>
-        )}
 
         {/* Divider */}
         <div className="w-full h-px bg-gray-200" />

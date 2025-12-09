@@ -9,6 +9,11 @@ type ProductTabsProps = {
 
 const ProductTabs = ({ product }: ProductTabsProps) => {
   const tabs = [
+    // Solo mostrar tab de descripción si el producto tiene descripción
+    ...(product.description ? [{
+      label: "Descripción",
+      component: <DescriptionTab description={product.description} />,
+    }] : []),
     {
       label: "Información del Producto",
       component: <ProductInfoTab product={product} />,
@@ -19,9 +24,12 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
     },
   ]
 
+  // El tab por defecto es Descripción si existe, sino Información del Producto
+  const defaultTab = product.description ? "Descripción" : "Información del Producto"
+
   return (
     <div className="w-full border border-gray-200 rounded-xl overflow-hidden bg-white">
-      <Accordion type="multiple" defaultValue={["Información del Producto"]}>
+      <Accordion type="multiple" defaultValue={[defaultTab]}>
         {tabs.map((tab, i) => (
           <Accordion.Item
             key={i}
@@ -33,6 +41,19 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
           </Accordion.Item>
         ))}
       </Accordion>
+    </div>
+  )
+}
+
+const DescriptionTab = ({ description }: { description: string }) => {
+  return (
+    <div className="py-4 px-1">
+      <p
+        className="text-base text-gray-600 leading-relaxed whitespace-pre-line"
+        data-testid="product-description"
+      >
+        {description}
+      </p>
     </div>
   )
 }
