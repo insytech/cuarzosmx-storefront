@@ -67,15 +67,21 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     notFound()
   }
 
-  const productDescription = product.description ||
+  // Obtener metadatos SEO personalizados del producto
+  const metadata = product.metadata as Record<string, string> | null
+  const seoTitle = metadata?.seo_title || product.title
+  const seoDescription = metadata?.seo_description ||
+    product.description ||
     `Compra ${product.title} en CuarzosMX. Cristales y joyería artesanal de alta calidad con envío a todo México.`
+  const seoKeywords = metadata?.seo_keywords
 
   return {
-    title: product.title,
-    description: productDescription,
+    title: seoTitle,
+    description: seoDescription,
+    keywords: seoKeywords ? seoKeywords.split(',').map(k => k.trim()) : undefined,
     openGraph: {
-      title: `${product.title} | CuarzosMX`,
-      description: productDescription,
+      title: `${seoTitle} | CuarzosMX`,
+      description: seoDescription,
       type: "website",
       images: product.thumbnail
         ? [
@@ -90,8 +96,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: `${product.title} | CuarzosMX`,
-      description: productDescription,
+      title: `${seoTitle} | CuarzosMX`,
+      description: seoDescription,
       images: product.thumbnail ? [product.thumbnail] : [],
     },
     alternates: {

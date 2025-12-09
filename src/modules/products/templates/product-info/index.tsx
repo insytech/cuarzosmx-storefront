@@ -38,16 +38,6 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         {/* Divider */}
         <div className="w-16 h-1 bg-main-color rounded-full" />
 
-        {/* Description */}
-        {product.description && (
-          <p
-            className="text-base text-gray-600 leading-relaxed whitespace-pre-line"
-            data-testid="product-description"
-          >
-            {product.description}
-          </p>
-        )}
-
         {/* Tags */}
         {product.tags && product.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-2">
