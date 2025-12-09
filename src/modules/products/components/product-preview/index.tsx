@@ -49,7 +49,7 @@ export default async function ProductPreview({
           </Text>
 
           {/* Precio */}
-          {showPrice && cheapestPrice && (
+          {cheapestPrice && (
             <div className="flex items-center">
               <span className="text-main-color font-bold text-lg">
                 <PreviewPrice price={cheapestPrice} />

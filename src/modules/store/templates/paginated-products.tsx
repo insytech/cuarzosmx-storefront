@@ -93,11 +93,9 @@ export default async function PaginatedProducts({
       const price = product.variants?.[0]?.calculated_price?.calculated_amount
       if (!price) return false
 
-      // El precio viene en centavos, convertir a pesos
-      const priceInPesos = price / 100
-
-      if (minPrice !== undefined && priceInPesos < minPrice) return false
-      if (maxPrice !== undefined && priceInPesos > maxPrice) return false
+      // El precio ya está en pesos MXN
+      if (minPrice !== undefined && price < minPrice) return false
+      if (maxPrice !== undefined && price > maxPrice) return false
 
       return true
     })
