@@ -38,9 +38,13 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
     // Focus en el input cuando se abre
     useEffect(() => {
         if (isOpen && inputRef.current) {
-            setTimeout(() => inputRef.current?.focus(), 100)
+            // Use requestAnimationFrame for more reliable focus after DOM update
+            requestAnimationFrame(() => {
+                inputRef.current?.focus()
+            })
         }
     }, [isOpen])
+
 
     // Debounce de la búsqueda
     useEffect(() => {
@@ -157,6 +161,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                                             onChange={(e) => setQuery(e.target.value)}
                                             placeholder="Buscar cristales, cuarzos, joyería..."
                                             className="flex-1 px-4 py-5 text-lg outline-none placeholder:text-gray-400"
+                                            autoFocus
                                         />
 
                                         {/* Botón limpiar / Loading */}

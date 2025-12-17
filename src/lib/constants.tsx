@@ -62,6 +62,7 @@ export const isMercadoCredito = (providerId?: string) => {
 
 // Add currencies that don't need to be divided by 100
 export const noDivisionCurrencies = [
+  "mxn",
   "krw",
   "jpy",
   "vnd",

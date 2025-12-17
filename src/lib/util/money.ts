@@ -1,4 +1,5 @@
 import { isEmpty } from "./isEmpty"
+import { noDivisionCurrencies } from "@lib/constants"
 
 type ConvertToLocaleParams = {
   amount: number
@@ -26,14 +27,17 @@ export const convertToLocale = ({
 }
 
 /**
- * Formatea un monto en centavos a una cadena de moneda legible
+ * Formatea un monto a una cadena de moneda legible
+ * Respeta las monedas que no requieren división por 100
  */
 export const formatAmount = (
-  amountInCents: number,
+  amountInSubunits: number,
   currencyCode: string,
   locale = "es-MX"
 ): string => {
-  const amount = amountInCents / 100 // Convertir de centavos a unidades
+  // Check if this currency should NOT be divided by 100
+  const shouldDivide = !noDivisionCurrencies.includes(currencyCode.toLowerCase())
+  const amount = shouldDivide ? amountInSubunits / 100 : amountInSubunits
 
   return new Intl.NumberFormat(locale, {
     style: "currency",

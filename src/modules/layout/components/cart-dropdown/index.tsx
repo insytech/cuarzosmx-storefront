@@ -110,7 +110,7 @@ const CartDropdown = ({
         >
           <PopoverPanel
             static
-            className="hidden small:block absolute top-[calc(100%+1px)] right-0 bg-white border-x border-b border-gray-200 w-[420px] text-ui-fg-base"
+            className="hidden small:block absolute top-[calc(100%+1px)] right-0 bg-white border-x border-b border-gray-200 w-[480px] text-ui-fg-base"
             data-testid="nav-cart-dropdown"
           >
             <div className="p-4 flex items-center justify-center">
@@ -143,9 +143,9 @@ const CartDropdown = ({
                         </LocalizedClientLink>
                         <div className="flex flex-col justify-between flex-1">
                           <div className="flex flex-col flex-1">
-                            <div className="flex items-start justify-between">
-                              <div className="flex flex-col overflow-ellipsis whitespace-nowrap mr-4 w-[180px]">
-                                <h3 className="text-base-regular overflow-hidden text-ellipsis">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex flex-col overflow-hidden max-w-[180px]">
+                                <h3 className="text-base-regular overflow-hidden text-ellipsis whitespace-nowrap">
                                   <LocalizedClientLink
                                     href={`/products/${item.product_handle}`}
                                     data-testid="product-link"
@@ -165,7 +165,7 @@ const CartDropdown = ({
                                   Cantidad: {item.quantity}
                                 </span>
                               </div>
-                              <div className="flex justify-end">
+                              <div className="flex-shrink-0 text-right min-w-[100px]">
                                 <LineItemPrice
                                   item={item}
                                   style="tight"
@@ -246,7 +246,7 @@ const CartDropdown = ({
                     <LocalizedClientLink href="/store">
                       <>
                         <span className="sr-only">Ir a la página de todos los productos</span>
-                        <Button className="w-full bg-main-color hover:bg-main-color/90 text-white border-main-color-dark" onClick={close}>Explorar productos</Button>
+                        <Button className="w-full bg-main-color hover:bg-main-color/90 text-white border-0 outline-none shadow-none" onClick={close}>Explorar productos</Button>
                       </>
                     </LocalizedClientLink>
                   </div>
