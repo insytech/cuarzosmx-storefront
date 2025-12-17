@@ -38,8 +38,14 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
       })
   }
 
-  const maxQtyFromInventory = 10
-  const maxQuantity = item.variant?.manage_inventory ? 10 : maxQtyFromInventory
+  // Calculate max quantity based on variant settings (same logic as product page)
+  const canAddUnlimited =
+    !item.variant?.manage_inventory || item.variant?.allow_backorder
+
+  // Get the max quantity user can add
+  const maxQuantity = canAddUnlimited
+    ? Infinity
+    : (item.variant?.inventory_quantity || 0)
 
   if (type === "preview") {
     return (
