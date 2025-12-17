@@ -26,10 +26,6 @@ const Review = ({
 
   const isOpen = searchParams.get("step") === "review"
 
-  // Debug logs
-  console.log("Review component - isOpen:", isOpen, "step:", searchParams.get("step"))
-  console.log("Review component - mercadoPagoCardData:", mercadoPagoCardData)
-
   const paidByGiftcard =
     cart?.gift_cards && cart?.gift_cards?.length > 0 && cart?.total === 0
 
@@ -44,14 +40,6 @@ const Review = ({
     (cart?.shipping_methods?.length ?? 0) > 0 &&
     (cart?.payment_collection || paidByGiftcard || isMercadoPagoPayment)
 
-  console.log("Review - previousStepsCompleted:", previousStepsCompleted, {
-    shipping_address: !!cart?.shipping_address,
-    shipping_methods: cart?.shipping_methods?.length,
-    payment_collection: !!cart?.payment_collection,
-    paidByGiftcard,
-    isMercadoPagoPayment
-  })
-
   // Process MercadoPago payment
   const handleMercadoPagoPayment = async () => {
     if (!mercadoPagoCardData) return
@@ -60,8 +48,6 @@ const Review = ({
     setError(null)
 
     try {
-      console.log("Processing MercadoPago payment with card data:", mercadoPagoCardData)
-
       const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
       const response = await fetch(`${backendUrl}/store/mercadopago-card-payment`, {
         method: "POST",
@@ -88,13 +74,10 @@ const Review = ({
       })
 
       const result = await response.json()
-      console.log("Payment response:", result)
 
       if (!response.ok || !result.success) {
         throw new Error(result.message || result.error || "Error procesando el pago")
       }
-
-      console.log("Pago exitoso:", result)
 
       // Save payment data to sessionStorage for the confirmation page
       // This includes both financing info and card type (debit/credit)
@@ -108,7 +91,6 @@ const Review = ({
           payment_type: mercadoPagoCardData.payment_type_id, // 'credit_card' or 'debit_card'
           payment_method: mercadoPagoCardData.payment_method_id, // 'master', 'visa', etc.
         }))
-        console.log("Payment data saved for confirmation page")
       } catch (e) {
         console.error("Error saving payment data:", e)
       }
