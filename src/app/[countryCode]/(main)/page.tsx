@@ -14,6 +14,9 @@ import {
   getTrendingProducts,
 } from "@lib/data/home-products"
 
+// ISR: Revalidate every hour to reduce function invocations
+export const revalidate = 3600
+
 export const metadata: Metadata = {
   title: "Inicio | Cristales, Cuarzos y Joyería Artesanal en México",
   description:

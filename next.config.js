@@ -103,7 +103,7 @@ const nextConfig = {
       },
     ]
   },
-  // Headers de seguridad
+  // Security headers
   async headers() {
     return [
       {
@@ -127,7 +127,15 @@ const nextConfig = {
           },
           {
             key: "Referrer-Policy",
-            value: "origin-when-cross-origin",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
           },
         ],
       },

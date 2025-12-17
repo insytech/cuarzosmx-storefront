@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import { Suspense } from "react"
 
 import { listCartOptions, retrieveCart } from "@lib/data/cart"
 import { retrieveCustomer } from "@lib/data/customer"
@@ -13,24 +14,23 @@ export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
 }
 
-export default async function PageLayout(props: { children: React.ReactNode }) {
+// Separate async component for cart-related features
+// This allows the page to render without waiting for cart/customer data
+async function CartFeatures() {
   const customer = await retrieveCustomer()
   const cart = await retrieveCart()
   let shippingOptions: StoreCartShippingOption[] = []
 
   if (cart) {
     const { shipping_options } = await listCartOptions()
-
     shippingOptions = shipping_options
   }
 
   return (
     <>
-      <Nav />
       {customer && cart && (
         <CartMismatchBanner customer={customer} cart={cart} />
       )}
-
       {cart && (
         <FreeShippingPriceNudge
           variant="popup"
@@ -38,6 +38,17 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
           shippingOptions={shippingOptions}
         />
       )}
+    </>
+  )
+}
+
+export default function PageLayout(props: { children: React.ReactNode }) {
+  return (
+    <>
+      <Nav />
+      <Suspense fallback={null}>
+        <CartFeatures />
+      </Suspense>
       {props.children}
       <Footer />
     </>

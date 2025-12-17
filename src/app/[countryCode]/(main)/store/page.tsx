@@ -3,6 +3,9 @@ import { Metadata } from "next"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import StoreTemplate from "@modules/store/templates"
 
+// ISR: Revalidate every 15 minutes for search freshness
+export const revalidate = 900
+
 export const metadata: Metadata = {
   title: "Tienda | Todos los Productos",
   description:

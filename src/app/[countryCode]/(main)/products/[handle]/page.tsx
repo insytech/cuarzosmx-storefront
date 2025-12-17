@@ -4,6 +4,9 @@ import { listProducts } from "@lib/data/products"
 import { getRegion, listRegions } from "@lib/data/regions"
 import ProductTemplate from "@modules/products/templates"
 
+// ISR: Revalidate every 30 minutes for fresher inventory data
+export const revalidate = 1800
+
 type Props = {
   params: Promise<{ countryCode: string; handle: string }>
 }
