@@ -14,6 +14,7 @@ type ProductActionsProps = {
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
   disabled?: boolean
+  cart?: HttpTypes.StoreCart | null
 }
 
 const optionsAsKeymap = (
@@ -28,6 +29,7 @@ const optionsAsKeymap = (
 export default function ProductActions({
   product,
   disabled,
+  cart,
 }: ProductActionsProps) {
   const [options, setOptions] = useState<Record<string, string | undefined>>({})
   const [isAdding, setIsAdding] = useState(false)
@@ -69,33 +71,66 @@ export default function ProductActions({
     })
   }, [product.variants, options])
 
-  // check if the selected variant is in stock
-  const inStock = useMemo(() => {
-    // If we don't manage inventory, we can always add to cart
-    if (selectedVariant && !selectedVariant.manage_inventory) {
-      return true
-    }
+  // Calculate how many of this variant are already in the cart
+  const quantityInCart = useMemo(() => {
+    if (!cart || !cart.items || !selectedVariant) return 0
+    const existingItem = cart.items.find(
+      (item) => item.variant_id === selectedVariant.id
+    )
+    return existingItem?.quantity || 0
+  }, [cart, selectedVariant])
 
-    // If we allow back orders on the variant, we can add to cart
-    if (selectedVariant?.allow_backorder) {
-      return true
-    }
-
-    // If there is inventory available, we can add to cart
-    if (
-      selectedVariant?.manage_inventory &&
-      (selectedVariant?.inventory_quantity || 0) > 0
-    ) {
-      return true
-    }
-
-    // Otherwise, we can't add to cart
+  // Determine if we can add unlimited quantity (backorders allowed or no inventory management)
+  const canAddUnlimited = useMemo(() => {
+    if (!selectedVariant) return false
+    // No inventory management = unlimited
+    if (!selectedVariant.manage_inventory) return true
+    // Backorders allowed = unlimited
+    if (selectedVariant.allow_backorder) return true
     return false
   }, [selectedVariant])
 
-  const actionsRef = useRef<HTMLDivElement>(null)
+  // Calculate max quantity user can select (accounting for items already in cart)
+  const maxQuantity = useMemo(() => {
+    if (canAddUnlimited) return Infinity
+    const inventoryAvailable = selectedVariant?.inventory_quantity || 0
+    // Subtract what's already in cart to get true available quantity
+    const trueAvailable = Math.max(0, inventoryAvailable - quantityInCart)
+    return trueAvailable
+  }, [selectedVariant, canAddUnlimited, quantityInCart])
 
+
+  // Check if at least 1 item can be added (accounts for cart items)
+  const inStock = useMemo(() => {
+    if (!selectedVariant) return false
+    // If unlimited (no inventory management or backorders allowed), always in stock
+    if (canAddUnlimited) return true
+    // Otherwise, check if there's at least 1 available (after accounting for cart)
+    return maxQuantity > 0
+  }, [selectedVariant, canAddUnlimited, maxQuantity])
+
+
+  // Reset quantity when variant changes or when quantity exceeds max
+  useEffect(() => {
+    if (maxQuantity !== Infinity && quantity > maxQuantity) {
+      setQuantity(Math.max(1, maxQuantity))
+    }
+  }, [maxQuantity, quantity])
+
+  const actionsRef = useRef<HTMLDivElement>(null)
   const inView = useIntersection(actionsRef, "0px")
+
+  // Increment quantity (respecting max)
+  const incrementQuantity = () => {
+    if (canAddUnlimited || quantity < maxQuantity) {
+      setQuantity(quantity + 1)
+    }
+  }
+
+  // Decrement quantity
+  const decrementQuantity = () => {
+    setQuantity(Math.max(1, quantity - 1))
+  }
 
   // add the selected variant to the cart
   const handleAddToCart = async () => {
@@ -103,13 +138,35 @@ export default function ProductActions({
 
     setIsAdding(true)
 
-    await addToCart({
-      variantId: selectedVariant.id,
-      quantity: quantity,
-      countryCode,
-    })
+    try {
+      await addToCart({
+        variantId: selectedVariant.id,
+        quantity: quantity,
+        countryCode,
+      })
+    } catch {
+      // Error handling is silent since we prevent invalid quantities in the UI
+    } finally {
+      setIsAdding(false)
+    }
+  }
 
-    setIsAdding(false)
+  // Determine what to show for stock status
+  const getStockStatusText = () => {
+    if (!selectedVariant) return null
+    if (!inStock) {
+      if (quantityInCart > 0) {
+        return `Ya tienes ${quantityInCart} en el carrito (máximo alcanzado)`
+      }
+      return "Agotado"
+    }
+    if (canAddUnlimited) return "Disponible - Bajo pedido"
+    // Use maxQuantity which already accounts for cart items
+    if (maxQuantity <= 5) {
+      const suffix = quantityInCart > 0 ? ` (${quantityInCart} en carrito)` : ""
+      return `${maxQuantity} disponible${maxQuantity > 1 ? "s" : ""}${suffix}`
+    }
+    return "En stock - Disponible"
   }
 
   return (
@@ -141,11 +198,19 @@ export default function ProductActions({
 
         {/* Quantity Selector */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-gray-700">Cantidad</label>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-700">Cantidad</label>
+            {/* Show max available when limited */}
+            {selectedVariant && !canAddUnlimited && maxQuantity > 0 && (
+              <span className="text-xs text-gray-500">
+                Máx: {maxQuantity}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:border-gray-400 transition-colors disabled:opacity-50"
+              onClick={decrementQuantity}
+              className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={quantity <= 1 || isAdding}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -156,9 +221,9 @@ export default function ProductActions({
               {quantity}
             </span>
             <button
-              onClick={() => setQuantity(quantity + 1)}
-              className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:border-gray-400 transition-colors disabled:opacity-50"
-              disabled={isAdding}
+              onClick={incrementQuantity}
+              className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isAdding || (!canAddUnlimited && quantity >= maxQuantity)}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -171,7 +236,7 @@ export default function ProductActions({
         {selectedVariant && (
           <div className={`flex items-center gap-2 text-sm ${inStock ? 'text-green-600' : 'text-red-600'}`}>
             <span className={`w-2 h-2 rounded-full ${inStock ? 'bg-green-500' : 'bg-red-500'}`} />
-            {inStock ? 'En stock - Disponible' : 'Agotado'}
+            {getStockStatusText()}
           </div>
         )}
 
