@@ -1,53 +1,118 @@
 import { Button, Heading } from "@medusajs/ui"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
-const intenciones = [
+// Default intentions WITHOUT Joyería (moved to categories)
+const defaultIntenciones = [
     {
+        handle: "proteccion",
         nombre: "Protección",
         descripcion: "Escudo contra energías negativas",
         imagen: "/categorias/PROTECCION.webp",
         href: "/categories/proteccion"
     },
     {
+        handle: "amor",
         nombre: "Amor",
         descripcion: "Atrae amor y armonía a tu vida",
         imagen: "/categorias/AMOR.webp",
         href: "/categories/amor-y-armonia"
     },
     {
+        handle: "abundancia",
         nombre: "Abundancia",
         descripcion: "Prosperidad y éxito desde el interior",
         imagen: "/categorias/ABUNDANCIA.webp",
         href: "/categories/abundancia"
     },
     {
+        handle: "paz",
         nombre: "Paz",
         descripcion: "Calma y serenidad interior",
         imagen: "/categorias/PAZ.webp",
         href: "/categories/puntas-y-chakras"
     },
     {
+        handle: "salud",
         nombre: "Salud",
         descripcion: "Bienestar físico y mental",
         imagen: "/categorias/SALUD.webp",
         href: "/categories/salud-y-tranquilidad"
     },
-    {
-        nombre: "Joyería",
-        descripcion: "Piezas únicas artesanales",
-        imagen: "/categorias/JOYERIA.webp",
-        href: "/categories/joyeria"
-    },
 ]
 
-export default function LifestyleBlock() {
+// Default lifestyle content
+const defaultLifestyle = {
+    title: "Vive en Armonía con la Energía de los Cuarzos",
+    subtitle: "Cada piedra guarda un propósito especial para acompañarte en tu camino espiritual",
+    backgroundImage: "/inicio-1.webp"
+}
+
+interface IntentionBanner {
+    handle: string
+    name: string
+    description?: string
+    image_url?: string
+    link: string
+}
+
+interface LifestyleContent {
+    title?: string
+    subtitle?: string
+    background_image_url?: string
+}
+
+async function fetchBannerSections(): Promise<{
+    intentions: IntentionBanner[]
+    lifestyle: LifestyleContent | null
+}> {
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+        const response = await fetch(`${baseUrl}/store/banners/sections`, {
+            headers: {
+                "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+            },
+            next: { revalidate: 60 },
+        })
+
+        if (response.ok) {
+            const data = await response.json()
+            return {
+                intentions: data.intentions || [],
+                lifestyle: data.lifestyle || null
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching banner sections:", error)
+    }
+    return { intentions: [], lifestyle: null }
+}
+
+export default async function LifestyleBlock() {
+    const { intentions: intentionBanners, lifestyle: lifestyleContent } = await fetchBannerSections()
+
+    // Merge API data with defaults for intentions
+    const intenciones = defaultIntenciones.map(defaultInt => {
+        const apiInt = intentionBanners.find(i => i.handle === defaultInt.handle)
+        return {
+            ...defaultInt,
+            nombre: apiInt?.name || defaultInt.nombre,
+            descripcion: apiInt?.description || defaultInt.descripcion,
+            imagen: apiInt?.image_url || defaultInt.imagen,
+        }
+    })
+
+    // Get lifestyle content with fallbacks
+    const title = lifestyleContent?.title || defaultLifestyle.title
+    const subtitle = lifestyleContent?.subtitle || defaultLifestyle.subtitle
+    const backgroundImage = lifestyleContent?.background_image_url || defaultLifestyle.backgroundImage
+
     return (
         <section className="w-full">
             {/* Parte 1 - Banner Inspiracional con Texto Superpuesto */}
             <div className="relative">
                 <div className="relative h-[400px] md:h-[500px] overflow-hidden bg-black">
                     <img
-                        src="/inicio-1.webp"
+                        src={backgroundImage}
                         alt="Estilo de vida con cuarzos"
                         className="w-full h-full object-cover opacity-30"
                     />
@@ -60,10 +125,10 @@ export default function LifestyleBlock() {
                             level="h2"
                             className="font-serenity text-3xl md:text-5xl lg:text-6xl font-bold mb-6 text-white drop-shadow-2xl max-w-4xl"
                         >
-                            Vive en Armonía con la Energía de los Cuarzos
+                            {title}
                         </Heading>
                         <p className="text-white/90 text-lg md:text-xl max-w-2xl mb-8 font-light drop-shadow-md">
-                            Cada piedra guarda un propósito especial para acompañarte en tu camino espiritual
+                            {subtitle}
                         </p>
                         <LocalizedClientLink href="/store">
                             <Button className="bg-white text-gray-800 hover:bg-gray-100 px-8 py-3 rounded-full font-semibold shadow-lg transition-all duration-300 hover:scale-105">
@@ -91,10 +156,10 @@ export default function LifestyleBlock() {
                             Elige el propósito que resuena con tu alma y descubre los cuarzos perfectos para ti
                         </p>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
                         {intenciones.map((intencion) => (
                             <LocalizedClientLink
-                                key={intencion.nombre}
+                                key={intencion.handle}
                                 href={intencion.href}
                                 className="group relative aspect-square rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                             >
