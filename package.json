@@ -23,6 +23,7 @@
     "@radix-ui/react-accordion": "^1.2.1",
     "@stripe/react-stripe-js": "^1.7.2",
     "@stripe/stripe-js": "^1.29.0",
+    "@tailwindcss/typography": "^0.5.19",
     "dompurify": "^3.3.0",
     "lodash": "^4.17.21",
     "marked": "^16.4.1",

@@ -273,3 +273,14 @@
 [id^="wallet_container"] iframe {
   max-height: 50px !important;
 }
+
+/* Tiptap Video Responsive & Alignment */
+[data-youtube-video] {
+  width: 100%;
+}
+
+[data-youtube-video] iframe {
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto !important;
+}

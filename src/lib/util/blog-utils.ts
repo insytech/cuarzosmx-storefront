@@ -18,7 +18,7 @@ export const sanitizeHtml = (markdown: string): string => {
         ADD_TAGS: ['iframe', 'img'],
         ADD_ATTR: [
             'allow', 'allowfullscreen', 'frameborder',
-            'scrolling', 'src', 'width', 'height', 'alt', 'class'
+            'scrolling', 'src', 'width', 'height', 'alt', 'class', 'style'
         ],
         ALLOWED_URI_REGEXP: /^https?:\/\/.*/,
         ALLOW_DATA_ATTR: false

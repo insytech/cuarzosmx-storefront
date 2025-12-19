@@ -16,11 +16,12 @@ const BlogContent = ({ markdown, className = "" }: BlogContentProps) => {
                 blog-content
                 prose prose-lg max-w-none
                 prose-headings:font-serenity
-                prose-h1:text-3xl prose-h1:md:text-4xl prose-h1:text-gray-900 prose-h1:mb-6
-                prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:text-gray-800 prose-h2:mt-10 prose-h2:mb-4
-                prose-h3:text-xl prose-h3:md:text-2xl prose-h3:text-gray-800 prose-h3:mt-8 prose-h3:mb-3
+                prose-h1:text-3xl prose-h1:md:text-4xl prose-h1:text-gray-900 prose-h1:mb-6 prose-h1:font-bold
+                prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:text-gray-800 prose-h2:mt-10 prose-h2:mb-4 prose-h2:font-bold
+                prose-h3:text-xl prose-h3:md:text-2xl prose-h3:text-gray-800 prose-h3:mt-8 prose-h3:mb-3 prose-h3:font-semibold
                 prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
-                prose-a:text-main-color prose-a:font-medium prose-a:no-underline hover:prose-a:underline hover:prose-a:text-main-color-dark
+                prose-a:text-main-color prose-a:no-underline hover:prose-a:underline hover:prose-a:text-main-color-dark
+                [&_h1_a]:font-bold [&_h2_a]:font-bold [&_h3_a]:font-semibold
                 prose-strong:text-gray-900 prose-strong:font-semibold
                 prose-ul:my-4 prose-ul:pl-6 prose-ul:list-disc
                 prose-ol:my-4 prose-ol:pl-6 prose-ol:list-decimal
