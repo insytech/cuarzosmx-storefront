@@ -18,7 +18,12 @@ const ShippingDetails = async ({ order }: ShippingDetailsProps) => {
   const destZip = order.shipping_address?.postal_code
   const shippingMethodName = shippingMethod?.name?.toLowerCase() || ""
 
-  if (destZip) {
+  // Check if it's store pickup - don't show carrier info for store pickup
+  const isStorePickup = shippingMethodName.includes("recoger") ||
+    shippingMethodName.includes("tienda") ||
+    shippingMethodName.includes("pickup")
+
+  if (destZip && !isStorePickup) {
     // Determinar el tipo basado en el nombre del método
     const isExpress = shippingMethodName.includes("express") ||
       shippingMethodName.includes("rápido") ||

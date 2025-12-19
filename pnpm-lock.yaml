@@ -46,7 +46,7 @@ dependencies:
     specifier: ^16.4.1
     version: 16.4.1
   next:
-    specifier: ^15.3.1
+    specifier: ^15.3.6
     version: 15.5.3(@babel/core@7.28.4)(react-dom@19.0.0-rc-66855b96-20241106)(react@19.0.0-rc-66855b96-20241106)
   pg:
     specifier: ^8.11.3
@@ -6479,6 +6479,7 @@ packages:
   /next@15.5.3(@babel/core@7.28.4)(react-dom@19.0.0-rc-66855b96-20241106)(react@19.0.0-rc-66855b96-20241106):
     resolution: {integrity: sha512-r/liNAx16SQj4D+XH/oI1dlpv9tdKJ6cONYPwwcCC46f2NjpaRWY+EKCzULfgQYV6YKXjHBchff2IZBSlZmJNw==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
+    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/CVE-2025-66478 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
