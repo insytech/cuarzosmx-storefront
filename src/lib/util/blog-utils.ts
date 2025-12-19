@@ -15,10 +15,10 @@ export const sanitizeHtml = (markdown: string): string => {
     }
 
     return DOMPurify.default.sanitize(html, {
-        ADD_TAGS: ['iframe', 'img'],
+        ADD_TAGS: ['iframe', 'img', 'div'],
         ADD_ATTR: [
             'allow', 'allowfullscreen', 'frameborder',
-            'scrolling', 'src', 'width', 'height', 'alt', 'class', 'style'
+            'scrolling', 'src', 'width', 'height', 'alt', 'class', 'style', 'data-youtube-video'
         ],
         ALLOWED_URI_REGEXP: /^https?:\/\/.*/,
         ALLOW_DATA_ATTR: false
