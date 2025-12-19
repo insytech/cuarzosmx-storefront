@@ -207,7 +207,7 @@ export async function deleteLineItem(lineId: string) {
   }
 
   await sdk.store.cart
-    .deleteLineItem(cartId, lineId, headers)
+    .deleteLineItem(cartId, lineId, {}, headers)
     .then(async () => {
       const cartCacheTag = await getCacheTag("carts")
       revalidateTag(cartCacheTag)
@@ -526,7 +526,7 @@ export async function completeMercadoPagoOrder(
     throw new Error("No cart ID found when completing MercadoPago order")
   }
 
-  console.log("Completing MercadoPago order:", { cartId: id, paymentId, providerId })
+
 
   const headers = {
     ...(await getAuthHeaders()),
@@ -542,23 +542,12 @@ export async function completeMercadoPagoOrder(
     )
 
     if (!hasPaymentSession) {
-      console.log("Creating payment session for MercadoPago...")
       await sdk.store.payment
         .initiatePaymentSession(cart!, { provider_id: providerId }, {}, headers)
-        .catch((err) => {
-          console.error("Error creating payment session:", err)
-          // Continue anyway, the payment was already processed
+        .catch((e) => {
+          // Silenciar error, simplemente no mostramos la info
         })
     }
-
-    // Log cart state before completing
-    const refreshedCart = await retrieveCart(id)
-    console.log("Cart state before complete:", {
-      items: refreshedCart?.items?.length,
-      shipping_methods: refreshedCart?.shipping_methods?.length,
-      payment_collection: refreshedCart?.payment_collection?.id,
-      payment_sessions: refreshedCart?.payment_collection?.payment_sessions?.length
-    })
 
     // Complete the cart
     const cartRes = await sdk.store.cart
@@ -569,7 +558,6 @@ export async function completeMercadoPagoOrder(
         return cartRes
       })
       .catch((err) => {
-        console.error("Error completing cart:", err)
         throw err
       })
 
@@ -594,7 +582,6 @@ export async function completeMercadoPagoOrder(
       error: "No se pudo completar el pedido"
     }
   } catch (error: any) {
-    console.error("Error completing MercadoPago order:", error)
     return {
       success: false,
       error: error.message || "Error al completar el pedido"

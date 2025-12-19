@@ -26,7 +26,6 @@ export default function FinancingDetails() {
             if (stored) {
                 const data = JSON.parse(stored)
                 setPaymentData(data)
-                console.log("Payment data loaded for order confirmation:", data)
 
                 // Clear it after loading (one-time use)
                 sessionStorage.removeItem(FINANCING_STORAGE_KEY)

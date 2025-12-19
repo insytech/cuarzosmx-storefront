@@ -6,7 +6,7 @@ import { Text } from "@medusajs/ui"
 export default function FinancingCostDisplay() {
     const { financingInfo } = useFinancing()
 
-    console.log("FinancingCostDisplay - financingInfo:", financingInfo)
+
 
     if (!financingInfo || !financingInfo.hasFinancing) {
         return null

@@ -28,7 +28,7 @@ export default function CheckoutPaymentReview({
                 const parsed = JSON.parse(stored)
                 // Only use if it's for the same cart
                 if (parsed.cart_id === cart?.id) {
-                    console.log("Loaded MercadoPago card data from sessionStorage:", parsed)
+
                     setMercadoPagoCardData(parsed)
                     // Update financing context
                     updateFinancingFromCardData(parsed)
@@ -45,7 +45,7 @@ export default function CheckoutPaymentReview({
 
     // Update financing context from card data
     const updateFinancingFromCardData = (cardData: MercadoPagoCardData | null) => {
-        console.log("updateFinancingFromCardData called with:", cardData)
+
         if (cardData?.transaction_amount && cardData.installments) {
             const installments = cardData.installments || 1
             const hasMultipleInstallments = installments > 1
@@ -67,21 +67,17 @@ export default function CheckoutPaymentReview({
                 installmentAmount: cardData.installment_amount || (totalFinanced / installments),
                 paymentType: cardData.payment_type_id || 'credit_card',
             }
-            console.log("Setting financing info:", financingInfo)
+
             setFinancingInfo(financingInfo)
         } else {
-            console.log("Clearing financing info - cardData incomplete:", {
-                hasCardData: !!cardData,
-                total_financed_amount: cardData?.total_financed_amount,
-                transaction_amount: cardData?.transaction_amount
-            })
+
             clearFinancingInfo()
         }
     }
 
     // Handle card data change - also save to sessionStorage
     const handleMercadoPagoCardDataChange = (cardData: MercadoPagoCardData | null) => {
-        console.log("Setting MercadoPago card data:", cardData)
+
         setMercadoPagoCardData(cardData)
 
         if (cardData) {

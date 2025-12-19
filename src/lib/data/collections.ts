@@ -40,8 +40,6 @@ export const listCollections = async (
       }
     )
     .then(({ collections }) => {
-      console.log('listCollections - Fetched collections:', collections?.length || 0)
-      console.log('listCollections - Collections:', collections)
       return { collections, count: collections.length }
     })
 }

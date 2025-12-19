@@ -39,12 +39,12 @@ export function FinancingProvider({ children }: { children: ReactNode }) {
     }, [])
 
     const setFinancingInfo = (info: FinancingInfo) => {
-        console.log("FinancingContext - setFinancingInfo called with:", info)
+
         setFinancingInfoState(info)
         if (info) {
             try {
                 sessionStorage.setItem(FINANCING_STORAGE_KEY, JSON.stringify(info))
-                console.log("FinancingContext - saved to sessionStorage")
+
             } catch (e) {
                 console.error("Error saving financing info:", e)
             }

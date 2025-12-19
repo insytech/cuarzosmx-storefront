@@ -23,7 +23,6 @@ export default async function ProductRail({
   })
 
   if (!pricedProducts || pricedProducts.length === 0) {
-    console.log('ProductRail - No products found for collection:', collection.title)
     return null
   }
 

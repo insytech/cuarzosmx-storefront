@@ -219,7 +219,7 @@ const Payment = ({
                         paymentInfoMap={paymentInfoMap}
                         cart={cart}
                         onCardDataReady={(cardData) => {
-                          console.log("Datos de tarjeta listos:", cardData)
+
                           setCardComplete(true)
                           setCardBrand(cardData.payment_method_id?.toUpperCase() || "Tarjeta")
                           // Notify parent component about card data
@@ -255,7 +255,7 @@ const Payment = ({
                     paymentInfoMap={paymentInfoMap}
                     cart={cart}
                     onPaymentSuccess={() => {
-                      console.log("Mercado Crédito payment initiated")
+
                     }}
                   />
                 )}

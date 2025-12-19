@@ -36,7 +36,6 @@ const ShippingDetails = async ({ order }: ShippingDetailsProps) => {
       }
     } catch (e) {
       // Silenciar error, simplemente no mostramos la info
-      console.log("[ShippingDetails] Could not fetch provider info")
     }
   }
 

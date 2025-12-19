@@ -144,7 +144,6 @@ export const MercadoPagoContainer = ({
         }
 
         const data = await response.json()
-        console.log('MercadoPago preference created:', data)
         setPreferenceId(data.preference_id)
       } catch (err: any) {
         console.error('Error creating MercadoPago preference:', err)
@@ -199,7 +198,7 @@ export const MercadoPagoContainer = ({
             <div className="w-full max-w-[200px] mx-auto my-3">
               <Wallet
                 initialization={{ preferenceId }}
-                onReady={() => console.log('Mercado Pago Wallet is ready')}
+                onReady={() => { }}
                 onError={(walletError) => {
                   console.error('Mercado Pago Wallet error:', walletError)
                   setError("Error al cargar el botón de Mercado Pago")
@@ -417,7 +416,7 @@ export const MercadoPagoCardContainer = ({
         throw new Error(result.message || result.error || "Error procesando el pago")
       }
 
-      console.log("Pago exitoso:", result)
+
       setCardComplete(true)
 
       if (onPaymentSuccess) {
@@ -504,17 +503,17 @@ export const MercadoPagoPaymentBrickContainer = ({
   const amount = useMemo(() => {
     if (!cart?.total) return 0
     // Debug: log the raw total to understand the format
-    console.log("Cart total raw value:", cart.total, "Type:", typeof cart.total)
+
     // If total is already in pesos (e.g., 400), use it directly
     // If total is in cents (e.g., 40000), divide by 100
     // MedusaJS v2 typically stores in cents
     const totalInPesos = cart.total > 10000 ? cart.total / 100 : cart.total
-    console.log("Amount for MercadoPago:", totalInPesos)
+
     return totalInPesos
   }, [cart?.total])
 
   const initialization = useMemo(() => {
-    console.log("CardPayment initialization:", { amount, email: cart?.email })
+
     return {
       amount,
       payer: {
@@ -539,7 +538,6 @@ export const MercadoPagoPaymentBrickContainer = ({
   }), [])
 
   const onReady = useCallback(() => {
-    console.log("CardPayment Brick is ready")
     setIsReady(true)
   }, [])
 
@@ -554,7 +552,7 @@ export const MercadoPagoPaymentBrickContainer = ({
     setError(null)
 
     try {
-      console.log("Card data tokenized - FULL formData:", JSON.stringify(formData, null, 2))
+
 
       const installments = formData.installments || 1
       const paymentMethodId = formData.payment_method_id
@@ -570,7 +568,6 @@ export const MercadoPagoPaymentBrickContainer = ({
       // Fetch installment info from our API (this tells us card type too)
       if (paymentMethodId) {
         try {
-          console.log("Fetching installment costs from API...")
           const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
           const response = await fetch(`${backendUrl}/store/mercadopago-installments`, {
             method: "POST",
@@ -587,7 +584,6 @@ export const MercadoPagoPaymentBrickContainer = ({
 
           if (response.ok) {
             const data = await response.json()
-            console.log("Installments API response:", data)
 
             availableInstallmentOptions = data.installment_options || []
 
@@ -595,7 +591,6 @@ export const MercadoPagoPaymentBrickContainer = ({
             // Debit cards typically only have 1 installment option
             if (availableInstallmentOptions.length === 1 && availableInstallmentOptions[0]?.installments === 1) {
               paymentType = 'debit_card'
-              console.log("Detected debit card - only 1 installment available")
             }
 
             // Find the selected installment option for financing info
@@ -607,7 +602,6 @@ export const MercadoPagoPaymentBrickContainer = ({
                 totalWithFinancing = selectedOption.total_amount
                 installmentAmount = selectedOption.installment_amount
                 financingCost = selectedOption.financing_cost
-                console.log("Found installment option from API:", selectedOption)
               }
             }
           } else {
@@ -619,14 +613,6 @@ export const MercadoPagoPaymentBrickContainer = ({
         }
       }
 
-      console.log("Final financing calculation:", {
-        originalAmount: amount,
-        totalWithFinancing,
-        installments,
-        installmentAmount,
-        financingCost,
-        paymentType
-      })
 
       const cardData = {
         token: formData.token,
@@ -648,8 +634,8 @@ export const MercadoPagoPaymentBrickContainer = ({
       }
 
       // Log formData keys to help debug what MercadoPago sends
-      console.log("formData keys:", Object.keys(formData))
-      console.log("Card data ready for review:", cardData)
+
+
 
       if (onCardDataReady) {
         onCardDataReady(cardData)
@@ -670,7 +656,7 @@ export const MercadoPagoPaymentBrickContainer = ({
 
   const handleError = useCallback((error: any) => {
     // Log error details for debugging
-    console.log("MercadoPago CardPayment error object:", JSON.stringify(error))
+
 
     // Get error message
     const errorMessage = error?.message || error?.cause?.[0]?.description || ""
@@ -691,7 +677,6 @@ export const MercadoPagoPaymentBrickContainer = ({
       internalErrors.some(e => errorMessage.includes(e))
 
     if (isInternalError) {
-      console.log("Ignoring internal CardPayment brick error:", errorMessage)
       return
     }
 
@@ -704,13 +689,11 @@ export const MercadoPagoPaymentBrickContainer = ({
 
   // Handler for bin changes - captures installment options when card number is entered
   const handleBinChange = useCallback((binData: any) => {
-    console.log("onBinChange callback data:", JSON.stringify(binData, null, 2))
 
     // MercadoPago returns installment options with the bin data
     // Each option has: installments, installment_amount, total_amount
     if (binData?.payerCosts || binData?.payer_costs) {
       const payerCosts = binData.payerCosts || binData.payer_costs
-      console.log("Installment options received:", payerCosts)
       setInstallmentOptions(payerCosts)
     }
   }, [])
@@ -824,7 +807,6 @@ export const MercadoCreditoContainer = ({
         }
 
         const data = await response.json()
-        console.log('MercadoPago Credits preference created:', data)
         setPreferenceId(data.preference_id)
       } catch (err: any) {
         console.error('Error creating MercadoPago Credits preference:', err)
@@ -897,7 +879,7 @@ export const MercadoCreditoContainer = ({
                     preferenceId,
                     redirectMode: 'self'
                   }}
-                  onReady={() => console.log('Mercado Crédito Wallet is ready')}
+                  onReady={() => { }}
                   onError={(walletError) => {
                     console.error('Mercado Crédito Wallet error:', walletError)
                     setError("Error al cargar el botón de Mercado Crédito")
