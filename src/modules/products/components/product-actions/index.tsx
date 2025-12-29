@@ -15,6 +15,7 @@ type ProductActionsProps = {
   region: HttpTypes.StoreRegion
   disabled?: boolean
   cart?: HttpTypes.StoreCart | null
+  onVariantChange?: (variantId: string | undefined) => void
 }
 
 const optionsAsKeymap = (
@@ -30,6 +31,7 @@ export default function ProductActions({
   product,
   disabled,
   cart,
+  onVariantChange,
 }: ProductActionsProps) {
   const [options, setOptions] = useState<Record<string, string | undefined>>({})
   const [isAdding, setIsAdding] = useState(false)
@@ -54,6 +56,19 @@ export default function ProductActions({
       return isEqual(variantOptions, options)
     })
   }, [product.variants, options])
+
+  // Notify parent and gallery when variant changes
+  useEffect(() => {
+    onVariantChange?.(selectedVariant?.id)
+    // Also dispatch a custom event for the gallery component
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("variant-change", {
+          detail: { variantId: selectedVariant?.id }
+        })
+      )
+    }
+  }, [selectedVariant?.id, onVariantChange])
 
   // update the options when a variant is selected
   const setOptionValue = (optionId: string, value: string) => {

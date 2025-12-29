@@ -63,6 +63,11 @@ const nextConfig = {
         protocol: "https",
         hostname: "cdn.shopify.com",
       },
+      // Cloudflare R2 storage
+      {
+        protocol: "https",
+        hostname: "*.r2.dev",
+      },
       // WordPress legacy media from previous site
       {
         protocol: "https",
