@@ -66,9 +66,7 @@ export default function ProductPrice({
       )}
 
       {/* Tax info */}
-      <p className="text-xs text-gray-500 mt-1">
-        IVA incluido
-      </p>
+
     </div>
   )
 }

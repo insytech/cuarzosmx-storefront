@@ -135,7 +135,7 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
             {convertToLocale({ amount: total ?? 0, currency_code })}
           </span>
         </div>
-        <p className="text-xs text-gray-500 text-right mt-1">IVA incluido</p>
+
       </div>
     </div>
   )
