@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Accordion from "./accordion"
 import { HttpTypes } from "@medusajs/types"
 
@@ -59,14 +60,34 @@ const DescriptionTab = ({ description }: { description: string }) => {
 }
 
 const ProductInfoTab = ({ product }: ProductTabsProps) => {
+  const [currentVariantId, setCurrentVariantId] = useState<string | undefined>()
+
+  // Listen for variant change events
+  useEffect(() => {
+    const handleVariantChange = (event: CustomEvent<{ variantId: string | undefined }>) => {
+      setCurrentVariantId(event.detail.variantId)
+    }
+
+    window.addEventListener("variant-change", handleVariantChange as EventListener)
+    return () => {
+      window.removeEventListener("variant-change", handleVariantChange as EventListener)
+    }
+  }, [])
+
+  // Find the selected variant
+  const selectedVariant = product.variants?.find(v => v.id === currentVariantId)
+
+  // Get the material: prioritize variant material, fallback to product material
+  const displayMaterial = selectedVariant?.material || product.material
+
   return (
     <div className="py-4 px-1">
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-3">
-          {product.material && (
+          {displayMaterial && (
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Material</span>
-              <span className="text-sm font-medium text-gray-800">{product.material}</span>
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Material & Significado</span>
+              <span className="text-sm font-medium text-gray-800">{displayMaterial}</span>
             </div>
           )}
           {product.origin_country && (
@@ -99,7 +120,7 @@ const ProductInfoTab = ({ product }: ProductTabsProps) => {
           )}
         </div>
       </div>
-      {!product.material && !product.origin_country && !product.type && !product.weight && (
+      {!displayMaterial && !product.origin_country && !product.type && !product.weight && (
         <p className="text-sm text-gray-500 italic">
           No hay información adicional disponible para este producto.
         </p>
