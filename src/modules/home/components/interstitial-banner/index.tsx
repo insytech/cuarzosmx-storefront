@@ -73,10 +73,6 @@ export default async function InterstitialBanner() {
                                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 loading="lazy"
                             />
-                            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-300" />
-                            <span className="relative z-10 text-white text-lg font-bold tracking-wide text-center drop-shadow-md select-none">
-                                {signo.nombre}
-                            </span>
                         </a>
                     ))}
                 </div>
