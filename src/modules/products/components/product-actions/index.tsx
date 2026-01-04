@@ -135,6 +135,26 @@ export default function ProductActions({
   const actionsRef = useRef<HTMLDivElement>(null)
   const inView = useIntersection(actionsRef, "0px")
 
+  // Track if related products section is visible
+  const [relatedInView, setRelatedInView] = useState(false)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setRelatedInView(entry.isIntersecting)
+      },
+      { threshold: 0.1, rootMargin: '0px 0px 50px 0px' }
+    )
+
+    const relatedSection = document.querySelector('[data-testid="related-products-container"]')
+    const footer = document.querySelector('footer')
+
+    if (relatedSection) observer.observe(relatedSection)
+    if (footer) observer.observe(footer)
+
+    return () => observer.disconnect()
+  }, [])
+
   // Increment quantity (respecting max)
   const incrementQuantity = () => {
     if (canAddUnlimited || quantity < maxQuantity) {
@@ -321,7 +341,7 @@ export default function ProductActions({
           inStock={inStock}
           handleAddToCart={handleAddToCart}
           isAdding={isAdding}
-          show={!inView}
+          show={!inView && !relatedInView}
           optionsDisabled={!!disabled || isAdding}
         />
       </div>

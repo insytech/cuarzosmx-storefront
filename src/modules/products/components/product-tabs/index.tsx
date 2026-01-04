@@ -9,6 +9,16 @@ type ProductTabsProps = {
 }
 
 const ProductTabs = ({ product }: ProductTabsProps) => {
+  // Check if product has info to display (material, metadata from any variant, weight, etc.)
+  const hasProductInfo = Boolean(
+    product.material ||
+    product.origin_country ||
+    product.type ||
+    product.weight ||
+    (product.length && product.width && product.height) ||
+    product.variants?.some(v => v.material || (v.metadata as any)?.significado)
+  )
+
   const tabs = [
     // Solo mostrar tab de descripción si el producto tiene descripción
     ...(product.description ? [{
@@ -25,12 +35,14 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
     },
   ]
 
-  // El tab por defecto es Descripción si existe, sino Información del Producto
-  const defaultTab = product.description ? "Descripción" : "Información del Producto"
+  // Build default expanded tabs
+  const defaultTabs: string[] = []
+  if (product.description) defaultTabs.push("Descripción")
+  if (hasProductInfo) defaultTabs.push("Información del Producto")
 
   return (
     <div className="w-full border border-gray-200 rounded-xl overflow-hidden bg-white">
-      <Accordion type="multiple" defaultValue={[defaultTab]}>
+      <Accordion type="multiple" defaultValue={defaultTabs}>
         {tabs.map((tab, i) => (
           <Accordion.Item
             key={i}
@@ -48,7 +60,7 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
 
 const DescriptionTab = ({ description }: { description: string }) => {
   return (
-    <div className="py-4 px-1">
+    <div className="py-6 px-4">
       <p
         className="text-base text-gray-600 leading-relaxed whitespace-pre-line"
         data-testid="product-description"
@@ -60,12 +72,24 @@ const DescriptionTab = ({ description }: { description: string }) => {
 }
 
 const ProductInfoTab = ({ product }: ProductTabsProps) => {
-  const [currentVariantId, setCurrentVariantId] = useState<string | undefined>()
+  const [currentVariantId, setCurrentVariantId] = useState<string | undefined>(undefined)
+  const [isMounted, setIsMounted] = useState(false)
 
-  // Listen for variant change events
+  // Listen for variant change events and persist to sessionStorage
   useEffect(() => {
+    setIsMounted(true)
+
+    // Initial check from sessionStorage
+    const stored = sessionStorage.getItem('selected-variant-id')
+    if (stored) {
+      setCurrentVariantId(stored)
+    }
+
     const handleVariantChange = (event: CustomEvent<{ variantId: string | undefined }>) => {
       setCurrentVariantId(event.detail.variantId)
+      if (event.detail.variantId) {
+        sessionStorage.setItem('selected-variant-id', event.detail.variantId)
+      }
     }
 
     window.addEventListener("variant-change", handleVariantChange as EventListener)
@@ -77,50 +101,104 @@ const ProductInfoTab = ({ product }: ProductTabsProps) => {
   // Find the selected variant
   const selectedVariant = product.variants?.find(v => v.id === currentVariantId)
 
-  // Get the material: prioritize variant material, fallback to product material
-  const displayMaterial = selectedVariant?.material || product.material
+  // Get metadata from variant if available
+  const variantMetadata = selectedVariant?.metadata as {
+    significado?: string
+    propiedades?: string
+    chakra?: string
+  } | null | undefined
+
+  // Material: variant material > product material (Wait for mount to show variant-specific data)
+  const displayMaterial = isMounted && selectedVariant?.material
+    ? selectedVariant.material
+    : product.material
+
+  // Additional info only after mount to avoid mismatch
+  const displaySignificado = isMounted ? variantMetadata?.significado : null
+  const displayPropiedades = isMounted ? variantMetadata?.propiedades : null
+  const displayChakra = isMounted ? variantMetadata?.chakra : null
 
   return (
-    <div className="py-4 px-1">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-3">
-          {displayMaterial && (
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Material & Significado</span>
-              <span className="text-sm font-medium text-gray-800">{displayMaterial}</span>
+    <div className="py-6 px-4">
+      <div className="flex flex-col gap-6">
+        {/* Material section */}
+        {displayMaterial && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">Material</span>
+            <span className="text-sm text-gray-800">{displayMaterial}</span>
+          </div>
+        )}
+
+        {/* Significado section - from metadata */}
+        {displaySignificado && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">Significado</span>
+            <span className="text-sm text-gray-800 whitespace-pre-line leading-relaxed">{displaySignificado}</span>
+          </div>
+        )}
+
+        {/* Propiedades section */}
+        {displayPropiedades && (
+          <div className="flex flex-col gap-2">
+            <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">Propiedades</span>
+            <div className="flex flex-wrap gap-2">
+              {displayPropiedades.split(",").map((prop, index) => (
+                <span
+                  key={index}
+                  className="text-xs bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full font-medium"
+                >
+                  {prop.trim()}
+                </span>
+              ))}
             </div>
-          )}
-          {product.origin_country && (
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">País de Origen</span>
-              <span className="text-sm font-medium text-gray-800">{product.origin_country}</span>
+          </div>
+        )}
+
+        {/* Chakra section */}
+        {displayChakra && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">Chakra</span>
+            <span className="text-sm text-gray-800">{displayChakra}</span>
+          </div>
+        )}
+
+        {/* Additional product info */}
+        {(product.origin_country || product.type || product.weight || (product.length && product.width && product.height)) && (
+          <div className="pt-4 border-t border-gray-100">
+            <div className="grid grid-cols-2 gap-4">
+              {product.origin_country && (
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">País de Origen</span>
+                  <span className="text-sm font-medium text-gray-800">{product.origin_country}</span>
+                </div>
+              )}
+              {product.type && (
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Tipo</span>
+                  <span className="text-sm font-medium text-gray-800">{product.type.value}</span>
+                </div>
+              )}
             </div>
-          )}
-          {product.type && (
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Tipo</span>
-              <span className="text-sm font-medium text-gray-800">{product.type.value}</span>
+            <div className="flex flex-col gap-3">
+              {product.weight && (
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Peso</span>
+                  <span className="text-sm font-medium text-gray-800">{product.weight} g</span>
+                </div>
+              )}
+              {product.length && product.width && product.height && (
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Dimensiones</span>
+                  <span className="text-sm font-medium text-gray-800">
+                    {product.length}L x {product.width}W x {product.height}H
+                  </span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <div className="flex flex-col gap-3">
-          {product.weight && (
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Peso</span>
-              <span className="text-sm font-medium text-gray-800">{product.weight} g</span>
-            </div>
-          )}
-          {product.length && product.width && product.height && (
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Dimensiones</span>
-              <span className="text-sm font-medium text-gray-800">
-                {product.length}L x {product.width}W x {product.height}H
-              </span>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-      {!displayMaterial && !product.origin_country && !product.type && !product.weight && (
+      {!displayMaterial && !displaySignificado && !product.origin_country && !product.type && !product.weight && (
         <p className="text-sm text-gray-500 italic">
           No hay información adicional disponible para este producto.
         </p>

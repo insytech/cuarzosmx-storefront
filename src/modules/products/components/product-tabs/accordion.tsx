@@ -19,9 +19,9 @@ type AccordionItemProps = AccordionPrimitive.AccordionItemProps & {
 
 type AccordionProps =
   | (AccordionPrimitive.AccordionSingleProps &
-      React.RefAttributes<HTMLDivElement>)
+    React.RefAttributes<HTMLDivElement>)
   | (AccordionPrimitive.AccordionMultipleProps &
-      React.RefAttributes<HTMLDivElement>)
+    React.RefAttributes<HTMLDivElement>)
 
 const Accordion: React.FC<AccordionProps> & {
   Item: React.FC<AccordionItemProps>
@@ -52,30 +52,28 @@ const Item: React.FC<AccordionItemProps> = ({
         className
       )}
     >
-      <AccordionPrimitive.Header className="px-1">
-        <div className="flex flex-col">
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Text className="text-ui-fg-subtle text-sm">{title}</Text>
-            </div>
-            <AccordionPrimitive.Trigger>
+      <AccordionPrimitive.Header className="px-4">
+        <AccordionPrimitive.Trigger className="w-full">
+          <div className="flex flex-col">
+            <div className="flex w-full items-center justify-between cursor-pointer hover:opacity-80 transition-opacity">
+              <div className="flex items-center gap-4">
+                <Text className="text-gray-800 text-base font-medium">{title}</Text>
+              </div>
               {customTrigger || <MorphingTrigger />}
-            </AccordionPrimitive.Trigger>
+            </div>
+            {subtitle && (
+              <Text as="span" size="small" className="mt-1 text-left">
+                {subtitle}
+              </Text>
+            )}
           </div>
-          {subtitle && (
-            <Text as="span" size="small" className="mt-1">
-              {subtitle}
-            </Text>
-          )}
-        </div>
+        </AccordionPrimitive.Trigger>
       </AccordionPrimitive.Header>
       <AccordionPrimitive.Content
         forceMount={forceMountContent}
-        className={clx(
-          "radix-state-closed:animate-accordion-close radix-state-open:animate-accordion-open radix-state-closed:pointer-events-none px-1"
-        )}
+        className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
       >
-        <div className="inter-base-regular group-radix-state-closed:animate-accordion-close">
+        <div className="pb-4">
           {description && <Text>{description}</Text>}
           <div className="w-full">{children}</div>
         </div>

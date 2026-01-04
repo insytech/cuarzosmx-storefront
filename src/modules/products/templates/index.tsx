@@ -52,7 +52,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
 
       {/* Breadcrumb */}
       <div className="bg-gray-50 border-b border-gray-100">
-        <div className="content-container max-w-7xl mx-auto px-4 lg:px-8 py-4">
+        <div className="content-container max-w-7xl mx-auto py-4">
           <nav className="flex items-center gap-2 text-sm text-gray-500">
             <LocalizedClientLink href="/" className="hover:text-main-color transition-colors">
               Inicio
@@ -82,7 +82,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
 
       {/* Main Product Section */}
       <div
-        className="content-container max-w-7xl mx-auto px-4 lg:px-8 py-8 md:py-12"
+        className="content-container max-w-7xl mx-auto py-8 md:py-12"
         data-testid="product-container"
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
@@ -113,31 +113,33 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 </Suspense>
               </div>
 
-              {/* Trust Badges */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="flex flex-col items-center text-center p-4 bg-white border border-gray-100 rounded-xl">
-                  <div className="w-10 h-10 bg-main-color-light rounded-full flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-main-color" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              {/* Trust Badges - Responsive */}
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:justify-center sm:gap-6 py-3 px-3 sm:px-4 bg-gradient-to-r from-purple-50 via-white to-purple-50 rounded-xl border border-purple-100">
+                <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-center sm:text-left">
+                  <div className="w-6 h-6 bg-main-color/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3.5 h-3.5 text-main-color" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span className="text-xs font-medium text-gray-700">100% Original</span>
+                  <span className="text-[10px] sm:text-xs font-medium text-gray-700">100% Original</span>
                 </div>
-                <div className="flex flex-col items-center text-center p-4 bg-white border border-gray-100 rounded-xl">
-                  <div className="w-10 h-10 bg-main-color-light rounded-full flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-main-color" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <div className="hidden sm:block w-px h-4 bg-purple-200" />
+                <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-center sm:text-left">
+                  <div className="w-6 h-6 bg-main-color/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3.5 h-3.5 text-main-color" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
-                  <span className="text-xs font-medium text-gray-700">Envío Seguro</span>
+                  <span className="text-[10px] sm:text-xs font-medium text-gray-700">Envío Seguro</span>
                 </div>
-                <div className="flex flex-col items-center text-center p-4 bg-white border border-gray-100 rounded-xl">
-                  <div className="w-10 h-10 bg-main-color-light rounded-full flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-main-color" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <div className="hidden sm:block w-px h-4 bg-purple-200" />
+                <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-center sm:text-left">
+                  <div className="w-6 h-6 bg-main-color/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3.5 h-3.5 text-main-color" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
-                  <span className="text-xs font-medium text-gray-700">Pago Seguro</span>
+                  <span className="text-[10px] sm:text-xs font-medium text-gray-700">Pago Seguro</span>
                 </div>
               </div>
 
