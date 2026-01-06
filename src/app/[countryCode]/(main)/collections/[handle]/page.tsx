@@ -59,20 +59,26 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     notFound()
   }
 
-  const description = `Descubre la colección ${collection.title}. Cristales, cuarzos y joyería artesanal de alta calidad en CuarzosMX.`
+  // Obtener metadatos SEO personalizados de la colección
+  const collectionMetadata = collection.metadata as Record<string, string> | null
+  const seoTitle = collectionMetadata?.seo_title || collection.title
+  const seoDescription = collectionMetadata?.seo_description ||
+    `Descubre la colección ${collection.title}. Cristales, cuarzos y joyería artesanal de alta calidad en CuarzosMX.`
+  const seoKeywords = collectionMetadata?.seo_keywords
 
   return {
-    title: collection.title,
-    description,
+    title: seoTitle,
+    description: seoDescription,
+    keywords: seoKeywords ? seoKeywords.split(',').map(k => k.trim()) : undefined,
     openGraph: {
-      title: `${collection.title} | CuarzosMX`,
-      description,
+      title: `${seoTitle} | CuarzosMX`,
+      description: seoDescription,
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${collection.title} | CuarzosMX`,
-      description,
+      title: `${seoTitle} | CuarzosMX`,
+      description: seoDescription,
     },
     alternates: {
       canonical: `/collections/${params.handle}`,

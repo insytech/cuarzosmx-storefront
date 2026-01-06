@@ -49,22 +49,27 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   try {
     const productCategory = await getCategoryByHandle(params.category)
 
-    const title = productCategory.name
-    const description = productCategory.description ??
+    // Obtener metadatos SEO personalizados de la categoría
+    const categoryMetadata = productCategory.metadata as Record<string, string> | null
+    const seoTitle = categoryMetadata?.seo_title || productCategory.name
+    const seoDescription = categoryMetadata?.seo_description ||
+      productCategory.description ||
       `Explora nuestra colección de ${productCategory.name}. Cristales, cuarzos y joyería artesanal de alta calidad en CuarzosMX.`
+    const seoKeywords = categoryMetadata?.seo_keywords
 
     return {
-      title: title,
-      description,
+      title: seoTitle,
+      description: seoDescription,
+      keywords: seoKeywords ? seoKeywords.split(',').map(k => k.trim()) : undefined,
       openGraph: {
-        title: `${title} | CuarzosMX`,
-        description,
+        title: `${seoTitle} | CuarzosMX`,
+        description: seoDescription,
         type: "website",
       },
       twitter: {
         card: "summary_large_image",
-        title: `${title} | CuarzosMX`,
-        description,
+        title: `${seoTitle} | CuarzosMX`,
+        description: seoDescription,
       },
       alternates: {
         canonical: `/categories/${params.category.join("/")}`,
