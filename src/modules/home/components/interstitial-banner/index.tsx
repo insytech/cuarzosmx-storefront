@@ -59,12 +59,12 @@ export default async function InterstitialBanner() {
                 <h2 className="font-serenity text-center text-3xl md:text-5xl font-bold text-gray-800 mb-12">
                     Cuarzos Según tu Signo
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8 justify-items-center">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 sm:gap-4 md:gap-6 justify-items-center">
                     {signos.map((signo) => (
                         <a
                             key={signo.handle}
                             href={`/collections/${signo.handle}`}
-                            className="relative w-36 h-36 rounded-lg shadow-lg overflow-hidden flex items-center justify-center group focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
+                            className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-lg shadow-lg overflow-hidden flex items-center justify-center group focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
                             tabIndex={0}
                         >
                             <img

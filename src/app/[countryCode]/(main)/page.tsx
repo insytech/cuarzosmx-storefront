@@ -9,7 +9,6 @@ import LifestyleBlock from "@modules/home/components/lifestyle-block"
 import CategoryGrid from "@modules/home/components/category-grid"
 import { getRegion } from "@lib/data/regions"
 import {
-  getFeaturedProducts,
   getOnSaleProducts,
   getTrendingProducts,
 } from "@lib/data/home-products"
@@ -42,36 +41,25 @@ export default async function Home(props: {
     return null
   }
 
-  // Obtener productos para cada sección en paralelo
-  const [featuredSection, onSaleSection, trendingSection] =
+  // Obtener productos para cada sección en paralelo (sin Featured Products)
+  const [onSaleSection, trendingSection] =
     await Promise.all([
-      getFeaturedProducts(countryCode, 4),
       getOnSaleProducts(countryCode, 4),
       getTrendingProducts(countryCode, 4),
     ])
 
   return (
     <>
-      {/* 2. Sección Hero */}
+      {/* 1. Sección Hero */}
       <HeroBlock />
 
-      {/* 2.1. Banner de Características */}
+      {/* 2. Banner de Características */}
       <FeaturesBanner />
 
-      {/* 3. Productos Destacados */}
-      <ProductCarousel
-        title={featuredSection.title}
-        subtitle={featuredSection.subtitle}
-        products={featuredSection.products}
-        region={region}
-        viewAllLink={featuredSection.viewAllLink}
-      />
-
-
-      {/* 7. Grilla de Categorías */}
+      {/* 3. Explora Nuestras Categorías (movido arriba, antes había Productos Destacados) */}
       <CategoryGrid />
 
-      {/* 5. Ofertas Especiales (solo se muestra si hay productos con descuento) */}
+      {/* 4. Ofertas Especiales */}
       <ProductCarousel
         title={onSaleSection.title}
         subtitle={onSaleSection.subtitle}
@@ -80,16 +68,16 @@ export default async function Home(props: {
         viewAllLink={onSaleSection.viewAllLink}
       />
 
-      {/* 6. Banner con Texto Superpuesto */}
+      {/* 5. Encuentra tu Intención */}
       <LifestyleBlock />
 
-      {/* 4. Banner CTA */}
+      {/* 6. Cuarzos Según tu Signo */}
       <InterstitialBanner />
 
-      {/* 8. Bloque Editorial */}
+      {/* 7. Bloque Editorial */}
       <EditorialBlock />
 
-      {/* 9. En Tendencia */}
+      {/* 8. En Tendencia */}
       <ProductCarousel
         title={trendingSection.title}
         subtitle={trendingSection.subtitle}
@@ -100,3 +88,4 @@ export default async function Home(props: {
     </>
   )
 }
+

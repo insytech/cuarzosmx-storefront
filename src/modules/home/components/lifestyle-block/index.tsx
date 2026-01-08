@@ -1,7 +1,7 @@
 import { Button, Heading } from "@medusajs/ui"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
-// Default intentions WITHOUT Joyería (moved to categories)
+// Default intentions - Paz removed per user request
 const defaultIntenciones = [
     {
         handle: "proteccion",
@@ -25,13 +25,6 @@ const defaultIntenciones = [
         href: "/categories/abundancia"
     },
     {
-        handle: "paz",
-        nombre: "Paz",
-        descripcion: "Calma y serenidad interior",
-        imagen: "/categorias/PAZ.webp",
-        href: "/categories/puntas-y-chakras"
-    },
-    {
         handle: "salud",
         nombre: "Salud",
         descripcion: "Bienestar físico y mental",
@@ -42,7 +35,7 @@ const defaultIntenciones = [
 
 // Default lifestyle content
 const defaultLifestyle = {
-    title: "Vive en Armonía con la Energía de los Cuarzos",
+    title: "Vive en Armonía con la\nEnergía de los Cuarzos",
     subtitle: "Cada piedra guarda un propósito especial para acompañarte en tu camino espiritual",
     backgroundImage: "/inicio-1.webp"
 }
@@ -123,7 +116,7 @@ export default async function LifestyleBlock() {
                         </span>
                         <Heading
                             level="h2"
-                            className="font-serenity text-3xl md:text-5xl lg:text-6xl font-bold mb-6 text-white drop-shadow-2xl max-w-4xl"
+                            className="font-serenity text-3xl md:text-5xl lg:text-6xl font-bold mb-6 text-white drop-shadow-2xl max-w-4xl whitespace-pre-line leading-tight md:leading-normal"
                         >
                             {title}
                         </Heading>
@@ -145,9 +138,9 @@ export default async function LifestyleBlock() {
                     <div className="text-center mb-12">
                         <Heading
                             level="h2"
-                            className="font-serenity text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4"
+                            className="font-serenity text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 leading-tight md:leading-normal"
                         >
-                            Encuentra tu Intención
+                            Encuentra tu<br className="md:hidden" /> Intención
                         </Heading>
                         <div className="flex justify-center mb-4">
                             <div className="h-1 w-16 bg-main-color rounded-full" />
@@ -156,7 +149,7 @@ export default async function LifestyleBlock() {
                             Elige el propósito que resuena con tu alma y descubre los cuarzos perfectos para ti
                         </p>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                         {intenciones.map((intencion) => (
                             <LocalizedClientLink
                                 key={intencion.handle}

@@ -42,14 +42,8 @@ export default function ProductCarousel({
                     </p>
                 </div>
 
-                {/* Grid de productos */}
-                <div
-                    className="grid gap-8"
-                    style={{
-                        gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-                        justifyItems: products.length === 1 ? "center" : undefined,
-                    }}
-                >
+                {/* Grid de productos - 2 columnas en móvil, hasta 4 en desktop */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                     {products.slice(0, 4).map((product) => (
                         <ProductPreview
                             key={product.id}

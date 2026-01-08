@@ -1,6 +1,54 @@
 import { Heading } from "@medusajs/ui"
 
-export default function EditorialBlock() {
+// Default editorial images with fallback
+const defaultEditorialImages = {
+    main: "/block/cuarzo-amatista-piedras-preciosas-3.webp",
+    small_1: "/block/cuarzo-amatista-piedras-preciosas-1.webp",
+    small_2: "/block/cuarzo-amatista-piedras-preciosas-2.webp",
+}
+
+interface EditorialBanner {
+    position: string
+    image_url?: string
+    alt_text?: string
+}
+
+async function fetchEditorialBanners(): Promise<EditorialBanner[]> {
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+        const response = await fetch(`${baseUrl}/store/banners/sections`, {
+            next: { revalidate: 60 },
+            headers: {
+                "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+            },
+        })
+
+        if (response.ok) {
+            const data = await response.json()
+            return data.editorial || []
+        }
+    } catch (error) {
+        console.error("Error fetching editorial banners:", error)
+    }
+    return []
+}
+
+export default async function EditorialBlock() {
+    const editorialBanners = await fetchEditorialBanners()
+
+    // Get images from API or use defaults
+    const mainBanner = editorialBanners.find(b => b.position === 'main')
+    const small1Banner = editorialBanners.find(b => b.position === 'small_1')
+    const small2Banner = editorialBanners.find(b => b.position === 'small_2')
+
+    const mainImage = mainBanner?.image_url || defaultEditorialImages.main
+    const small1Image = small1Banner?.image_url || defaultEditorialImages.small_1
+    const small2Image = small2Banner?.image_url || defaultEditorialImages.small_2
+
+    const mainAlt = mainBanner?.alt_text || "Cuarzo principal"
+    const small1Alt = small1Banner?.alt_text || "Cuarzo verde"
+    const small2Alt = small2Banner?.alt_text || "Cuarzo negro"
+
     return (
         <section className="w-full py-16 bg-white relative overflow-hidden">
             <style>{`
@@ -58,14 +106,11 @@ export default function EditorialBlock() {
 
                     {/* Columna Derecha - Fondo decorativo y Imágenes */}
                     <div className="relative flex items-center justify-center min-h-[480px] md:min-h-[520px] px-8">
-                        {/* Fondo blanco con sombra suave */}
-                        {/* <div className="absolute inset-0 rounded-3xl bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] z-5" /> */}
-
                         {/* Círculo principal grande */}
                         <div className="relative z-20 rounded-full border-[16px] border-white shadow-2xl w-[420px] h-[420px] flex items-center justify-center flex-shrink-0 float-animation float-animation-delay-1">
                             <img
-                                src="/block/cuarzo-amatista-piedras-preciosas-3.webp"
-                                alt="Cuarzo principal"
+                                src={mainImage}
+                                alt={mainAlt}
                                 className="object-cover w-[450px] h-[450px] rounded-full"
                             />
                         </div>
@@ -74,8 +119,8 @@ export default function EditorialBlock() {
                         <div className="absolute top-20 -left-4 md:left-20 z-30 flex items-center justify-center float-animation float-animation-delay-2">
                             <div className="rounded-full border-[3px] border-white shadow-xl w-[150px] h-[150px] flex items-center justify-center">
                                 <img
-                                    src="/block/cuarzo-amatista-piedras-preciosas-1.webp"
-                                    alt="Cuarzo verde"
+                                    src={small1Image}
+                                    alt={small1Alt}
                                     className="object-cover w-[150px] h-[150px] rounded-full"
                                 />
                             </div>
@@ -85,8 +130,8 @@ export default function EditorialBlock() {
                         <div className="absolute bottom-20 -right-4 md:right-20 z-30 flex items-center justify-center float-animation float-animation-delay-2">
                             <div className="rounded-full border-[3px] border-white shadow-xl w-[150px] h-[150px]  flex items-center justify-center">
                                 <img
-                                    src="/block/cuarzo-amatista-piedras-preciosas-2.webp"
-                                    alt="Cuarzo negro"
+                                    src={small2Image}
+                                    alt={small2Alt}
                                     className="object-cover w-[150px] h-[150px] rounded-full"
                                 />
                             </div>

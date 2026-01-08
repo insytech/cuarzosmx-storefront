@@ -31,7 +31,7 @@ const processUrl = (url: string): { href: string; isExternal: boolean } => {
         const hostname = urlObj.hostname.toLowerCase()
 
         // Verificar si es un dominio interno
-        const isInternalDomain = INTERNAL_DOMAINS.some(domain => 
+        const isInternalDomain = INTERNAL_DOMAINS.some(domain =>
             hostname === domain || hostname.endsWith(`.${domain}`)
         )
 
@@ -57,31 +57,31 @@ const processUrl = (url: string): { href: string; isExternal: boolean } => {
 }
 
 // Componente helper para manejar links internos y externos
-const BannerLink = ({ 
-    href, 
-    children, 
-    className 
-}: { 
+const BannerLink = ({
+    href,
+    children,
+    className
+}: {
     href: string
     children: React.ReactNode
-    className?: string 
+    className?: string
 }) => {
     const { href: processedHref, isExternal } = processUrl(href)
 
     // Si es URL externa, usa <a> con target="_blank"
     if (isExternal) {
         return (
-            <a 
-                href={processedHref} 
-                target="_blank" 
-                rel="noopener noreferrer" 
+            <a
+                href={processedHref}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={className}
             >
                 {children}
             </a>
         )
     }
-    
+
     // Si es ruta interna, usa LocalizedClientLink
     return (
         <LocalizedClientLink href={processedHref} className={className}>
@@ -181,7 +181,7 @@ export default function HeroBlock() {
                             />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
                                 <span className="bg-white text-main-color-dark px-4 py-2 rounded-large shadow-lg hover:bg-gray-100 font-medium text-sm">
-                                    Comprar Ahora
+                                    Descubre Más
                                 </span>
                             </div>
                         </BannerLink>
@@ -205,7 +205,7 @@ export default function HeroBlock() {
                             />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
                                 <span className="bg-white text-main-color-dark px-4 py-2 rounded-large shadow-lg hover:bg-gray-100 font-medium text-sm">
-                                    Oferta Especial
+                                    Descubre Más
                                 </span>
                             </div>
                         </BannerLink>
@@ -253,7 +253,7 @@ export default function HeroBlock() {
                             />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 rounded-lg">
                                 <span className="bg-white text-main-color-dark px-4 py-2 rounded-large shadow-lg hover:bg-gray-100 font-medium text-sm">
-                                    Ver Detalles
+                                    Descubre Más
                                 </span>
                             </div>
                         </BannerLink>

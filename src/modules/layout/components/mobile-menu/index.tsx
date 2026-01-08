@@ -1,7 +1,7 @@
 "use client"
 
 import { Dialog, Transition } from "@headlessui/react"
-import { Fragment, useState } from "react"
+import { Fragment, useState, useEffect } from "react"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { HttpTypes } from "@medusajs/types"
 import SearchButton from "@modules/search/components/search-button"
@@ -11,75 +11,6 @@ type CategoryItem = {
     handle: string
     subcategories?: { name: string; handle: string }[]
 }
-
-const categories: CategoryItem[] = [
-    {
-        name: "Cuarzos Decorativos",
-        handle: "cuarzos-decorativos",
-        subcategories: [
-            { name: "Geodas", handle: "geodas" },
-            { name: "Drusas", handle: "drusas" },
-            { name: "Puntas Generador", handle: "puntas-generador" },
-        ],
-    },
-    {
-        name: "Cuarzos Por Kilo",
-        handle: "cuarzos-por-kilo",
-        subcategories: [
-            { name: "Cuarzo Cristal", handle: "cuarzo-cristal" },
-            { name: "Cuarzo Rosa", handle: "cuarzo-rosa" },
-            { name: "Amatista", handle: "amatista" },
-            { name: "Citrino", handle: "citrino" },
-            { name: "Obsidiana", handle: "obsidiana" },
-        ],
-    },
-    {
-        name: "Puntas y Chakras",
-        handle: "puntas-y-chakras",
-        subcategories: [
-            { name: "Puntas Pulidas", handle: "puntas-pulidas" },
-            { name: "Set de Chakras", handle: "set-de-chakras" },
-            { name: "Obeliscos", handle: "obeliscos" },
-        ],
-    },
-    {
-        name: "Protección",
-        handle: "proteccion",
-        subcategories: [
-            { name: "Obsidiana Negra", handle: "obsidiana-negra" },
-            { name: "Turmalina Negra", handle: "turmalina-negra" },
-            { name: "Ojo de Tigre", handle: "ojo-de-tigre" },
-        ],
-    },
-    {
-        name: "Amor y Armonía",
-        handle: "amor-y-armonia",
-        subcategories: [
-            { name: "Cuarzo Rosa", handle: "cuarzo-rosa-amor" },
-            { name: "Rodocrosita", handle: "rodocrosita" },
-            { name: "Aventurina Verde", handle: "aventurina-verde" },
-        ],
-    },
-    {
-        name: "Salud y Tranquilidad",
-        handle: "salud-y-tranquilidad",
-        subcategories: [
-            { name: "Amatista", handle: "amatista-salud" },
-            { name: "Cuarzo Cristal", handle: "cuarzo-cristal-salud" },
-            { name: "Selenita", handle: "selenita" },
-        ],
-    },
-    {
-        name: "Abundancia",
-        handle: "abundancia",
-        subcategories: [
-            { name: "Citrino", handle: "citrino-abundancia" },
-            { name: "Pirita", handle: "pirita" },
-            { name: "Jade Verde", handle: "jade-verde" },
-        ],
-    },
-    { name: "Joyería", handle: "joyeria" },
-]
 
 const menuItems = [
     { name: "Inicio", href: "/" },
@@ -94,10 +25,31 @@ type MobileMenuProps = {
     regions?: HttpTypes.StoreRegion[] | null
 }
 
+async function fetchCategories(): Promise<CategoryItem[]> {
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+        const response = await fetch(`${baseUrl}/store/categories`, {
+            headers: {
+                "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+            },
+        })
+
+        if (response.ok) {
+            const data = await response.json()
+            return data.categories || []
+        }
+    } catch (error) {
+        console.error("Error fetching categories:", error)
+    }
+    return []
+}
+
 export default function MobileMenu({ regions }: MobileMenuProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
     const [showCategories, setShowCategories] = useState(false)
+    const [categories, setCategories] = useState<CategoryItem[]>([])
+    const [loadingCategories, setLoadingCategories] = useState(false)
 
     const openMenu = () => setIsOpen(true)
     const closeMenu = () => {
@@ -109,6 +61,16 @@ export default function MobileMenu({ regions }: MobileMenuProps) {
     const toggleCategory = (handle: string) => {
         setExpandedCategory(expandedCategory === handle ? null : handle)
     }
+
+    // Load categories when categories view is opened
+    useEffect(() => {
+        if (showCategories && categories.length === 0 && !loadingCategories) {
+            setLoadingCategories(true)
+            fetchCategories()
+                .then(setCategories)
+                .finally(() => setLoadingCategories(false))
+        }
+    }, [showCategories, categories.length, loadingCategories])
 
     return (
         <>
@@ -251,72 +213,88 @@ export default function MobileMenu({ regions }: MobileMenuProps) {
                                             Categorías
                                         </h2>
 
-                                        {/* Categories List */}
-                                        <div className="space-y-2">
-                                            {categories.map((category) => (
-                                                <div key={category.handle}>
-                                                    {category.subcategories ? (
-                                                        <>
-                                                            <button
-                                                                onClick={() => toggleCategory(category.handle)}
-                                                                className="w-full flex items-center justify-between p-3 text-gray-700 hover:text-main-color hover:bg-gray-50 rounded-xl transition-colors"
-                                                            >
-                                                                <span className="font-medium">{category.name}</span>
-                                                                <svg
-                                                                    className={`w-5 h-5 transition-transform duration-200 ${expandedCategory === category.handle ? "rotate-180" : ""
-                                                                        }`}
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    strokeWidth={2}
-                                                                    viewBox="0 0 24 24"
-                                                                >
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                                                </svg>
-                                                            </button>
+                                        {/* Loading State */}
+                                        {loadingCategories && (
+                                            <div className="flex items-center justify-center py-8">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-main-color"></div>
+                                            </div>
+                                        )}
 
-                                                            {/* Subcategories */}
-                                                            <Transition
-                                                                show={expandedCategory === category.handle}
-                                                                enter="transition-all duration-200 ease-out"
-                                                                enterFrom="opacity-0 max-h-0"
-                                                                enterTo="opacity-100 max-h-96"
-                                                                leave="transition-all duration-150 ease-in"
-                                                                leaveFrom="opacity-100 max-h-96"
-                                                                leaveTo="opacity-0 max-h-0"
-                                                            >
-                                                                <div className="overflow-hidden ml-4 border-l-2 border-main-color-light pl-4 space-y-1">
-                                                                    <LocalizedClientLink
-                                                                        href={`/categories/${category.handle}`}
-                                                                        onClick={closeMenu}
-                                                                        className="block py-2 px-3 text-sm text-main-color font-medium hover:bg-main-color-light rounded-lg transition-colors"
+                                        {/* Categories List */}
+                                        {!loadingCategories && (
+                                            <div className="space-y-2">
+                                                {categories.map((category) => (
+                                                    <div key={category.handle}>
+                                                        {category.subcategories && category.subcategories.length > 0 ? (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => toggleCategory(category.handle)}
+                                                                    className="w-full flex items-center justify-between p-3 text-gray-700 hover:text-main-color hover:bg-gray-50 rounded-xl transition-colors"
+                                                                >
+                                                                    <span className="font-medium">{category.name}</span>
+                                                                    <svg
+                                                                        className={`w-5 h-5 transition-transform duration-200 ${expandedCategory === category.handle ? "rotate-180" : ""
+                                                                            }`}
+                                                                        fill="none"
+                                                                        stroke="currentColor"
+                                                                        strokeWidth={2}
+                                                                        viewBox="0 0 24 24"
                                                                     >
-                                                                        Ver todo en {category.name}
-                                                                    </LocalizedClientLink>
-                                                                    {category.subcategories.map((sub) => (
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                                                    </svg>
+                                                                </button>
+
+                                                                {/* Subcategories */}
+                                                                <Transition
+                                                                    show={expandedCategory === category.handle}
+                                                                    enter="transition-all duration-200 ease-out"
+                                                                    enterFrom="opacity-0 max-h-0"
+                                                                    enterTo="opacity-100 max-h-96"
+                                                                    leave="transition-all duration-150 ease-in"
+                                                                    leaveFrom="opacity-100 max-h-96"
+                                                                    leaveTo="opacity-0 max-h-0"
+                                                                >
+                                                                    <div className="overflow-hidden ml-4 border-l-2 border-main-color-light pl-4 space-y-1">
                                                                         <LocalizedClientLink
-                                                                            key={sub.handle}
-                                                                            href={`/categories/${category.handle}/${sub.handle}`}
+                                                                            href={`/categories/${category.handle}`}
                                                                             onClick={closeMenu}
-                                                                            className="block py-2 px-3 text-sm text-gray-600 hover:text-main-color hover:bg-gray-50 rounded-lg transition-colors"
+                                                                            className="block py-2 px-3 text-sm text-main-color font-medium hover:bg-main-color-light rounded-lg transition-colors"
                                                                         >
-                                                                            {sub.name}
+                                                                            Ver todo en {category.name}
                                                                         </LocalizedClientLink>
-                                                                    ))}
-                                                                </div>
-                                                            </Transition>
-                                                        </>
-                                                    ) : (
-                                                        <LocalizedClientLink
-                                                            href={`/categories/${category.handle}`}
-                                                            onClick={closeMenu}
-                                                            className="block p-3 text-gray-700 font-medium hover:text-main-color hover:bg-gray-50 rounded-xl transition-colors"
-                                                        >
-                                                            {category.name}
-                                                        </LocalizedClientLink>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
+                                                                        {category.subcategories.map((sub) => (
+                                                                            <LocalizedClientLink
+                                                                                key={sub.handle}
+                                                                                href={`/categories/${category.handle}/${sub.handle}`}
+                                                                                onClick={closeMenu}
+                                                                                className="block py-2 px-3 text-sm text-gray-600 hover:text-main-color hover:bg-gray-50 rounded-lg transition-colors"
+                                                                            >
+                                                                                {sub.name}
+                                                                            </LocalizedClientLink>
+                                                                        ))}
+                                                                    </div>
+                                                                </Transition>
+                                                            </>
+                                                        ) : (
+                                                            <LocalizedClientLink
+                                                                href={`/categories/${category.handle}`}
+                                                                onClick={closeMenu}
+                                                                className="block p-3 text-gray-700 font-medium hover:text-main-color hover:bg-gray-50 rounded-xl transition-colors"
+                                                            >
+                                                                {category.name}
+                                                            </LocalizedClientLink>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Empty State */}
+                                        {!loadingCategories && categories.length === 0 && (
+                                            <p className="text-center text-gray-500 py-8">
+                                                No se encontraron categorías
+                                            </p>
+                                        )}
                                     </div>
                                 )}
                             </div>

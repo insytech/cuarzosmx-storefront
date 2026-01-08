@@ -42,7 +42,7 @@ export default async function ProductPreview({
         <div className="flex flex-col gap-2 mt-4">
           {/* Nombre del producto */}
           <Text
-            className="text-black font-semibold text-base leading-snug line-clamp-2 group-hover:text-main-color transition-colors"
+            className="text-black font-semibold text-xs sm:text-sm md:text-base leading-snug line-clamp-2 group-hover:text-main-color transition-colors"
             data-testid="product-title"
           >
             {product.title}
@@ -51,16 +51,16 @@ export default async function ProductPreview({
           {/* Precio */}
           {cheapestPrice && (
             <div className="flex items-center">
-              <span className="text-main-color font-bold text-lg">
+              <span className="text-main-color font-bold text-sm sm:text-base md:text-lg">
                 <PreviewPrice price={cheapestPrice} />
               </span>
             </div>
           )}
 
-          {/* Pequeña descripción si existe */}
-          {product.description && (
-            <p className="text-main-color-dark text-xs line-clamp-1 opacity-70 mt-1">
-              {product.description}
+          {/* Subtítulo o descripción si existe */}
+          {(product.subtitle || product.description) && (
+            <p className="text-main-color-dark text-[10px] sm:text-xs line-clamp-1 opacity-70 mt-1">
+              {product.subtitle || product.description}
             </p>
           )}
         </div>
