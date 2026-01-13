@@ -86,7 +86,7 @@ export default function Footer() {
                   </div>
                 </a>
                 <a
-                  href="https://wa.me/524928690537"
+                  href="https://wa.me/524921277919"
                   target="_blank"
                   rel="noreferrer noopener"
                   aria-label="Contáctanos por WhatsApp"
@@ -379,7 +379,7 @@ export default function Footer() {
                     {/* WhatsApp */}
                     <li>
                       <a
-                        href="https://wa.me/524928690537"
+                        href="https://wa.me/524921277919"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hover:text-main-color-dark transition-colors duration-200 flex items-center gap-3"
@@ -390,7 +390,7 @@ export default function Footer() {
                           </svg>
                         </div>
                         <div>
-                          <span className="block text-main-color-dark font-medium">+52 492 869 0537</span>
+                          <span className="block text-main-color-dark font-medium">+52 492 127 7919</span>
                           <span className="text-xs text-main-color-dark/60">WhatsApp</span>
                         </div>
                       </a>
@@ -398,7 +398,7 @@ export default function Footer() {
                     {/* Email */}
                     <li>
                       <a
-                        href="mailto:ventas@cuarzos.mx"
+                        href="mailto:mineralzac@hotmail.com"
                         className="hover:text-main-color-dark transition-colors duration-200 flex items-center gap-3"
                       >
                         <div className="w-8 h-8 rounded-full bg-main-color/10 flex items-center justify-center flex-shrink-0">
@@ -407,7 +407,7 @@ export default function Footer() {
                           </svg>
                         </div>
                         <div>
-                          <span className="block text-main-color-dark font-medium">ventas@cuarzos.mx</span>
+                          <span className="block text-main-color-dark font-medium">mineralzac@hotmail.com</span>
                           <span className="text-xs text-main-color-dark/60">Correo electrónico</span>
                         </div>
                       </a>

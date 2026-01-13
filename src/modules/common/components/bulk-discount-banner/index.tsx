@@ -135,7 +135,7 @@ const BulkDiscountBanner = ({
     // Si le faltan productos para el descuento
     if (bulkDiscount.itemsNeeded > 0 && bulkDiscount.totalItems > 0) {
         const progress = Math.min(
-            (bulkDiscount.totalItems / (BULK_DISCOUNT_THRESHOLD + 1)) * 100,
+            (bulkDiscount.totalItems / BULK_DISCOUNT_THRESHOLD) * 100,
             100
         )
 
@@ -236,13 +236,13 @@ const BulkDiscountBanner = ({
                             >
                                 {progress > 20 && (
                                     <span className="text-[10px] text-white font-bold">
-                                        {bulkDiscount.totalItems}/{BULK_DISCOUNT_THRESHOLD + 1}
+                                        {bulkDiscount.totalItems}/{BULK_DISCOUNT_THRESHOLD}
                                     </span>
                                 )}
                             </div>
                         </div>
                         <p className="text-xs text-purple-500 mt-1">
-                            {bulkDiscount.totalItems} de {BULK_DISCOUNT_THRESHOLD + 1}{" "}
+                            {bulkDiscount.totalItems} de {BULK_DISCOUNT_THRESHOLD}{" "}
                             productos necesarios
                         </p>
                     </div>

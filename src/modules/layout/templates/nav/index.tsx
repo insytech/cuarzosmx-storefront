@@ -15,7 +15,7 @@ export default async function Nav() {
     <div className="sticky top-0 inset-x-0 z-50 group">
       <TopBar />
       <header className="h-16 lg:h-20 mx-auto bg-white px-4 lg:px-8 shadow-sm">
-        <nav className="flex items-center justify-between w-full h-full max-w-8xl lg:mx-24">
+        <nav className="flex items-center justify-between w-full h-full max-w-8xl mx-auto">
           {/* Mobile Menu Button */}
           <div className="lg:hidden">
             <MobileMenu regions={regions} />

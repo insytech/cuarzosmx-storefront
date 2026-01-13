@@ -19,7 +19,7 @@ const faqItems: FAQItem[] = [
             <>
                 Para hacer tu pedido por WhatsApp escríbenos en alguno de estos números:
                 <ul className="list-disc pl-6 mt-2 space-y-1">
-                    <li><a href="https://wa.me/524928690537" className="text-main-color hover:underline">+52 492 869 0537</a></li>
+                    <li><a href="https://wa.me/524921277919" className="text-main-color hover:underline">+52 492 127 7919</a></li>
                     <li><a href="https://wa.me/524921054682" className="text-main-color hover:underline">+52 492 105 4682</a></li>
                     <li><a href="https://wa.me/524922466698" className="text-main-color hover:underline">+52 492 246 6698</a></li>
                     <li><a href="https://wa.me/524921294044" className="text-main-color hover:underline">+52 492 129 4044</a></li>
@@ -164,7 +164,7 @@ export default function FAQTemplate() {
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <a
-                                href="https://wa.me/524928690537"
+                                href="https://wa.me/524921277919"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-medium transition-colors duration-200"

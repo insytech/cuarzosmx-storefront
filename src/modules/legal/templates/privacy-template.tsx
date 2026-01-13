@@ -75,8 +75,8 @@ export default function PrivacyTemplate() {
                             puede contactarnos a través de:
                         </p>
                         <ul className="list-disc pl-6 space-y-2 mt-3">
-                            <li>Correo electrónico: <a href="mailto:ventas@cuarzos.mx" className="text-main-color hover:underline">ventas@cuarzos.mx</a></li>
-                            <li>WhatsApp: <a href="https://wa.me/524928690537" className="text-main-color hover:underline">+52 492 869 0537</a></li>
+                            <li>Correo electrónico: <a href="mailto:mineralzac@hotmail.com" className="text-main-color hover:underline">mineralzac@hotmail.com</a></li>
+                            <li>WhatsApp: <a href="https://wa.me/524921277919" className="text-main-color hover:underline">+52 492 127 7919</a></li>
                         </ul>
                     </Section>
 
@@ -142,7 +142,7 @@ export default function PrivacyTemplate() {
 
                         <p className="mt-4 text-sm text-gray-600">
                             Si no desea que sus datos sean tratados para finalidades secundarias, puede indicarlo
-                            enviando un correo a <a href="mailto:ventas@cuarzos.mx" className="text-main-color hover:underline">ventas@cuarzos.mx</a>
+                            enviando un correo a <a href="mailto:mineralzac@hotmail.com" className="text-main-color hover:underline">mineralzac@hotmail.com</a>
                             con el asunto &quot;Cancelar comunicaciones&quot;.
                         </p>
                     </Section>
@@ -193,7 +193,7 @@ export default function PrivacyTemplate() {
                         <div className="bg-main-color-light/30 rounded-xl p-6 mt-4">
                             <h4 className="font-semibold text-gray-800 mb-3">Para ejercer sus derechos ARCO:</h4>
                             <ol className="list-decimal pl-6 space-y-2">
-                                <li>Envíe un correo a <a href="mailto:ventas@cuarzos.mx" className="text-main-color hover:underline font-medium">ventas@cuarzos.mx</a></li>
+                                <li>Envíe un correo a <a href="mailto:mineralzac@hotmail.com" className="text-main-color hover:underline font-medium">mineralzac@hotmail.com</a></li>
                                 <li>Incluya: nombre completo, correo electrónico registrado, descripción clara de su solicitud</li>
                                 <li>Adjunte copia de identificación oficial</li>
                                 <li>Recibirá respuesta en un plazo máximo de 20 días hábiles</li>

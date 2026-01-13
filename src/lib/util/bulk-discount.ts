@@ -36,8 +36,8 @@ export function calculateBulkDiscount(
 
     // Contar total de items
     const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0)
-    const itemsNeeded = Math.max(0, BULK_DISCOUNT_THRESHOLD + 1 - totalItems)
-    const isEligible = totalItems > BULK_DISCOUNT_THRESHOLD
+    const itemsNeeded = Math.max(0, BULK_DISCOUNT_THRESHOLD - totalItems)
+    const isEligible = totalItems >= BULK_DISCOUNT_THRESHOLD
 
     // Buscar si hay descuentos bulk ya aplicados en los items (por el backend)
     let bulkDiscountTotal = 0

@@ -323,14 +323,14 @@ export default function CookiesPolicyTemplate() {
                         <ul className="list-disc pl-6 space-y-2 mt-3">
                             <li>
                                 Correo electrónico:{" "}
-                                <a href="mailto:ventas@cuarzos.mx" className="text-main-color hover:underline">
-                                    ventas@cuarzos.mx
+                                <a href="mailto:mineralzac@hotmail.com" className="text-main-color hover:underline">
+                                    mineralzac@hotmail.com
                                 </a>
                             </li>
                             <li>
                                 WhatsApp:{" "}
-                                <a href="https://wa.me/524928690537" className="text-main-color hover:underline">
-                                    +52 492 869 0537
+                                <a href="https://wa.me/524921277919" className="text-main-color hover:underline">
+                                    +52 492 127 7919
                                 </a>
                             </li>
                         </ul>

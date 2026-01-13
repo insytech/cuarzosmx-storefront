@@ -52,7 +52,7 @@ export default function ContactTemplate() {
     }
 
     const whatsappNumbers = [
-        { number: "+52 492 869 0537", link: "524928690537" },
+        { number: "+52 492 127 7919", link: "524921277919" },
         { number: "+52 492 105 4682", link: "524921054682" },
         { number: "+52 492 246 6698", link: "524922466698" },
         { number: "+52 492 129 4044", link: "524921294044" },
