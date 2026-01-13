@@ -296,7 +296,7 @@ export default function ReturnsTemplate() {
                         </p>
                         <div className="flex flex-wrap gap-4 mt-4">
                             <a
-                                href="https://wa.me/524928690537"
+                                href="https://wa.me/524921277919"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 bg-green-500 text-white px-6 py-3 rounded-full hover:bg-green-600 transition-colors"
