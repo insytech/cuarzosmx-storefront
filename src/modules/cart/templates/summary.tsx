@@ -54,7 +54,7 @@ const Summary = ({ cart }: SummaryProps) => {
 
       {/* WhatsApp Help */}
       <a
-        href="https://wa.me/524928690537?text=Hola! Tengo una pregunta sobre mi carrito"
+        href="https://wa.me/524921277919?text=Hola! Tengo una pregunta sobre mi carrito"
         target="_blank"
         rel="noopener noreferrer"
         className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-medium rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 text-sm"

@@ -322,7 +322,7 @@ export default function ProductActions({
 
         {/* WhatsApp Button */}
         <a
-          href={`https://wa.me/524928690537?text=Hola! Me interesa el producto: ${product.title}`}
+          href={`https://wa.me/524921277919?text=Hola! Me interesa el producto: ${product.title}`}
           target="_blank"
           rel="noopener noreferrer"
           className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-medium rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2"

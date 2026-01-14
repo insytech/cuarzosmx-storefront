@@ -303,7 +303,7 @@ export default function MobileMenu({ regions }: MobileMenuProps) {
                             <div className="p-4 border-t border-gray-100 bg-gray-50">
                                 <div className="flex items-center justify-center gap-4">
                                     <a
-                                        href="https://wa.me/524928690537"
+                                        href="https://wa.me/524921277919"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-full text-sm font-medium hover:bg-green-600 transition-colors"

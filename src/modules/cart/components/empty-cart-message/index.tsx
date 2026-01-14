@@ -45,7 +45,7 @@ const EmptyCartMessage = () => {
       <div className="mt-12 text-center">
         <p className="text-sm text-gray-400 mb-4">¿Necesitas ayuda?</p>
         <a
-          href="https://wa.me/524928690537?text=Hola! Necesito ayuda para encontrar un cuarzo"
+          href="https://wa.me/524921277919?text=Hola! Necesito ayuda para encontrar un cuarzo"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium transition-colors"
