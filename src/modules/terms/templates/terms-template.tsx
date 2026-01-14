@@ -463,12 +463,12 @@ export default function TermsTemplate() {
                                 <div>
                                     <p className="text-sm text-gray-600">WhatsApp</p>
                                     <a
-                                        href="https://wa.me/524921076242"
+                                        href="https://wa.me/524921277919"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-green-600 font-medium hover:underline"
                                     >
-                                        +52 492 107 6242
+                                        +52 492 127 7919
                                     </a>
                                 </div>
                             </div>

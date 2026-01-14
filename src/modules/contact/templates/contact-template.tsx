@@ -291,13 +291,13 @@ export default function ContactTemplate() {
                                     <h3 className="font-semibold text-lg text-gray-800">Envío de Comprobantes de Pago</h3>
                                 </div>
                                 <a
-                                    href="https://wa.me/524921076242"
+                                    href="https://wa.me/524921277919"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 text-gray-700 hover:text-amber-600 transition-colors duration-200"
                                 >
                                     <span className="text-amber-500">WhatsApp:</span>
-                                    <span className="hover:underline">+52 492 107 6242</span>
+                                    <span className="hover:underline">+52 492 127 7919</span>
                                 </a>
                             </div>
 
