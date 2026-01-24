@@ -100,16 +100,31 @@ const nextConfig = {
         : []),
     ],
   },
-  // Rewrites para proxy de medios legados
+  // Rewrites para proxy
   async rewrites() {
-    if (!LEGACY_MEDIA_ORIGIN) return []
-    const base = LEGACY_MEDIA_ORIGIN.replace(/\/$/, "")
-    return [
-      {
+    const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || process.env.MEDUSA_BACKEND_URL
+    const rewrites = []
+
+    // Proxy del Admin Panel de Medusa (/app/*)
+    // Permite que URLs como cuarzos.mx/app/invite funcionen
+    if (MEDUSA_BACKEND_URL) {
+      const backendBase = MEDUSA_BACKEND_URL.replace(/\/$/, "")
+      rewrites.push({
+        source: "/app/:path*",
+        destination: `${backendBase}/app/:path*`,
+      })
+    }
+
+    // Proxy de medios legados de WordPress
+    if (LEGACY_MEDIA_ORIGIN) {
+      const legacyBase = LEGACY_MEDIA_ORIGIN.replace(/\/$/, "")
+      rewrites.push({
         source: "/wp-content/:path*",
-        destination: `${base}/wp-content/:path*`,
-      },
-    ]
+        destination: `${legacyBase}/wp-content/:path*`,
+      })
+    }
+
+    return rewrites
   },
   // Security headers
   async headers() {
