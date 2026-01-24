@@ -24,12 +24,14 @@ const nextConfig = {
   // Optimizaciones de rendimiento
   poweredByHeader: false,
   compress: true,
-  // Optimización de imágenes
+  // Optimización de imágenes (optimizado para reducir transformaciones de Vercel)
+  // - Solo webp (avif es más lento de generar y duplica variantes)
+  // - deviceSizes reducido de 7 a 4 breakpoints clave
+  // - imageSizes reducido de 8 a 3 para íconos/thumbnails pequeños
   images: {
-    formats: ["image/avif", "image/webp"],
-    qualities: [25, 50, 75, 100], // Required for Next.js 16
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    formats: ["image/webp"],
+    deviceSizes: [640, 828, 1200, 1920],
+    imageSizes: [64, 128, 256],
     remotePatterns: [
       {
         protocol: "http",

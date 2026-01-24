@@ -49,6 +49,7 @@ export default function CollectionTemplate({
               fill
               className="object-cover object-center"
               priority
+              unoptimized
             />
             {/* Overlay con gradiente */}
             <div className="absolute inset-0 bg-gradient-to-r from-main-color/90 via-main-color-dark/80 to-purple-900/70" />
