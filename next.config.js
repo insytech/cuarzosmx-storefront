@@ -105,13 +105,27 @@ const nextConfig = {
     const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || process.env.MEDUSA_BACKEND_URL
     const rewrites = []
 
-    // Proxy del Admin Panel de Medusa (/app/*)
-    // Permite que URLs como cuarzos.mx/app/invite funcionen
+    // Proxy del Admin Panel de Medusa y sus APIs
+    // Permite que el admin funcione desde cuarzos.mx/app
     if (MEDUSA_BACKEND_URL) {
       const backendBase = MEDUSA_BACKEND_URL.replace(/\/$/, "")
+
+      // Admin dashboard UI
       rewrites.push({
         source: "/app/:path*",
         destination: `${backendBase}/app/:path*`,
+      })
+
+      // Admin authentication API
+      rewrites.push({
+        source: "/auth/:path*",
+        destination: `${backendBase}/auth/:path*`,
+      })
+
+      // Admin API endpoints
+      rewrites.push({
+        source: "/admin/:path*",
+        destination: `${backendBase}/admin/:path*`,
       })
     }
 
