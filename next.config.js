@@ -147,7 +147,7 @@ const nextConfig = {
     return [
       {
         source: "/whatsapp",
-        destination: "https://wa.me/528120888937",
+        destination: "https://wa.me/524921277919",
         permanent: true,
       },
     ]
