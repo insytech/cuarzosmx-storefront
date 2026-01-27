@@ -24,14 +24,16 @@ const nextConfig = {
   // Optimizaciones de rendimiento
   poweredByHeader: false,
   compress: true,
-  // Optimización de imágenes (optimizado para reducir transformaciones de Vercel)
-  // - Solo webp (avif es más lento de generar y duplica variantes)
-  // - deviceSizes reducido de 7 a 4 breakpoints clave
-  // - imageSizes reducido de 8 a 3 para íconos/thumbnails pequeños
+  // Optimización de imágenes DESACTIVADA temporalmente
+  // Razón: Límite de 5,000 transformaciones gratuitas de Vercel alcanzado
+  // Las imágenes se sirven directamente desde R2 (Cloudflare CDN)
+  // TODO: Re-activar después de pre-optimizar imágenes en R2
   images: {
-    formats: ["image/webp"],
-    deviceSizes: [640, 828, 1200, 1920],
-    imageSizes: [64, 128, 256],
+    unoptimized: true,  // Desactiva transformaciones de Vercel
+    // Configuración anterior (comentada para referencia):
+    // formats: ["image/webp"],
+    // deviceSizes: [640, 828, 1200, 1920],
+    // imageSizes: [64, 128, 256],
     remotePatterns: [
       {
         protocol: "http",
