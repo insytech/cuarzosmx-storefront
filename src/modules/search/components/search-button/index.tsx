@@ -6,9 +6,10 @@ import SearchModal from "@modules/search/components/search-modal"
 interface SearchButtonProps {
     className?: string
     showText?: boolean
+    onNavigate?: () => void
 }
 
-const SearchButton = ({ className = "", showText = false }: SearchButtonProps) => {
+const SearchButton = ({ className = "", showText = false, onNavigate }: SearchButtonProps) => {
     const [isOpen, setIsOpen] = useState(false)
 
     // Atajo de teclado Ctrl+K o Cmd+K
@@ -38,7 +39,7 @@ const SearchButton = ({ className = "", showText = false }: SearchButtonProps) =
                 {showText && <span className="ml-2">Buscar productos...</span>}
             </button>
 
-            <SearchModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+            <SearchModal isOpen={isOpen} onClose={() => setIsOpen(false)} onNavigate={onNavigate} />
         </>
     )
 }

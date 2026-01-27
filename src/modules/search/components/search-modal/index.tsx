@@ -11,9 +11,10 @@ import { formatAmount } from "@lib/util/money"
 interface SearchModalProps {
     isOpen: boolean
     onClose: () => void
+    onNavigate?: () => void
 }
 
-const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
+const SearchModal = ({ isOpen, onClose, onNavigate }: SearchModalProps) => {
     const router = useRouter()
     const params = useParams()
     const countryCode = (params?.countryCode as string) || "mx"
@@ -81,6 +82,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
             saveRecentSearch(query.trim())
             router.push(`/${countryCode}/store?q=${encodeURIComponent(query.trim())}`)
             onClose()
+            onNavigate?.()
         }
     }
 
@@ -90,6 +92,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
             saveRecentSearch(query.trim())
         }
         onClose()
+        onNavigate?.()
     }
 
     // Limpiar búsquedas recientes

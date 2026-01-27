@@ -138,6 +138,7 @@ export default function MobileMenu({ regions }: MobileMenuProps) {
                                             <SearchButton
                                                 className="w-full flex items-center justify-center gap-2 p-4 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 transition-colors"
                                                 showText={true}
+                                                onNavigate={closeMenu}
                                             />
                                         </div>
 
