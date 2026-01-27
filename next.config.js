@@ -142,6 +142,16 @@ const nextConfig = {
 
     return rewrites
   },
+  // Redirects para links externos (mejora deliverability de emails)
+  async redirects() {
+    return [
+      {
+        source: "/whatsapp",
+        destination: "https://wa.me/528120888937",
+        permanent: true,
+      },
+    ]
+  },
   // Security headers
   async headers() {
     return [
