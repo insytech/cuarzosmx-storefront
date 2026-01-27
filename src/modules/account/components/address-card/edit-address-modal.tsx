@@ -6,6 +6,7 @@ import { Button, Heading, Text, clx } from "@medusajs/ui"
 
 import useToggleState from "@lib/hooks/use-toggle-state"
 import CountrySelect from "@modules/checkout/components/country-select"
+import StateSelect from "@modules/checkout/components/state-select"
 import Input from "@modules/common/components/input"
 import Modal from "@modules/common/components/modal"
 import Spinner from "@modules/common/icons/spinner"
@@ -175,6 +176,10 @@ const EditAddress: React.FC<EditAddressProps> = ({
                   name="postal_code"
                   required
                   autoComplete="postal-code"
+                  inputMode="numeric"
+                  pattern="[0-9]{5}"
+                  maxLength={5}
+                  validationMessage="Ingresa un código postal válido de 5 dígitos"
                   defaultValue={address.postal_code || undefined}
                   data-testid="postal-code-input"
                 />
@@ -187,12 +192,12 @@ const EditAddress: React.FC<EditAddressProps> = ({
                   data-testid="city-input"
                 />
               </div>
-              <Input
-                label="Province / State"
+              <StateSelect
                 name="province"
                 autoComplete="address-level1"
                 defaultValue={address.province || undefined}
-                data-testid="state-input"
+                required
+                data-testid="state-select"
               />
               <CountrySelect
                 name="country_code"
@@ -205,7 +210,12 @@ const EditAddress: React.FC<EditAddressProps> = ({
               <Input
                 label="Phone"
                 name="phone"
-                autoComplete="phone"
+                type="tel"
+                autoComplete="tel"
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                validationMessage="Ingresa un número de teléfono válido de 10 dígitos"
                 defaultValue={address.phone || undefined}
                 data-testid="phone-input"
               />

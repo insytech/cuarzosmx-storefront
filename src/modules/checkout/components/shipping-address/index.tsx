@@ -6,6 +6,7 @@ import { mapKeys } from "lodash"
 import React, { useEffect, useMemo, useState } from "react"
 import AddressSelect from "../address-select"
 import CountrySelect from "../country-select"
+import StateSelect from "../state-select"
 
 const ShippingAddress = ({
   customer,
@@ -90,6 +91,24 @@ const ShippingAddress = ({
     })
   }
 
+  // Handler específico para teléfono - solo permite dígitos y máximo 10
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").slice(0, 10)
+    setFormData({
+      ...formData,
+      [e.target.name]: value,
+    })
+  }
+
+  // Handler para código postal - solo permite dígitos y máximo 5
+  const handlePostalCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").slice(0, 5)
+    setFormData({
+      ...formData,
+      [e.target.name]: value,
+    })
+  }
+
   return (
     <>
       {customer && (addressesInRegion?.length || 0) > 0 && (
@@ -148,8 +167,12 @@ const ShippingAddress = ({
           label="Código Postal"
           name="shipping_address.postal_code"
           autoComplete="postal-code"
+          inputMode="numeric"
+          pattern="[0-9]{5}"
+          maxLength={5}
+          validationMessage="Ingresa un código postal válido de 5 dígitos"
           value={formData["shipping_address.postal_code"]}
-          onChange={handleChange}
+          onChange={handlePostalCodeChange}
           required
           data-testid="shipping-postal-code-input"
         />
@@ -171,13 +194,13 @@ const ShippingAddress = ({
           required
           data-testid="shipping-country-select"
         />
-        <Input
-          label="Estado / Provincia"
+        <StateSelect
           name="shipping_address.province"
           autoComplete="address-level1"
           value={formData["shipping_address.province"]}
           onChange={handleChange}
-          data-testid="shipping-province-input"
+          required
+          data-testid="shipping-province-select"
         />
       </div>
       <div className="my-8">
@@ -194,8 +217,10 @@ const ShippingAddress = ({
           label="Correo electrónico"
           name="email"
           type="email"
-          title="Ingresa un correo electrónico válido."
+          validationMessage="Ingresa un correo electrónico válido"
           autoComplete="email"
+          spellCheck={false}
+          autoCapitalize="none"
           value={formData.email}
           onChange={handleChange}
           required
@@ -204,9 +229,15 @@ const ShippingAddress = ({
         <Input
           label="Teléfono"
           name="shipping_address.phone"
+          type="tel"
           autoComplete="tel"
+          inputMode="numeric"
+          pattern="[0-9]{10}"
+          maxLength={10}
+          validationMessage="Ingresa un número de teléfono válido de 10 dígitos"
           value={formData["shipping_address.phone"]}
-          onChange={handleChange}
+          onChange={handlePhoneChange}
+          required
           data-testid="shipping-phone-input"
         />
       </div>

@@ -6,6 +6,7 @@ import { useEffect, useState, useActionState } from "react"
 
 import useToggleState from "@lib/hooks/use-toggle-state"
 import CountrySelect from "@modules/checkout/components/country-select"
+import StateSelect from "@modules/checkout/components/state-select"
 import Input from "@modules/common/components/input"
 import Modal from "@modules/common/components/modal"
 import { SubmitButton } from "@modules/checkout/components/submit-button"
@@ -105,6 +106,10 @@ const AddAddress = ({
                   name="postal_code"
                   required
                   autoComplete="postal-code"
+                  inputMode="numeric"
+                  pattern="[0-9]{5}"
+                  maxLength={5}
+                  validationMessage="Ingresa un código postal válido de 5 dígitos"
                   data-testid="postal-code-input"
                 />
                 <Input
@@ -115,11 +120,11 @@ const AddAddress = ({
                   data-testid="city-input"
                 />
               </div>
-              <Input
-                label="Province / State"
+              <StateSelect
                 name="province"
                 autoComplete="address-level1"
-                data-testid="state-input"
+                required
+                data-testid="state-select"
               />
               <CountrySelect
                 region={region}
@@ -131,7 +136,12 @@ const AddAddress = ({
               <Input
                 label="Phone"
                 name="phone"
-                autoComplete="phone"
+                type="tel"
+                autoComplete="tel"
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                validationMessage="Ingresa un número de teléfono válido de 10 dígitos"
                 data-testid="phone-input"
               />
             </div>

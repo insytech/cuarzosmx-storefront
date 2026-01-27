@@ -2,6 +2,7 @@ import { HttpTypes } from "@medusajs/types"
 import Input from "@modules/common/components/input"
 import React, { useState } from "react"
 import CountrySelect from "../country-select"
+import StateSelect from "../state-select"
 
 const BillingAddress = ({ cart }: { cart: HttpTypes.StoreCart | null }) => {
   const [formData, setFormData] = useState<any>({
@@ -24,6 +25,24 @@ const BillingAddress = ({ cart }: { cart: HttpTypes.StoreCart | null }) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
+    })
+  }
+
+  // Handler específico para teléfono - solo permite dígitos y máximo 10
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").slice(0, 10)
+    setFormData({
+      ...formData,
+      [e.target.name]: value,
+    })
+  }
+
+  // Handler para código postal - solo permite dígitos y máximo 5
+  const handlePostalCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").slice(0, 5)
+    setFormData({
+      ...formData,
+      [e.target.name]: value,
     })
   }
 
@@ -69,8 +88,12 @@ const BillingAddress = ({ cart }: { cart: HttpTypes.StoreCart | null }) => {
           label="Código Postal"
           name="billing_address.postal_code"
           autoComplete="postal-code"
+          inputMode="numeric"
+          pattern="[0-9]{5}"
+          maxLength={5}
+          validationMessage="Ingresa un código postal válido de 5 dígitos"
           value={formData["billing_address.postal_code"]}
-          onChange={handleChange}
+          onChange={handlePostalCodeChange}
           required
           data-testid="billing-postal-input"
         />
@@ -90,20 +113,25 @@ const BillingAddress = ({ cart }: { cart: HttpTypes.StoreCart | null }) => {
           required
           data-testid="billing-country-select"
         />
-        <Input
-          label="Estado / Provincia"
+        <StateSelect
           name="billing_address.province"
           autoComplete="address-level1"
           value={formData["billing_address.province"]}
           onChange={handleChange}
-          data-testid="billing-province-input"
+          required
+          data-testid="billing-province-select"
         />
         <Input
           label="Teléfono"
           name="billing_address.phone"
+          type="tel"
           autoComplete="tel"
+          inputMode="numeric"
+          pattern="[0-9]{10}"
+          maxLength={10}
+          validationMessage="Ingresa un número de teléfono válido de 10 dígitos"
           value={formData["billing_address.phone"]}
-          onChange={handleChange}
+          onChange={handlePhoneChange}
           data-testid="billing-phone-input"
         />
       </div>
