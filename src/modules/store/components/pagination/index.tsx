@@ -108,7 +108,39 @@ export function Pagination({
   // Render the component
   return (
     <div className="flex justify-center w-full mt-12">
-      <div className="flex gap-3 items-end" data-testid={dataTestid}>{renderPageButtons()}</div>
+      <div className="flex gap-3 items-center" data-testid={dataTestid}>
+        <button
+          className={clx(
+            "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+            page === 1
+              ? "text-ui-fg-disabled cursor-not-allowed"
+              : "text-ui-fg-muted hover:bg-ui-bg-base-hover hover:text-ui-fg-base"
+          )}
+          disabled={page === 1}
+          onClick={() => handlePageChange(page - 1)}
+          aria-label="Página anterior"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        {renderPageButtons()}
+        <button
+          className={clx(
+            "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+            page === totalPages
+              ? "text-ui-fg-disabled cursor-not-allowed"
+              : "text-ui-fg-muted hover:bg-ui-bg-base-hover hover:text-ui-fg-base"
+          )}
+          disabled={page === totalPages}
+          onClick={() => handlePageChange(page + 1)}
+          aria-label="Página siguiente"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
   )
 }
