@@ -17,6 +17,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
+    "@medusajs/icons": "^2.13.0",
     "@medusajs/js-sdk": "^2.12.2",
     "@medusajs/ui": "^4.0.30",
     "@mercadopago/sdk-react": "^1.0.6",
@@ -24,6 +25,8 @@
     "@stripe/react-stripe-js": "^1.7.2",
     "@stripe/stripe-js": "^1.29.0",
     "@tailwindcss/typography": "^0.5.19",
+    "@vercel/speed-insights": "^1.1.0",
+    "clsx": "^2.1.1",
     "dompurify": "^3.3.0",
     "lodash": "^4.17.21",
     "marked": "^16.4.1",
