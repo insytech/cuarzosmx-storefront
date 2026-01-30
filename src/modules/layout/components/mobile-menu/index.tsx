@@ -115,7 +115,7 @@ export default function MobileMenu({ regions }: MobileMenuProps) {
                             {/* Header */}
                             <div className="flex items-center justify-between p-4 border-b border-gray-100">
                                 <LocalizedClientLink href="/" onClick={closeMenu}>
-                                    <img src="/cuarzosmx-logo.webp" alt="CuarzosMX" className="h-10" />
+                                    <img src="/cuarzosmx-logo.webp" alt="CuarzosMX" className="h-10" width={49.5} height={40} />
                                 </LocalizedClientLink>
                                 <button
                                     onClick={closeMenu}

@@ -28,14 +28,14 @@ export default async function Nav() {
               className="hover:opacity-80 transition-opacity"
               data-testid="nav-store-link"
             >
-              <img src="/cuarzosmx-logo.webp" alt="CuarzosMX" className="h-10 lg:h-14" />
+              <img src="/cuarzosmx-logo.webp" alt="CuarzosMX" className="h-10 lg:h-14 w-auto" width={69} height={56} />
             </LocalizedClientLink>
             <LocalizedClientLink
               href="/"
               className="hover:opacity-80 transition-opacity hidden sm:block"
               data-testid="nav-store-link"
             >
-              <img src="/TIPO BLACK.webp" alt="CuarzosMX Logotype" className="h-7 lg:h-9" />
+              <img src="/TIPO BLACK.webp" alt="CuarzosMX Logotype" className="h-7 lg:h-9 w-auto" width={146} height={36} />
             </LocalizedClientLink>
           </div>
 

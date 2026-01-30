@@ -46,10 +46,23 @@ async function CartFeatures() {
   )
 }
 
+function NavFallback() {
+  return (
+    <div className="sticky top-0 inset-x-0 z-50">
+      <div className="w-full bg-main-color text-white text-center text-[10px] sm:text-xs py-1.5 sm:py-2 font-semibold px-3 sm:px-8">
+        &nbsp;
+      </div>
+      <header className="h-16 lg:h-20 mx-auto bg-white px-4 lg:px-8 shadow-sm" />
+    </div>
+  )
+}
+
 export default function PageLayout(props: { children: React.ReactNode }) {
   return (
     <>
-      <Nav />
+      <Suspense fallback={<NavFallback />}>
+        <Nav />
+      </Suspense>
       <Suspense fallback={null}>
         <CartFeatures />
       </Suspense>

@@ -115,17 +115,12 @@ export function CookieConsentProvider({ children }: { children: React.ReactNode 
         }
     }, [isConsentGiven])
 
-    // No renderizar nada hasta que se carguen las preferencias
-    if (!isLoaded) {
-        return <>{children}</>
-    }
-
     return (
         <CookieConsentContext.Provider
             value={{
                 preferences,
                 isConsentGiven,
-                showBanner,
+                showBanner: isLoaded && showBanner,
                 updatePreferences,
                 acceptAll,
                 rejectAll,

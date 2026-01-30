@@ -32,13 +32,14 @@ export default async function Home(props: {
 
   const { countryCode } = params
 
-  const region = await getRegion(countryCode)
+  const [region, trendingSection] = await Promise.all([
+    getRegion(countryCode),
+    getTrendingProducts(countryCode, 4),
+  ])
 
   if (!region) {
     return null
   }
-
-  const trendingSection = await getTrendingProducts(countryCode, 4)
 
   return (
     <>
