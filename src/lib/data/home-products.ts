@@ -2,6 +2,7 @@
 
 import { HttpTypes } from "@medusajs/types"
 import { listProducts } from "./products"
+import { getCacheOptions } from "./cookies"
 
 export type ProductSection = {
     products: HttpTypes.StoreProduct[]
@@ -10,41 +11,71 @@ export type ProductSection = {
     viewAllLink?: string
 }
 
+const PRODUCT_FIELDS =
+    "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags"
+
+const BACKEND_URL =
+    process.env.MEDUSA_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+    "http://localhost:9000"
+
 /**
- * Obtiene productos destacados (con tag "destacado" o metadata.featured)
+ * Fetch products by tag values using the custom backend endpoint.
+ * Falls back to client-side filtering if the endpoint is unavailable.
+ */
+async function fetchProductsByTags(
+    tagValues: string[],
+    limit: number
+): Promise<any[]> {
+    try {
+        const tags = tagValues.join(",")
+        const next = {
+            ...(await getCacheOptions("home-products")),
+        }
+
+        const response = await fetch(
+            `${BACKEND_URL}/store/products-by-tags?tags=${encodeURIComponent(tags)}&limit=${limit}`,
+            {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+                next,
+                cache: "force-cache",
+            } as any
+        )
+
+        if (!response.ok) {
+            console.warn(`products-by-tags returned ${response.status}, falling back`)
+            return []
+        }
+
+        const data = await response.json()
+        return data.products ?? []
+    } catch (error) {
+        console.warn("products-by-tags endpoint failed, falling back:", error)
+        return []
+    }
+}
+
+/**
+ * Obtiene productos destacados (con tag "destacado" o "featured")
  */
 export async function getFeaturedProducts(
     countryCode: string,
     limit = 4
 ): Promise<ProductSection> {
-    const { response } = await listProducts({
-        countryCode,
-        queryParams: {
-            limit: 50,
-            fields: "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags",
-        },
-    })
+    let products = await fetchProductsByTags(["destacado", "featured"], limit)
 
-    // Filtrar por tag "destacado" o "featured", o metadata.featured
-    const featured = response.products.filter((product) => {
-        const hasTag = product.tags?.some(
-            (tag) =>
-                tag.value?.toLowerCase() === "destacado" ||
-                tag.value?.toLowerCase() === "featured"
-        )
-        const hasMetadata =
-            product.metadata?.featured === true ||
-            product.metadata?.featured === "true"
-        return hasTag || hasMetadata
-    })
-
-    // Si no hay productos con tag, tomar los primeros productos como destacados
-    const products = featured.length > 0
-        ? featured.slice(0, limit)
-        : response.products.slice(0, limit)
+    // Fallback: primeros productos
+    if (products.length === 0) {
+        const { response } = await listProducts({
+            countryCode,
+            queryParams: { limit, fields: PRODUCT_FIELDS },
+        })
+        products = response.products
+    }
 
     return {
-        products,
+        products: products.slice(0, limit),
         title: "Productos Destacados",
         subtitle: "Nuestras piezas más especiales, seleccionadas cuidadosamente para ti",
         viewAllLink: "/store?filter=featured",
@@ -61,21 +92,14 @@ export async function getNewArrivals(
     const { response } = await listProducts({
         countryCode,
         queryParams: {
-            limit: 20,
-            order: "-created_at", // Más recientes primero
-            fields: "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags",
+            limit,
+            order: "-created_at",
+            fields: PRODUCT_FIELDS,
         },
     })
 
-    // Ordenar por fecha de creación (más recientes primero)
-    const sorted = [...response.products].sort((a, b) => {
-        const dateA = new Date(a.created_at || 0).getTime()
-        const dateB = new Date(b.created_at || 0).getTime()
-        return dateB - dateA
-    })
-
     return {
-        products: sorted.slice(0, limit),
+        products: response.products,
         title: "Nuevos Ingresos",
         subtitle: "Las últimas adiciones a nuestra colección de cristales",
         viewAllLink: "/store?sortBy=created_at",
@@ -83,52 +107,32 @@ export async function getNewArrivals(
 }
 
 /**
- * Obtiene los productos más vendidos (con tag "bestseller" o metadata.bestseller)
+ * Obtiene los productos más vendidos (con tag "bestseller")
  */
 export async function getBestSellers(
     countryCode: string,
     limit = 4
 ): Promise<ProductSection> {
-    const { response } = await listProducts({
-        countryCode,
-        queryParams: {
-            limit: 50,
-            fields: "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags",
-        },
-    })
+    let products = await fetchProductsByTags(
+        ["bestseller", "más vendido", "popular"],
+        limit
+    )
 
-    // Filtrar por tag "bestseller", "más vendido" o metadata
-    const bestsellers = response.products.filter((product) => {
-        const hasTag = product.tags?.some(
-            (tag) =>
-                tag.value?.toLowerCase() === "bestseller" ||
-                tag.value?.toLowerCase() === "más vendido" ||
-                tag.value?.toLowerCase() === "popular"
-        )
-        const hasMetadata =
-            product.metadata?.bestseller === true ||
-            product.metadata?.bestseller === "true" ||
-            product.metadata?.popular === true
-        return hasTag || hasMetadata
-    })
-
-    // Si no hay productos con tag, usar productos con menor inventario (asumiendo que se vendieron más)
-    let products: HttpTypes.StoreProduct[]
-
-    if (bestsellers.length >= limit) {
-        products = bestsellers.slice(0, limit)
-    } else {
-        // Fallback: ordenar por inventario (menor inventario = más vendido)
-        const byInventory = [...response.products].sort((a, b) => {
-            const invA = a.variants?.[0]?.inventory_quantity ?? Infinity
-            const invB = b.variants?.[0]?.inventory_quantity ?? Infinity
-            return invA - invB
+    // Fallback: productos más recientes
+    if (products.length === 0) {
+        const { response } = await listProducts({
+            countryCode,
+            queryParams: {
+                limit,
+                order: "-created_at",
+                fields: PRODUCT_FIELDS,
+            },
         })
-        products = byInventory.slice(0, limit)
+        products = response.products
     }
 
     return {
-        products,
+        products: products.slice(0, limit),
         title: "Más Vendidos",
         subtitle: "Los favoritos de nuestra comunidad cristalera",
         viewAllLink: "/store?filter=bestseller",
@@ -136,60 +140,32 @@ export async function getBestSellers(
 }
 
 /**
- * Obtiene productos en tendencia (bajo inventario = se están vendiendo bien)
+ * Obtiene productos en tendencia (con tag "tendencia" o "trending")
  */
 export async function getTrendingProducts(
     countryCode: string,
     limit = 4
 ): Promise<ProductSection> {
-    const { response } = await listProducts({
-        countryCode,
-        queryParams: {
-            limit: 50,
-            fields: "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags",
-        },
-    })
+    let products = await fetchProductsByTags(
+        ["tendencia", "trending", "popular"],
+        limit
+    )
 
-    // Filtrar productos con tag "tendencia" o "trending" primero
-    const trending = response.products.filter((product) => {
-        const hasTag = product.tags?.some(
-            (tag) =>
-                tag.value?.toLowerCase() === "tendencia" ||
-                tag.value?.toLowerCase() === "trending" ||
-                tag.value?.toLowerCase() === "popular"
-        )
-        return hasTag
-    })
-
-    let products: HttpTypes.StoreProduct[]
-
-    if (trending.length >= limit) {
-        products = trending.slice(0, limit)
-    } else {
-        // Fallback: productos con bajo inventario (se están vendiendo)
-        const byInventory = [...response.products]
-            .filter((p) => {
-                const inv = p.variants?.[0]?.inventory_quantity
-                // Solo productos con inventario bajo pero no agotados
-                return inv !== undefined && inv > 0 && inv < 20
-            })
-            .sort((a, b) => {
-                const invA = a.variants?.[0]?.inventory_quantity ?? Infinity
-                const invB = b.variants?.[0]?.inventory_quantity ?? Infinity
-                return invA - invB
-            })
-
-        if (byInventory.length >= limit) {
-            products = byInventory.slice(0, limit)
-        } else {
-            // Si no hay suficientes, mezclar con los que hay
-            const shuffled = [...response.products].sort(() => Math.random() - 0.5)
-            products = shuffled.slice(0, limit)
-        }
+    // Fallback: productos más recientes
+    if (products.length === 0) {
+        const { response } = await listProducts({
+            countryCode,
+            queryParams: {
+                limit,
+                order: "-created_at",
+                fields: PRODUCT_FIELDS,
+            },
+        })
+        products = response.products
     }
 
     return {
-        products,
+        products: products.slice(0, limit),
         title: "En Tendencia",
         subtitle: "Los productos que están conquistando a nuestra comunidad",
         viewAllLink: "/store",
@@ -197,44 +173,47 @@ export async function getTrendingProducts(
 }
 
 /**
- * Obtiene productos en oferta (con descuento o tag "oferta")
+ * Obtiene productos en oferta (con tag "oferta"/"sale"/"descuento" o con descuento calculado)
  */
 export async function getOnSaleProducts(
     countryCode: string,
     limit = 4
 ): Promise<ProductSection> {
-    const { response } = await listProducts({
-        countryCode,
-        queryParams: {
-            limit: 50,
-            fields: "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags",
-        },
-    })
+    // Try tag-based filtering first
+    let products = await fetchProductsByTags(
+        ["oferta", "sale", "descuento"],
+        limit
+    )
 
-    // Filtrar productos con descuento o tag "oferta"
-    const onSale = response.products.filter((product) => {
-        // Verificar tag
-        const hasTag = product.tags?.some(
-            (tag) =>
-                tag.value?.toLowerCase() === "oferta" ||
-                tag.value?.toLowerCase() === "sale" ||
-                tag.value?.toLowerCase() === "descuento"
-        )
+    // If not enough tagged products, supplement with discounted products
+    if (products.length < limit) {
+        const { response } = await listProducts({
+            countryCode,
+            queryParams: {
+                limit: 20,
+                fields: PRODUCT_FIELDS,
+            },
+        })
 
-        // Verificar si tiene precio original vs calculado (descuento)
-        const variant = product.variants?.[0]
-        const calculatedAmount = variant?.calculated_price?.calculated_amount
-        const originalAmount = variant?.calculated_price?.original_amount
-        const hasDiscount =
-            calculatedAmount != null &&
-            originalAmount != null &&
-            calculatedAmount < originalAmount
+        const existingIds = new Set(products.map((p: any) => p.id))
 
-        return hasTag || hasDiscount
-    })
+        const discounted = response.products.filter((product) => {
+            if (existingIds.has(product.id)) return false
+            const variant = product.variants?.[0]
+            const calculatedAmount = variant?.calculated_price?.calculated_amount
+            const originalAmount = variant?.calculated_price?.original_amount
+            return (
+                calculatedAmount != null &&
+                originalAmount != null &&
+                calculatedAmount < originalAmount
+            )
+        })
+
+        products = [...products, ...discounted].slice(0, limit)
+    }
 
     return {
-        products: onSale.slice(0, limit),
+        products: products.slice(0, limit),
         title: "Ofertas Especiales",
         subtitle: "Aprovecha estos precios únicos por tiempo limitado",
         viewAllLink: "/store?filter=sale",
@@ -252,15 +231,13 @@ export async function getProductsByCategory(
     const { response } = await listProducts({
         countryCode,
         queryParams: {
-            limit,
-            fields: "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags,+categories",
+            limit: 20,
+            fields: PRODUCT_FIELDS,
         },
     })
 
-    // Filtrar por categoría (si tuviéramos el ID de la categoría sería más eficiente)
-    // Por ahora filtramos en cliente
-    const filtered = response.products.filter((product) =>
-        product.categories?.some((cat) => cat.handle === categoryHandle)
+    const filtered = response.products.filter((product: any) =>
+        product.categories?.some((cat: any) => cat.handle === categoryHandle)
     )
 
     const categoryName = categoryHandle

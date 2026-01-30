@@ -8,10 +8,7 @@ import EditorialBlock from "@modules/home/components/editorial-block"
 import LifestyleBlock from "@modules/home/components/lifestyle-block"
 import CategoryGrid from "@modules/home/components/category-grid"
 import { getRegion } from "@lib/data/regions"
-import {
-  getOnSaleProducts,
-  getTrendingProducts,
-} from "@lib/data/home-products"
+import { getTrendingProducts } from "@lib/data/home-products"
 
 // ISR: Revalidate every hour to reduce function invocations
 export const revalidate = 3600
@@ -41,12 +38,7 @@ export default async function Home(props: {
     return null
   }
 
-  // Obtener productos para cada sección en paralelo (sin Featured Products)
-  const [onSaleSection, trendingSection] =
-    await Promise.all([
-      getOnSaleProducts(countryCode, 4),
-      getTrendingProducts(countryCode, 4),
-    ])
+  const trendingSection = await getTrendingProducts(countryCode, 4)
 
   return (
     <>
@@ -56,19 +48,10 @@ export default async function Home(props: {
       {/* 2. Banner de Características */}
       <FeaturesBanner />
 
-      {/* 3. Explora Nuestras Categorías (movido arriba, antes había Productos Destacados) */}
+      {/* 3. Explora Nuestras Categorías */}
       <CategoryGrid />
 
-      {/* 4. Ofertas Especiales */}
-      <ProductCarousel
-        title={onSaleSection.title}
-        subtitle={onSaleSection.subtitle}
-        products={onSaleSection.products}
-        region={region}
-        viewAllLink={onSaleSection.viewAllLink}
-      />
-
-      {/* 5. Encuentra tu Intención */}
+      {/* 4. Encuentra tu Intención */}
       <LifestyleBlock />
 
       {/* 6. Cuarzos Según tu Signo */}
