@@ -1,6 +1,14 @@
 import { Metadata } from "next"
+import { Montserrat } from "next/font/google"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import "styles/globals.css"
 import CookieConsentWrapper from "@modules/common/components/cookie-consent-wrapper"
+
+const montserrat = Montserrat({
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+  variable: "--font-montserrat",
+})
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzosmx.com"
 
@@ -121,13 +129,8 @@ const websiteSchema = {
 
 export default function RootLayout(props: { children: React.ReactNode }) {
   return (
-    <html lang="es-MX" data-mode="light">
+    <html lang="es-MX" data-mode="light" className={montserrat.variable}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
-
         {/* Schema.org JSON-LD */}
         <script
           type="application/ld+json"
@@ -142,6 +145,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         <CookieConsentWrapper>
           <main className="relative">{props.children}</main>
         </CookieConsentWrapper>
+        <SpeedInsights />
       </body>
     </html>
   )

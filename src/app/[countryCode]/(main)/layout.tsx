@@ -17,8 +17,12 @@ export const metadata: Metadata = {
 // Separate async component for cart-related features
 // This allows the page to render without waiting for cart/customer data
 async function CartFeatures() {
-  const customer = await retrieveCustomer()
-  const cart = await retrieveCart()
+  // Fetch customer and cart in parallel
+  const [customer, cart] = await Promise.all([
+    retrieveCustomer(),
+    retrieveCart(),
+  ])
+
   let shippingOptions: StoreCartShippingOption[] = []
 
   if (cart) {

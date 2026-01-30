@@ -71,7 +71,7 @@ module.exports = {
       },
       fontFamily: {
         sans: [
-
+          "var(--font-montserrat)",
           "Montserrat",
           "Inter",
           "-apple-system",
