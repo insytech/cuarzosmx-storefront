@@ -1,34 +1,21 @@
-"use client"
-
-import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import { useEffect, useState } from "react"
-import { PromotionMessage, BannerResponse } from "../../../../types/global"
+import { BannerResponse } from "../../../../types/global"
 import { fetchBanners } from "@util/banner-api"
 
-export default function TopBar() {
-    const [promotionMessage, setPromotionMessage] = useState<PromotionMessage | null>(null)
-    const [loading, setLoading] = useState(true)
+export default async function TopBar() {
+    let displayMessage = "20% DE DESCUENTO POR LA COMPRA DE MÁS DE 12 PRODUCTOS"
 
-    useEffect(() => {
-        const loadPromotionMessage = async () => {
-            try {
-                const response: BannerResponse = await fetchBanners()
-                setPromotionMessage(response.promotionMessage)
-            } catch (err) {
-                console.error("Error loading promotion message:", err)
-            } finally {
-                setLoading(false)
-            }
+    try {
+        const response: BannerResponse = await fetchBanners()
+        if (response.promotionMessage?.message) {
+            displayMessage = response.promotionMessage.message
         }
-
-        loadPromotionMessage()
-    }, [])
-
-    const displayMessage = promotionMessage?.message || "20% DE DESCUENTO POR LA COMPRA DE MÁS DE 12 PRODUCTOS"
+    } catch (err) {
+        console.error("Error loading promotion message:", err)
+    }
 
     return (
         <div className="w-full bg-main-color text-white text-center text-[10px] sm:text-xs py-1.5 sm:py-2 font-semibold flex justify-between items-center px-3 sm:px-8">
-            <span className="truncate flex-1 mr-2">{loading ? "Cargando..." : displayMessage}</span>
+            <span className="truncate flex-1 mr-2">{displayMessage}</span>
             <div className="flex gap-3 sm:gap-4 flex-shrink-0">
                 <a href="https://www.instagram.com/cuarzosmx_oficial/" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">
                     {/* Instagram icon */}
