@@ -1,7 +1,6 @@
 "use server"
 
 import { sdk } from "@lib/config"
-import { sortProducts } from "@lib/util/sort-products"
 import { HttpTypes } from "@medusajs/types"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import { getAuthHeaders, getCacheOptions } from "./cookies"
@@ -112,7 +111,7 @@ export const searchProducts = async ({
   }
 
   try {
-    // Try Medusa's native search with 'q' parameter
+    // Use Medusa's native search with 'q' parameter
     const { products } = await sdk.client.fetch<{
       products: HttpTypes.StoreProduct[]
       count: number
@@ -127,44 +126,10 @@ export const searchProducts = async ({
         q: query,
       },
       headers,
-      cache: "no-store", // No cache for search
-    })
-
-    if (products && products.length > 0) {
-      return products
-    }
-
-    // Fallback: fetch more products and filter locally
-    const { products: allProducts } = await sdk.client.fetch<{
-      products: HttpTypes.StoreProduct[]
-      count: number
-    }>("/store/products", {
-      method: "GET",
-      query: {
-        limit: 200,
-        offset: 0,
-        region_id: region.id,
-        fields:
-          "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags",
-      },
-      headers,
       cache: "no-store",
     })
 
-    const queryLower = query.toLowerCase()
-    const filteredProducts = allProducts.filter((product) => {
-      const titleMatch = product.title?.toLowerCase().includes(queryLower)
-      const descriptionMatch = product.description
-        ?.toLowerCase()
-        .includes(queryLower)
-      const handleMatch = product.handle?.toLowerCase().includes(queryLower)
-      const tagsMatch = product.tags?.some((tag) =>
-        tag.value?.toLowerCase().includes(queryLower)
-      )
-      return titleMatch || descriptionMatch || handleMatch || tagsMatch
-    })
-
-    return filteredProducts.slice(0, limit)
+    return products ?? []
   } catch (error) {
     console.error("Search error:", error)
     return []
@@ -172,11 +137,11 @@ export const searchProducts = async ({
 }
 
 /**
- * This will fetch 100 products to the Next.js cache and sort them based on the sortBy parameter.
- * It will then return the paginated products based on the page and limit parameters.
+ * Fetches products with server-side sorting and pagination.
+ * Delegates sorting and pagination to the Medusa API to avoid over-fetching.
  */
 export const listProductsWithSort = async ({
-  page = 0,
+  page = 1,
   queryParams,
   sortBy = "created_at",
   countryCode,
@@ -192,28 +157,38 @@ export const listProductsWithSort = async ({
 }> => {
   const limit = queryParams?.limit || 12
 
+  // Map sortBy to Medusa order param
+  let order: string | undefined
+  switch (sortBy) {
+    case "price_asc":
+      order = "variants.calculated_price.calculated_amount"
+      break
+    case "price_desc":
+      order = "-variants.calculated_price.calculated_amount"
+      break
+    case "created_at":
+    default:
+      order = "-created_at"
+      break
+  }
+
   const {
     response: { products, count },
   } = await listProducts({
-    pageParam: 0,
+    pageParam: page,
     queryParams: {
       ...queryParams,
-      limit: 100,
+      limit,
+      order,
     },
     countryCode,
   })
 
-  const sortedProducts = sortProducts(products, sortBy)
-
-  const pageParam = (page - 1) * limit
-
-  const nextPage = count > pageParam + limit ? pageParam + limit : null
-
-  const paginatedProducts = sortedProducts.slice(pageParam, pageParam + limit)
+  const nextPage = count > (page - 1) * limit + limit ? page + 1 : null
 
   return {
     response: {
-      products: paginatedProducts,
+      products,
       count,
     },
     nextPage,

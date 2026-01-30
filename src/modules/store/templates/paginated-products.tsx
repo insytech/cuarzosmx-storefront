@@ -42,7 +42,7 @@ export default async function PaginatedProducts({
   inStock?: boolean
 }) {
   const queryParams: PaginatedProductsParams = {
-    limit: 100, // Fetch more to filter client-side for price and stock
+    limit: PRODUCT_LIMIT,
   }
 
   if (collectionId) {
@@ -60,10 +60,6 @@ export default async function PaginatedProducts({
     queryParams.id = productsIds
   }
 
-  if (sortBy === "created_at") {
-    queryParams.order = "created_at"
-  }
-
   // Añadir búsqueda
   if (searchQuery) {
     queryParams.q = searchQuery
@@ -76,51 +72,15 @@ export default async function PaginatedProducts({
   }
 
   const {
-    response: { products: allProducts },
+    response: { products: paginatedProducts, count },
   } = await listProductsWithSort({
-    page: 1,
+    page,
     queryParams,
     sortBy,
     countryCode,
   })
 
-  // Aplicar filtros adicionales del lado del cliente
-  let filteredProducts = allProducts
-
-  // Filtro de precio
-  if (minPrice !== undefined || maxPrice !== undefined) {
-    filteredProducts = filteredProducts.filter(product => {
-      const price = product.variants?.[0]?.calculated_price?.calculated_amount
-      if (!price) return false
-
-      // El precio ya está en pesos MXN
-      if (minPrice !== undefined && price < minPrice) return false
-      if (maxPrice !== undefined && price > maxPrice) return false
-
-      return true
-    })
-  }
-
-  // Filtro de disponibilidad
-  if (inStock) {
-    filteredProducts = filteredProducts.filter(product => {
-      const variant = product.variants?.[0]
-      if (!variant) return false
-
-      // Si no maneja inventario, está disponible
-      if (!variant.manage_inventory) return true
-
-      // Si tiene inventario > 0, está disponible
-      return (variant.inventory_quantity || 0) > 0
-    })
-  }
-
-  const totalFiltered = filteredProducts.length
-  const totalPages = Math.ceil(totalFiltered / PRODUCT_LIMIT)
-
-  // Paginar los productos filtrados
-  const startIndex = (page - 1) * PRODUCT_LIMIT
-  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + PRODUCT_LIMIT)
+  const totalPages = Math.ceil(count / PRODUCT_LIMIT)
 
   // Si no hay resultados
   if (paginatedProducts.length === 0) {
@@ -137,7 +97,7 @@ export default async function PaginatedProducts({
         <p className="text-gray-500 mb-6 max-w-md">
           {searchQuery
             ? `No hay productos que coincidan con "${searchQuery}". Intenta con otros términos o explora nuestras categorías.`
-            : minPrice || maxPrice || inStock || (categoryIds && categoryIds.length > 0)
+            : (categoryIds && categoryIds.length > 0)
               ? "No hay productos que coincidan con los filtros seleccionados. Prueba ajustando los filtros."
               : "Pronto agregaremos más productos a nuestra tienda."}
         </p>
@@ -156,7 +116,7 @@ export default async function PaginatedProducts({
       {/* Contador de resultados */}
       <div className="mb-6 flex items-center justify-between">
         <p className="text-sm text-gray-600">
-          Mostrando <span className="font-medium">{paginatedProducts.length}</span> de <span className="font-medium">{totalFiltered}</span> productos
+          Mostrando <span className="font-medium">{paginatedProducts.length}</span> de <span className="font-medium">{count}</span> productos
         </p>
       </div>
 
