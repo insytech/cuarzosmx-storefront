@@ -11,18 +11,18 @@ body {
 
 @font-face {
   font-family: 'Simple Serenity Serif';
-  src: url('/fonts/Simple Serenity Serif.ttf') format('truetype');
+  src: url('/fonts/Simple Serenity Serif.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
-  font-display: optional;
+  font-display: fallback;
 }
 
 @font-face {
   font-family: 'Aqua Grotesque';
-  src: url('/fonts/Aqua Grotesque.ttf') format('truetype');
+  src: url('/fonts/Aqua Grotesque.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
-  font-display: optional;
+  font-display: fallback;
 }
 
 @layer utilities {
