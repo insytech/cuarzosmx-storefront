@@ -1,11 +1,11 @@
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { listProducts } from "@lib/data/products"
-import { getRegion, listRegions } from "@lib/data/regions"
+import { getRegion } from "@lib/data/regions"
 import ProductTemplate from "@modules/products/templates"
 
-// ISR: Revalidate every 30 minutes for fresher inventory data
-export const revalidate = 1800
+// ISR: Revalidate every hour to reduce function invocations
+export const revalidate = 3600
 
 type Props = {
   params: Promise<{ countryCode: string; handle: string }>
@@ -13,36 +13,21 @@ type Props = {
 
 export async function generateStaticParams() {
   try {
-    const countryCodes = await listRegions().then((regions) =>
-      regions?.flatMap((r) => r.countries?.map((c) => c.iso_2))
-    )
+    // Only pre-generate for the default region to reduce build-time CPU.
+    // Other regions will be generated on-demand and cached via ISR.
+    const defaultCountry = process.env.NEXT_PUBLIC_DEFAULT_REGION || "mx"
 
-    if (!countryCodes) {
-      return []
-    }
-
-    const promises = countryCodes.map(async (country) => {
-      const { response } = await listProducts({
-        countryCode: country,
-        queryParams: { limit: 100, fields: "handle" },
-      })
-
-      return {
-        country,
-        products: response.products,
-      }
+    const { response } = await listProducts({
+      countryCode: defaultCountry,
+      queryParams: { limit: 100, fields: "handle" },
     })
 
-    const countryProducts = await Promise.all(promises)
-
-    return countryProducts
-      .flatMap((countryData) =>
-        countryData.products.map((product) => ({
-          countryCode: countryData.country,
-          handle: product.handle,
-        }))
-      )
-      .filter((param) => param.handle)
+    return response.products
+      .filter((product) => product.handle)
+      .map((product) => ({
+        countryCode: defaultCountry,
+        handle: product.handle,
+      }))
   } catch (error) {
     console.error(
       `Failed to generate static paths for product pages: ${error instanceof Error ? error.message : "Unknown error"

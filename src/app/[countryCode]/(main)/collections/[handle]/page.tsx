@@ -2,8 +2,7 @@ import { Metadata } from "next"
 import { notFound } from "next/navigation"
 
 import { getCollectionByHandle, listCollections } from "@lib/data/collections"
-import { listRegions } from "@lib/data/regions"
-import { StoreCollection, StoreRegion } from "@medusajs/types"
+import { StoreCollection } from "@medusajs/types"
 import CollectionTemplate from "@modules/collections/templates"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 
@@ -21,34 +20,25 @@ type Props = {
 export const PRODUCT_LIMIT = 12
 
 export async function generateStaticParams() {
+  // Don't fetch *products just for static params - only need handles
   const { collections } = await listCollections({
-    fields: "*products",
+    fields: "handle",
   })
 
   if (!collections) {
     return []
   }
 
-  const countryCodes = await listRegions().then(
-    (regions: StoreRegion[]) =>
-      regions
-        ?.flatMap((r) => r.countries?.map((c) => c.iso_2))
-        .filter(Boolean) as string[]
-  )
+  // Only pre-generate for the default region to reduce build-time CPU.
+  // Other regions will be generated on-demand and cached via ISR.
+  const defaultCountry = process.env.NEXT_PUBLIC_DEFAULT_REGION || "mx"
 
-  const collectionHandles = collections.map(
-    (collection: StoreCollection) => collection.handle
-  )
-
-  const staticParams = countryCodes
-    ?.flatMap((countryCode: string) =>
-      collectionHandles.map((handle: string | undefined) => ({
-        countryCode,
-        handle,
-      }))
-    )
-
-  return staticParams
+  return collections
+    .filter((collection: StoreCollection) => collection.handle)
+    .map((collection: StoreCollection) => ({
+      countryCode: defaultCountry,
+      handle: collection.handle,
+    }))
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {

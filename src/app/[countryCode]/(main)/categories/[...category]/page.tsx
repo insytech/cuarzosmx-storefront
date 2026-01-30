@@ -2,8 +2,6 @@ import { Metadata } from "next"
 import { notFound } from "next/navigation"
 
 import { getCategoryByHandle, listCategories } from "@lib/data/categories"
-import { listRegions } from "@lib/data/regions"
-import { StoreRegion } from "@medusajs/types"
 import CategoryTemplate from "@modules/categories/templates"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 
@@ -25,23 +23,14 @@ export async function generateStaticParams() {
     return []
   }
 
-  const countryCodes = await listRegions().then((regions: StoreRegion[]) =>
-    regions?.flatMap((r) => r.countries?.map((c) => c.iso_2))
-  )
+  // Only pre-generate for the default region to reduce build-time CPU.
+  // Other regions will be generated on-demand and cached via ISR.
+  const defaultCountry = process.env.NEXT_PUBLIC_DEFAULT_REGION || "mx"
 
-  const categoryHandles = product_categories.map(
-    (category: any) => category.handle
-  )
-
-  const staticParams = countryCodes
-    ?.flatMap((countryCode: string | undefined) =>
-      categoryHandles.map((handle: any) => ({
-        countryCode,
-        category: [handle],
-      }))
-    )
-
-  return staticParams
+  return product_categories.map((category: any) => ({
+    countryCode: defaultCountry,
+    category: [category.handle],
+  }))
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
