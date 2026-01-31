@@ -131,8 +131,6 @@ export default function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="es-MX" data-mode="light" className={montserrat.variable}>
       <head>
-        {/* Preload hero image for LCP */}
-        <link rel="preload" as="image" href="/promo/promo-1.webp" />
         {/* Schema.org JSON-LD */}
         <script
           type="application/ld+json"
