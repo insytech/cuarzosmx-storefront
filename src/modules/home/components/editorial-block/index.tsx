@@ -1,4 +1,5 @@
 import { Heading } from "@medusajs/ui"
+import { fetchBannerSections } from "@util/banner-api"
 
 // Default editorial images with fallback
 const defaultEditorialImages = {
@@ -13,28 +14,9 @@ interface EditorialBanner {
     alt_text?: string
 }
 
-async function fetchEditorialBanners(): Promise<EditorialBanner[]> {
-    try {
-        const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
-        const response = await fetch(`${baseUrl}/store/banners/sections`, {
-            next: { revalidate: 60 },
-            headers: {
-                "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
-            },
-        })
-
-        if (response.ok) {
-            const data = await response.json()
-            return data.editorial || []
-        }
-    } catch (error) {
-        console.error("Error fetching editorial banners:", error)
-    }
-    return []
-}
-
 export default async function EditorialBlock() {
-    const editorialBanners = await fetchEditorialBanners()
+    const data = await fetchBannerSections()
+    const editorialBanners: EditorialBanner[] = data.editorial || []
 
     // Get images from API or use defaults
     const mainBanner = editorialBanners.find(b => b.position === 'main')
@@ -70,6 +52,8 @@ export default async function EditorialBlock() {
             <img
                 src="/block/background.webp"
                 alt=""
+                width={800}
+                height={400}
                 className="absolute left-0 bottom-0 w-full h-full object-cover pointer-events-none select-none z-0"
                 style={{ maxHeight: "100%", minHeight: "400px" }}
             />
@@ -111,6 +95,8 @@ export default async function EditorialBlock() {
                             <img
                                 src={mainImage}
                                 alt={mainAlt}
+                                width={420}
+                                height={420}
                                 className="object-cover w-[450px] h-[450px] rounded-full"
                             />
                         </div>
@@ -121,6 +107,8 @@ export default async function EditorialBlock() {
                                 <img
                                     src={small1Image}
                                     alt={small1Alt}
+                                    width={150}
+                                    height={150}
                                     className="object-cover w-[150px] h-[150px] rounded-full"
                                 />
                             </div>
@@ -132,6 +120,8 @@ export default async function EditorialBlock() {
                                 <img
                                     src={small2Image}
                                     alt={small2Alt}
+                                    width={150}
+                                    height={150}
                                     className="object-cover w-[150px] h-[150px] rounded-full"
                                 />
                             </div>

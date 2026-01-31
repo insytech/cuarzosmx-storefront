@@ -1,5 +1,6 @@
 import { Heading } from "@medusajs/ui"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import { fetchBannerSections } from "@util/banner-api"
 
 // Default categories with fallback images - NOW INCLUDES JOYERÍA
 const defaultCategorias = [
@@ -48,28 +49,9 @@ interface CategoryBanner {
     link: string
 }
 
-async function fetchCategoryBanners(): Promise<CategoryBanner[]> {
-    try {
-        const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
-        const response = await fetch(`${baseUrl}/store/banners/sections`, {
-            next: { revalidate: 60 },
-            headers: {
-                "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
-            },
-        })
-
-        if (response.ok) {
-            const data = await response.json()
-            return data.categories || []
-        }
-    } catch (error) {
-        console.error("Error fetching category banners:", error)
-    }
-    return []
-}
-
 export default async function CategoryGrid() {
-    const categoryBanners = await fetchCategoryBanners()
+    const data = await fetchBannerSections()
+    const categoryBanners: CategoryBanner[] = data.categories || []
 
     // Merge API data with defaults
     const categorias = defaultCategorias.map(defaultCat => {
@@ -116,6 +98,8 @@ export default async function CategoryGrid() {
                             <img
                                 src={categoria.imagen}
                                 alt={categoria.nombre}
+                                width={300}
+                                height={400}
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 loading="lazy"
                             />

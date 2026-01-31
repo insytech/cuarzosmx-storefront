@@ -1,3 +1,4 @@
+import { cache } from "react"
 import { BannerResponse } from "../../types/global"
 import { getBaseURL } from "./env"
 
@@ -47,3 +48,22 @@ export async function fetchBanners(): Promise<BannerResponse> {
         throw error
     }
 }
+
+export const fetchBannerSections = cache(async () => {
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+        const response = await fetch(`${baseUrl}/store/banners/sections`, {
+            headers: {
+                "x-publishable-api-key": PUBLISHABLE_API_KEY || "",
+            },
+            next: { revalidate: 60 },
+        })
+
+        if (response.ok) {
+            return await response.json()
+        }
+    } catch (error) {
+        console.error("Error fetching banner sections:", error)
+    }
+    return {}
+})

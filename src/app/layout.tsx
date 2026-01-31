@@ -1,8 +1,8 @@
 import { Metadata } from "next"
 import { Montserrat } from "next/font/google"
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import "styles/globals.css"
 import CookieConsentWrapper from "@modules/common/components/cookie-consent-wrapper"
+import LazySpeedInsights from "@modules/common/components/lazy-speed-insights"
 
 const montserrat = Montserrat({
   subsets: ["latin", "latin-ext"],
@@ -131,6 +131,8 @@ export default function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="es-MX" data-mode="light" className={montserrat.variable}>
       <head>
+        {/* Preload hero image for LCP */}
+        <link rel="preload" as="image" href="/promo/promo-1.webp" />
         {/* Schema.org JSON-LD */}
         <script
           type="application/ld+json"
@@ -145,7 +147,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         <CookieConsentWrapper>
           <main className="relative">{props.children}</main>
         </CookieConsentWrapper>
-        <SpeedInsights />
+        <LazySpeedInsights />
       </body>
     </html>
   )

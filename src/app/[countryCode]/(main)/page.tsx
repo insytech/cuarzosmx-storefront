@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import { Suspense } from "react"
 
 import HeroBlock from "@modules/home/components/hero-block"
 import FeaturesBanner from "@modules/home/components/features-banner"
@@ -44,7 +45,21 @@ export default async function Home(props: {
   return (
     <>
       {/* 1. Sección Hero */}
-      <HeroBlock />
+      <Suspense
+        fallback={
+          <section className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
+              <div className="col-span-2 row-span-2 aspect-square bg-gray-100 rounded-lg animate-pulse" />
+              <div className="aspect-square bg-gray-100 rounded-lg animate-pulse" />
+              <div className="aspect-square bg-gray-100 rounded-lg animate-pulse" />
+              <div className="aspect-square bg-gray-100 rounded-lg animate-pulse" />
+              <div className="aspect-square bg-gray-100 rounded-lg animate-pulse" />
+            </div>
+          </section>
+        }
+      >
+        <HeroBlock />
+      </Suspense>
 
       {/* 2. Banner de Características */}
       <FeaturesBanner />

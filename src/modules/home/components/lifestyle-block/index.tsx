@@ -1,5 +1,6 @@
 import { Button, Heading } from "@medusajs/ui"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import { fetchBannerSections } from "@util/banner-api"
 
 // Default intentions - Paz removed per user request
 const defaultIntenciones = [
@@ -54,34 +55,10 @@ interface LifestyleContent {
     background_image_url?: string
 }
 
-async function fetchBannerSections(): Promise<{
-    intentions: IntentionBanner[]
-    lifestyle: LifestyleContent | null
-}> {
-    try {
-        const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
-        const response = await fetch(`${baseUrl}/store/banners/sections`, {
-            headers: {
-                "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
-            },
-            next: { revalidate: 60 },
-        })
-
-        if (response.ok) {
-            const data = await response.json()
-            return {
-                intentions: data.intentions || [],
-                lifestyle: data.lifestyle || null
-            }
-        }
-    } catch (error) {
-        console.error("Error fetching banner sections:", error)
-    }
-    return { intentions: [], lifestyle: null }
-}
-
 export default async function LifestyleBlock() {
-    const { intentions: intentionBanners, lifestyle: lifestyleContent } = await fetchBannerSections()
+    const data = await fetchBannerSections()
+    const intentionBanners: IntentionBanner[] = data.intentions || []
+    const lifestyleContent: LifestyleContent | null = data.lifestyle || null
 
     // Merge API data with defaults for intentions
     const intenciones = defaultIntenciones.map(defaultInt => {
@@ -107,6 +84,8 @@ export default async function LifestyleBlock() {
                     <img
                         src={backgroundImage}
                         alt="Estilo de vida con cuarzos"
+                        width={800}
+                        height={500}
                         className="w-full h-full object-cover opacity-30"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
@@ -159,6 +138,8 @@ export default async function LifestyleBlock() {
                                 <img
                                     src={intencion.imagen}
                                     alt={intencion.nombre}
+                                    width={400}
+                                    height={400}
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                     loading="lazy"
                                 />

@@ -1,3 +1,5 @@
+import { fetchBannerSections } from "@util/banner-api"
+
 // Default zodiac signs
 const defaultSignos = [
     { handle: "aries", nombre: "ARIES", img: "/signos/ARIES.webp" },
@@ -20,28 +22,9 @@ interface ZodiacBanner {
     image_url?: string
 }
 
-async function fetchZodiacBanners(): Promise<ZodiacBanner[]> {
-    try {
-        const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
-        const response = await fetch(`${baseUrl}/store/banners/sections`, {
-            next: { revalidate: 60 },
-            headers: {
-                "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
-            },
-        })
-
-        if (response.ok) {
-            const data = await response.json()
-            return data.zodiac || []
-        }
-    } catch (error) {
-        console.error("Error fetching zodiac banners:", error)
-    }
-    return []
-}
-
 export default async function InterstitialBanner() {
-    const zodiacBanners = await fetchZodiacBanners()
+    const data = await fetchBannerSections()
+    const zodiacBanners: ZodiacBanner[] = data.zodiac || []
 
     // Merge API data with defaults
     const signos = defaultSignos.map(defaultSign => {
@@ -70,6 +53,8 @@ export default async function InterstitialBanner() {
                             <img
                                 src={signo.img}
                                 alt={signo.nombre}
+                                width={128}
+                                height={128}
                                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 loading="lazy"
                             />
