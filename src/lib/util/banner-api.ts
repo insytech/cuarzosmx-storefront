@@ -24,7 +24,7 @@ export async function fetchBanners(): Promise<BannerResponse> {
                 "Content-Type": "application/json",
             },
             next: {
-                revalidate: 300, // Cache for 5 minutes
+                revalidate: 86400, // Cache for 24 hours
             },
         })
 
@@ -56,7 +56,7 @@ export const fetchBannerSections = cache(async () => {
             headers: {
                 "x-publishable-api-key": PUBLISHABLE_API_KEY || "",
             },
-            next: { revalidate: 60 },
+            next: { revalidate: 86400 },
         })
 
         if (response.ok) {
