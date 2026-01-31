@@ -19,6 +19,9 @@ const BACKEND_URL =
     process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
     "http://localhost:9000"
 
+const PUBLISHABLE_API_KEY =
+    process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
+
 /**
  * Fetch products by tag values using the custom backend endpoint.
  * Falls back to client-side filtering if the endpoint is unavailable.
@@ -37,7 +40,10 @@ async function fetchProductsByTags(
             `${BACKEND_URL}/store/products-by-tags?tags=${encodeURIComponent(tags)}&limit=${limit}`,
             {
                 method: "GET",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-publishable-api-key": PUBLISHABLE_API_KEY,
+                },
                 next,
                 cache: "force-cache",
             } as any
