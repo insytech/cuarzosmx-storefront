@@ -38,14 +38,12 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
       })
   }
 
-  // Calculate max quantity based on variant settings (same logic as product page)
+  // The Cart API does not return inventory_quantity on variants.
+  // Use a safe max fallback and let the backend validate real stock on update.
+  const MAX_CART_QUANTITY = 99
   const canAddUnlimited =
     !item.variant?.manage_inventory || item.variant?.allow_backorder
-
-  // Get the max quantity user can add
-  const maxQuantity = canAddUnlimited
-    ? Infinity
-    : (item.variant?.inventory_quantity || 0)
+  const maxQuantity = canAddUnlimited ? Infinity : MAX_CART_QUANTITY
 
   if (type === "preview") {
     return (
