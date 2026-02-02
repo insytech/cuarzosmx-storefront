@@ -10,7 +10,12 @@ import LineItemUnitPrice from "@modules/common/components/line-item-unit-price"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import Spinner from "@modules/common/icons/spinner"
 import Thumbnail from "@modules/products/components/thumbnail"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+const PUBLISHABLE_KEY =
+  process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
 
 type ItemProps = {
   item: HttpTypes.StoreCartLineItem
@@ -21,6 +26,36 @@ type ItemProps = {
 const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [liveInventory, setLiveInventory] = useState<number | null>(null)
+
+  useEffect(() => {
+    const productId = item.product_id
+    const variantId = item.variant_id
+    if (!productId || !variantId) return
+
+    const fetchLiveInventory = async () => {
+      try {
+        const url = new URL(`${BACKEND_URL}/store/products/${productId}`)
+        url.searchParams.set("fields", "variants.id,variants.inventory_quantity")
+        const res = await fetch(url.toString(), {
+          headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
+          cache: "no-store",
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        const variant = data.product?.variants?.find(
+          (v: any) => v.id === variantId
+        )
+        if (variant?.inventory_quantity != null) {
+          setLiveInventory(variant.inventory_quantity)
+        }
+      } catch {
+        // Silently fail — fallback to MAX_CART_QUANTITY
+      }
+    }
+
+    fetchLiveInventory()
+  }, [item.product_id, item.variant_id])
 
   const changeQuantity = async (quantity: number) => {
     setError(null)
@@ -38,12 +73,12 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
       })
   }
 
-  // The Cart API does not return inventory_quantity on variants.
-  // Use a safe max fallback and let the backend validate real stock on update.
   const MAX_CART_QUANTITY = 99
   const canAddUnlimited =
     !item.variant?.manage_inventory || item.variant?.allow_backorder
-  const maxQuantity = canAddUnlimited ? Infinity : MAX_CART_QUANTITY
+  const maxQuantity = canAddUnlimited
+    ? Infinity
+    : liveInventory ?? MAX_CART_QUANTITY
 
   if (type === "preview") {
     return (
