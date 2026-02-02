@@ -50,7 +50,7 @@ export default function ProductActions({
     if (!product.id) return
     try {
       const url = new URL(`${BACKEND_URL}/store/products/${product.id}`)
-      url.searchParams.set("fields", "variants.id,+variants.inventory_quantity")
+      url.searchParams.set("fields", "variants.id,variants.inventory_quantity")
       const res = await fetch(url.toString(), {
         headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
         cache: "no-store",
