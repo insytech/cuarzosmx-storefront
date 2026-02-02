@@ -53,6 +53,7 @@ export default function ProductActions({
       url.searchParams.set("fields", "variants.id,+variants.inventory_quantity")
       const res = await fetch(url.toString(), {
         headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
+        cache: "no-store",
       })
       if (!res.ok) return
       const data = await res.json()
