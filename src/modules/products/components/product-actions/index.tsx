@@ -6,9 +6,14 @@ import { HttpTypes } from "@medusajs/types"
 import OptionSelect from "@modules/products/components/product-actions/option-select"
 import { isEqual } from "lodash"
 import { useParams } from "next/navigation"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import ProductPrice from "../product-price"
 import MobileActions from "./mobile-actions"
+
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+const PUBLISHABLE_KEY =
+  process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
 
 type ProductActionsProps = {
   product: HttpTypes.StoreProduct
@@ -37,6 +42,32 @@ export default function ProductActions({
   const [isAdding, setIsAdding] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const countryCode = useParams().countryCode as string
+
+  // Live inventory: fetched client-side to bypass ISR cache
+  const [liveInventory, setLiveInventory] = useState<Record<string, number>>({})
+
+  const fetchLiveInventory = useCallback(async () => {
+    if (!product.id) return
+    try {
+      const res = await fetch(
+        `${BACKEND_URL}/store/products/${product.id}?fields=variants.id,+variants.inventory_quantity`,
+        { headers: { "x-publishable-api-key": PUBLISHABLE_KEY } }
+      )
+      if (!res.ok) return
+      const data = await res.json()
+      const map: Record<string, number> = {}
+      for (const v of data.product?.variants || []) {
+        if (v.id != null && v.inventory_quantity != null) {
+          map[v.id] = v.inventory_quantity
+        }
+      }
+      setLiveInventory(map)
+    } catch {
+      // Silently fail — cached data is used as fallback
+    }
+  }, [product.id])
+
+  useEffect(() => { fetchLiveInventory() }, [fetchLiveInventory])
 
   // If there is only 1 variant, preselect the options
   useEffect(() => {
@@ -106,13 +137,16 @@ export default function ProductActions({
   }, [selectedVariant])
 
   // Calculate max quantity user can select (accounting for items already in cart)
+  // Prefer live inventory (fresh client-side fetch) over cached data from ISR
   const maxQuantity = useMemo(() => {
     if (canAddUnlimited) return Infinity
-    const inventoryAvailable = selectedVariant?.inventory_quantity || 0
-    // Subtract what's already in cart to get true available quantity
+    const variantId = selectedVariant?.id
+    const inventoryAvailable = (variantId && liveInventory[variantId] != null)
+      ? liveInventory[variantId]
+      : (selectedVariant?.inventory_quantity || 0)
     const trueAvailable = Math.max(0, inventoryAvailable - quantityInCart)
     return trueAvailable
-  }, [selectedVariant, canAddUnlimited, quantityInCart])
+  }, [selectedVariant, canAddUnlimited, quantityInCart, liveInventory])
 
 
   // Check if at least 1 item can be added (accounts for cart items)
