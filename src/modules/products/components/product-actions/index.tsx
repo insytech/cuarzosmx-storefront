@@ -49,10 +49,11 @@ export default function ProductActions({
   const fetchLiveInventory = useCallback(async () => {
     if (!product.id) return
     try {
-      const res = await fetch(
-        `${BACKEND_URL}/store/products/${product.id}?fields=variants.id,+variants.inventory_quantity`,
-        { headers: { "x-publishable-api-key": PUBLISHABLE_KEY } }
-      )
+      const url = new URL(`${BACKEND_URL}/store/products/${product.id}`)
+      url.searchParams.set("fields", "variants.id,+variants.inventory_quantity")
+      const res = await fetch(url.toString(), {
+        headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
+      })
       if (!res.ok) return
       const data = await res.json()
       const map: Record<string, number> = {}
