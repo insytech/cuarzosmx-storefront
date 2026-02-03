@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
@@ -21,20 +21,32 @@ export async function POST(request: NextRequest) {
 
   const countryCode = process.env.NEXT_PUBLIC_DEFAULT_REGION || "mx"
   const revalidated: string[] = []
+  const revalidatedTags: string[] = []
 
   for (const handle of handles) {
     const path = `/${countryCode}/products/${handle}`
     revalidatePath(path)
     revalidated.push(path)
+
+    // Also revalidate the specific product tag
+    const productTag = `product-${handle}`
+    revalidateTag(productTag)
+    revalidatedTags.push(productTag)
   }
 
-  // Also revalidate the home page and collections since product changes
+  // Revalidate global products tag (for listings)
+  revalidateTag("products")
+  revalidatedTags.push("products")
+
+  // Also revalidate the home page and store pages since product changes
   // may affect listings
   revalidatePath(`/${countryCode}`)
-  revalidated.push(`/${countryCode}`)
+  revalidatePath(`/${countryCode}/store`)
+  revalidated.push(`/${countryCode}`, `/${countryCode}/store`)
 
   return NextResponse.json({
     revalidated,
+    revalidatedTags,
     now: Date.now(),
   })
 }

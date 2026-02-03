@@ -15,6 +15,13 @@ const BACKEND_URL =
 const PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
 
+type VariantImage = {
+  id: string
+  variant_id: string
+  image_url: string
+  position: number
+}
+
 type ProductActionsProps = {
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
@@ -46,6 +53,9 @@ export default function ProductActions({
   // Live inventory: fetched client-side to bypass ISR cache
   const [liveInventory, setLiveInventory] = useState<Record<string, number>>({})
 
+  // Variant images for thumbnails: variantId -> first image URL
+  const [variantThumbnails, setVariantThumbnails] = useState<Record<string, string>>({})
+
   const fetchLiveInventory = useCallback(async () => {
     if (!product.id) return
     try {
@@ -70,6 +80,42 @@ export default function ProductActions({
   }, [product.id])
 
   useEffect(() => { fetchLiveInventory() }, [fetchLiveInventory])
+
+  // Fetch variant images for thumbnails in option selector
+  const fetchVariantThumbnails = useCallback(async () => {
+    if (!product.variants?.length || product.variants.length <= 1) return
+
+    const thumbnailMap: Record<string, string> = {}
+
+    await Promise.all(
+      product.variants.map(async (variant) => {
+        if (!variant.id) return
+        try {
+          const res = await fetch(
+            `${BACKEND_URL}/store/variant-images/${variant.id}`,
+            {
+              headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
+              cache: "force-cache",
+            }
+          )
+          if (!res.ok) return
+          const data = await res.json()
+          const images = data.images as VariantImage[] | undefined
+          if (images?.length) {
+            // Sort by position and get first image
+            const sorted = [...images].sort((a, b) => a.position - b.position)
+            thumbnailMap[variant.id] = sorted[0].image_url
+          }
+        } catch {
+          // Silently fail for individual variants
+        }
+      })
+    )
+
+    setVariantThumbnails(thumbnailMap)
+  }, [product.variants])
+
+  useEffect(() => { fetchVariantThumbnails() }, [fetchVariantThumbnails])
 
   // Auto-select first available variant (preferring in-stock variants)
   // This improves UX by showing a valid state immediately instead of "Agotado"
@@ -134,6 +180,28 @@ export default function ProductActions({
       return isEqual(variantOptions, options)
     })
   }, [product.variants, options])
+
+  // Create a map of option value -> thumbnail URL for each option
+  // This allows OptionSelect to show variant images as thumbnails
+  const getOptionThumbnails = useCallback((optionId: string): Record<string, string | null> => {
+    const thumbnails: Record<string, string | null> = {}
+
+    if (!product.variants?.length) return thumbnails
+
+    for (const variant of product.variants) {
+      const variantOpts = variant.options || []
+      // Find the option value for this optionId in this variant
+      const optionValue = variantOpts.find((opt: any) => opt.option_id === optionId)?.value
+      if (optionValue && variant.id) {
+        // Only set if we haven't already or if we have a thumbnail
+        if (!thumbnails[optionValue] && variantThumbnails[variant.id]) {
+          thumbnails[optionValue] = variantThumbnails[variant.id]
+        }
+      }
+    }
+
+    return thumbnails
+  }, [product.variants, variantThumbnails])
 
   // Calculate how many of this variant are already in the cart
   const quantityInCart = useMemo(() => {
@@ -277,6 +345,7 @@ export default function ProductActions({
                   title={option.title ?? ""}
                   data-testid="product-options"
                   disabled={!!disabled || isAdding}
+                  variantThumbnails={getOptionThumbnails(option.id)}
                 />
               </div>
             ))}

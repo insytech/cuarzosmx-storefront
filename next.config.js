@@ -155,6 +155,46 @@ const nextConfig = {
   // Security headers
   async headers() {
     return [
+      // Cache-Control for dynamic pages (products, store, etc.)
+      // stale-while-revalidate: serve cached version immediately,
+      // but fetch fresh in background for next request
+      {
+        source: "/:countryCode/products/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+      {
+        source: "/:countryCode/store",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+      {
+        source: "/:countryCode/categories/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+      {
+        source: "/:countryCode/collections/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+      // Security headers for all paths
       {
         source: "/:path*",
         headers: [

@@ -3,7 +3,7 @@
 import { sdk } from "@lib/config"
 import { HttpTypes } from "@medusajs/types"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
-import { getAuthHeaders, getCacheOptions } from "./cookies"
+import { getAuthHeaders } from "./cookies"
 import { getRegion, retrieveRegion } from "./regions"
 
 export const listProducts = async ({
@@ -48,8 +48,10 @@ export const listProducts = async ({
     ...(await getAuthHeaders()),
   }
 
-  const next = {
-    ...(await getCacheOptions("products")),
+  // Build cache tags: global "products" tag + specific product tag if querying by handle
+  const cacheTags = ["products"]
+  if (queryParams?.handle) {
+    cacheTags.push(`product-${queryParams.handle}`)
   }
 
   return sdk.client
@@ -66,8 +68,10 @@ export const listProducts = async ({
           ...queryParams,
         },
         headers,
-        next,
-        cache: "force-cache",
+        next: {
+          tags: cacheTags,
+          revalidate: 3600, // ISR fallback: revalidate every hour
+        },
       }
     )
     .then(({ products, count }) => {
