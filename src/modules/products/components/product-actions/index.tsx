@@ -50,36 +50,11 @@ export default function ProductActions({
   const [quantity, setQuantity] = useState(1)
   const countryCode = useParams().countryCode as string
 
-  // Live inventory: fetched client-side to bypass ISR cache
-  const [liveInventory, setLiveInventory] = useState<Record<string, number>>({})
+  // Stock error message when live check fails at add-to-cart
+  const [stockError, setStockError] = useState<string | null>(null)
 
   // Variant images for thumbnails: variantId -> first image URL
   const [variantThumbnails, setVariantThumbnails] = useState<Record<string, string>>({})
-
-  const fetchLiveInventory = useCallback(async () => {
-    if (!product.id) return
-    try {
-      const url = new URL(`${BACKEND_URL}/store/products/${product.id}`)
-      url.searchParams.set("fields", "variants.id,variants.inventory_quantity")
-      const res = await fetch(url.toString(), {
-        headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
-        cache: "no-store",
-      })
-      if (!res.ok) return
-      const data = await res.json()
-      const map: Record<string, number> = {}
-      for (const v of data.product?.variants || []) {
-        if (v.id != null && v.inventory_quantity != null) {
-          map[v.id] = v.inventory_quantity
-        }
-      }
-      setLiveInventory(map)
-    } catch {
-      // Silently fail — cached data is used as fallback
-    }
-  }, [product.id])
-
-  useEffect(() => { fetchLiveInventory() }, [fetchLiveInventory])
 
   // Fetch variant images for thumbnails in option selector
   const fetchVariantThumbnails = useCallback(async () => {
@@ -223,16 +198,13 @@ export default function ProductActions({
   }, [selectedVariant])
 
   // Calculate max quantity user can select (accounting for items already in cart)
-  // Prefer live inventory (fresh client-side fetch) over cached data from ISR
+  // Uses ISR data (kept fresh by on-demand revalidation when inventory changes)
   const maxQuantity = useMemo(() => {
     if (canAddUnlimited) return Infinity
-    const variantId = selectedVariant?.id
-    const inventoryAvailable = (variantId && liveInventory[variantId] != null)
-      ? liveInventory[variantId]
-      : (selectedVariant?.inventory_quantity || 0)
+    const inventoryAvailable = selectedVariant?.inventory_quantity || 0
     const trueAvailable = Math.max(0, inventoryAvailable - quantityInCart)
     return trueAvailable
-  }, [selectedVariant, canAddUnlimited, quantityInCart, liveInventory])
+  }, [selectedVariant, canAddUnlimited, quantityInCart])
 
 
   // Check if at least 1 item can be added (accounts for cart items)
@@ -287,20 +259,54 @@ export default function ProductActions({
     setQuantity(Math.max(1, quantity - 1))
   }
 
-  // add the selected variant to the cart
+  // Clear stock error when variant changes
+  useEffect(() => { setStockError(null) }, [selectedVariant?.id])
+
+  // add the selected variant to the cart (with live inventory check)
   const handleAddToCart = async () => {
     if (!selectedVariant?.id) return null
 
     setIsAdding(true)
+    setStockError(null)
 
     try {
+      // Live inventory check: verify stock before adding to cart
+      // This is the only moment we hit the backend — not on every page view
+      if (selectedVariant.manage_inventory && !selectedVariant.allow_backorder) {
+        const url = new URL(`${BACKEND_URL}/store/products/${product.id}`)
+        url.searchParams.set("fields", "+variants.inventory_quantity")
+        const res = await fetch(url.toString(), {
+          headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
+          cache: "no-store",
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const liveVariant = (data.product?.variants || []).find(
+            (v: any) => v.id === selectedVariant.id
+          )
+          const liveQty = liveVariant?.inventory_quantity ?? 0
+          const availableAfterCart = liveQty - quantityInCart
+
+          if (availableAfterCart < quantity) {
+            setStockError(
+              availableAfterCart <= 0
+                ? "Este producto se acaba de agotar"
+                : `Solo quedan ${availableAfterCart} disponible${availableAfterCart > 1 ? "s" : ""}`
+            )
+            setIsAdding(false)
+            return
+          }
+        }
+        // If fetch fails, proceed anyway — Medusa validates at checkout
+      }
+
       await addToCart({
         variantId: selectedVariant.id,
         quantity: quantity,
         countryCode,
       })
     } catch {
-      // Error handling is silent since we prevent invalid quantities in the UI
+      // Medusa will reject if truly out of stock
     } finally {
       setIsAdding(false)
     }
@@ -393,6 +399,16 @@ export default function ProductActions({
           <div className={`flex items-center gap-2 text-sm ${inStock ? 'text-green-600' : 'text-red-600'}`}>
             <span className={`w-2 h-2 rounded-full ${inStock ? 'bg-green-500' : 'bg-red-500'}`} />
             {getStockStatusText()}
+          </div>
+        )}
+
+        {/* Stock error from live check at add-to-cart */}
+        {stockError && (
+          <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            {stockError}
           </div>
         )}
 

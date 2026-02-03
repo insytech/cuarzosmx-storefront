@@ -156,14 +156,15 @@ const nextConfig = {
   async headers() {
     return [
       // Cache-Control for dynamic pages (products, store, etc.)
-      // stale-while-revalidate: serve cached version immediately,
-      // but fetch fresh in background for next request
+      // max-age=0: browser always revalidates with server (no stale local cache)
+      // s-maxage=60: CDN/proxy can cache for 60s
+      // stale-while-revalidate=300: CDN serves stale while fetching fresh in background
       {
         source: "/:countryCode/products/:path*",
         headers: [
           {
             key: "Cache-Control",
-            value: "public, s-maxage=60, stale-while-revalidate=300",
+            value: "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
           },
         ],
       },
@@ -172,7 +173,7 @@ const nextConfig = {
         headers: [
           {
             key: "Cache-Control",
-            value: "public, s-maxage=60, stale-while-revalidate=300",
+            value: "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
           },
         ],
       },
@@ -181,7 +182,7 @@ const nextConfig = {
         headers: [
           {
             key: "Cache-Control",
-            value: "public, s-maxage=60, stale-while-revalidate=300",
+            value: "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
           },
         ],
       },
@@ -190,7 +191,7 @@ const nextConfig = {
         headers: [
           {
             key: "Cache-Control",
-            value: "public, s-maxage=60, stale-while-revalidate=300",
+            value: "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
           },
         ],
       },
