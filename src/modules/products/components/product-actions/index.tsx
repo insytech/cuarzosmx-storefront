@@ -71,12 +71,28 @@ export default function ProductActions({
 
   useEffect(() => { fetchLiveInventory() }, [fetchLiveInventory])
 
-  // If there is only 1 variant, preselect the options
+  // Auto-select first available variant (preferring in-stock variants)
+  // This improves UX by showing a valid state immediately instead of "Agotado"
   useEffect(() => {
-    if (product.variants?.length === 1) {
+    if (!product.variants?.length) return
+
+    // If only 1 variant, select it directly
+    if (product.variants.length === 1) {
       const variantOptions = optionsAsKeymap(product.variants[0].options)
       setOptions(variantOptions ?? {})
+      return
     }
+
+    // For multiple variants: prefer first in-stock variant, fallback to first variant
+    const firstInStock = product.variants.find((v) => {
+      // Check if variant has stock (or allows backorder/no inventory management)
+      if (!v.manage_inventory || v.allow_backorder) return true
+      return (v.inventory_quantity ?? 0) > 0
+    })
+
+    const variantToSelect = firstInStock || product.variants[0]
+    const variantOptions = optionsAsKeymap(variantToSelect.options)
+    setOptions(variantOptions ?? {})
   }, [product.variants])
 
   const selectedVariant = useMemo(() => {
@@ -332,12 +348,12 @@ export default function ProductActions({
               </svg>
               Agregando...
             </>
-          ) : !selectedVariant && !options ? (
+          ) : !selectedVariant ? (
             <>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              Selecciona una variante
+              Selecciona una opción
             </>
           ) : !inStock || !isValidVariant ? (
             <>
