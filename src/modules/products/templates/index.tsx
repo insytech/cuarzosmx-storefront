@@ -1,4 +1,4 @@
-import React, { Suspense } from "react"
+import { Suspense } from "react"
 
 import ProductGalleryWithVariants from "@modules/products/components/product-gallery-with-variants"
 import ProductActions from "@modules/products/components/product-actions"
@@ -20,14 +20,72 @@ type ProductTemplateProps = {
   countryCode: string
 }
 
-const ProductTemplate: React.FC<ProductTemplateProps> = ({
+/**
+ * Pre-compute the initial variant ID on the server using the same
+ * deterministic logic as ProductActions. This eliminates the flicker
+ * caused by SSR rendering all product images then client-side switching
+ * to variant-specific images after hydration.
+ */
+const getInitialVariantId = (product: HttpTypes.StoreProduct): string | undefined => {
+  const variants = product.variants
+  if (!variants?.length) return undefined
+  if (variants.length === 1) return variants[0].id
+
+  const firstInStock = variants.find((v) => {
+    if (!v.manage_inventory || v.allow_backorder) return true
+    return (v.inventory_quantity ?? 0) > 0
+  })
+
+  return (firstInStock || variants[0])?.id
+}
+
+/**
+ * Fetch variant-specific images on the server so the gallery renders
+ * with the correct images from the very first paint — zero flicker.
+ */
+const fetchVariantImages = async (
+  variantId: string
+): Promise<Array<{ id: string; url: string }>> => {
+  try {
+    const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || ""
+    const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
+
+    // No per-fetch cache — the page-level ISR (revalidate = 3600) already
+    // handles caching. Adding next:{revalidate} here activates the Data Cache
+    // separately, which can serve stale data even when ISR regenerates.
+    const response = await fetch(
+      `${backendUrl}/store/variant-images/${variantId}`,
+      {
+        headers: { "x-publishable-api-key": publishableKey },
+        cache: "no-store",
+      }
+    )
+
+    if (!response.ok) return []
+
+    const data = await response.json()
+    const images = data.images || []
+    return images.map((img: any) => ({ id: img.id, url: img.image_url }))
+  } catch {
+    return []
+  }
+}
+
+const ProductTemplate = async ({
   product,
   region,
   countryCode,
-}) => {
+}: ProductTemplateProps) => {
   if (!product || !product.id) {
     return notFound()
   }
+
+  const initialVariantId = getInitialVariantId(product)
+
+  // Fetch variant images on the server to eliminate gallery flicker
+  const initialVariantImages = initialVariantId
+    ? await fetchVariantImages(initialVariantId)
+    : []
 
   // Breadcrumb items para Schema.org
   const breadcrumbItems = [
@@ -88,7 +146,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
           {/* Left Column - Images */}
           <div className="order-1">
-            <ProductGalleryWithVariants images={product?.images || []} thumbnail={product?.thumbnail} />
+            <ProductGalleryWithVariants
+              images={product?.images || []}
+              thumbnail={product?.thumbnail}
+              initialVariantId={initialVariantId}
+              initialVariantImages={initialVariantImages}
+            />
           </div>
 
           {/* Right Column - Product Details */}
