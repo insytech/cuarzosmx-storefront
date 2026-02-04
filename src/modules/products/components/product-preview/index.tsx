@@ -34,6 +34,12 @@ export default async function ProductPreview({
             isFeatured={isFeatured}
             className={imageClassName ? imageClassName : "transition-transform duration-300 ease-in-out group-hover/image:scale-110 object-cover w-full h-full"}
           />
+          {/* Sale badge */}
+          {cheapestPrice?.price_type === "sale" && (
+            <span className="absolute top-2 left-2 z-10 bg-red-600 text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+              -{cheapestPrice.percentage_diff}%
+            </span>
+          )}
           {/* Overlay gradient on hover */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 rounded-lg" />
         </div>

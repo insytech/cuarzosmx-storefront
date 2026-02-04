@@ -13,6 +13,8 @@ type OptionSelectProps = {
   "data-testid"?: string
   /** Map of option value -> thumbnail URL */
   variantThumbnails?: Record<string, string | null>
+  /** Map of option value -> discount percentage (e.g. "20") */
+  variantSaleDiscounts?: Record<string, string>
 }
 
 const OptionSelect: React.FC<OptionSelectProps> = ({
@@ -23,6 +25,7 @@ const OptionSelect: React.FC<OptionSelectProps> = ({
   "data-testid": dataTestId,
   disabled,
   variantThumbnails,
+  variantSaleDiscounts,
 }) => {
   const filteredOptions = (option.values ?? []).map((v) => v.value)
   const hasThumbnails = variantThumbnails && Object.values(variantThumbnails).some(Boolean)
@@ -39,6 +42,7 @@ const OptionSelect: React.FC<OptionSelectProps> = ({
         {filteredOptions.map((v) => {
           const thumbnail = variantThumbnails?.[v]
           const isSelected = v === current
+          const saleDiscount = variantSaleDiscounts?.[v]
 
           // If we have thumbnails, render card-style buttons
           if (hasThumbnails) {
@@ -47,7 +51,7 @@ const OptionSelect: React.FC<OptionSelectProps> = ({
                 onClick={() => updateOption(option.id, v)}
                 key={v}
                 className={clx(
-                  "flex flex-col items-center gap-2 p-2 rounded-xl border-2 transition-all duration-200 min-w-[90px]",
+                  "relative flex flex-col items-center gap-2 p-2 rounded-xl border-2 transition-all duration-200 min-w-[90px]",
                   {
                     "border-main-color bg-main-color-light ring-2 ring-main-color ring-offset-1": isSelected,
                     "border-gray-200 bg-white hover:border-main-color hover:bg-gray-50": !isSelected,
@@ -57,6 +61,11 @@ const OptionSelect: React.FC<OptionSelectProps> = ({
                 disabled={disabled}
                 data-testid="option-button"
               >
+                {saleDiscount && (
+                  <span className="absolute -top-2 -right-2 z-10 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm leading-none">
+                    -{saleDiscount}%
+                  </span>
+                )}
                 {thumbnail ? (
                   <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
                     <Image
@@ -93,7 +102,7 @@ const OptionSelect: React.FC<OptionSelectProps> = ({
               onClick={() => updateOption(option.id, v)}
               key={v}
               className={clx(
-                "border text-sm font-medium h-11 min-w-[80px] px-4 rounded-lg transition-all duration-200",
+                "relative border text-sm font-medium h-11 min-w-[80px] px-4 rounded-lg transition-all duration-200",
                 {
                   "border-main-color bg-main-color-light text-main-color-dark ring-2 ring-main-color ring-offset-1": isSelected,
                   "border-gray-300 bg-white text-gray-700 hover:border-main-color hover:bg-gray-50": !isSelected,
@@ -103,6 +112,11 @@ const OptionSelect: React.FC<OptionSelectProps> = ({
               disabled={disabled}
               data-testid="option-button"
             >
+              {saleDiscount && (
+                <span className="absolute -top-2 -right-2 z-10 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm leading-none">
+                  -{saleDiscount}%
+                </span>
+              )}
               {v}
             </button>
           )

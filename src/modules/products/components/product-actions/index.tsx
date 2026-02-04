@@ -178,6 +178,35 @@ export default function ProductActions({
     return thumbnails
   }, [product.variants, variantThumbnails])
 
+  // Create a map of option value -> discount percentage for sale variants
+  // Uses existing calculated_price data — no extra fetch needed
+  const getOptionSaleDiscounts = useCallback((optionId: string): Record<string, string> => {
+    const discounts: Record<string, string> = {}
+
+    if (!product.variants?.length) return discounts
+
+    for (const variant of product.variants) {
+      const cp = (variant as any).calculated_price
+      if (!cp) continue
+
+      const original = cp.original_amount
+      const calculated = cp.calculated_amount
+      if (!original || !calculated || calculated >= original) continue
+
+      const pct = Math.round(((original - calculated) / original) * 100)
+      if (pct <= 0) continue
+
+      const optionValue = (variant.options || []).find(
+        (opt: any) => opt.option_id === optionId
+      )?.value
+      if (optionValue && !discounts[optionValue]) {
+        discounts[optionValue] = String(pct)
+      }
+    }
+
+    return discounts
+  }, [product.variants])
+
   // Calculate how many of this variant are already in the cart
   const quantityInCart = useMemo(() => {
     if (!cart || !cart.items || !selectedVariant) return 0
@@ -352,6 +381,7 @@ export default function ProductActions({
                   data-testid="product-options"
                   disabled={!!disabled || isAdding}
                   variantThumbnails={getOptionThumbnails(option.id)}
+                  variantSaleDiscounts={getOptionSaleDiscounts(option.id)}
                 />
               </div>
             ))}
