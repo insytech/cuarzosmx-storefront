@@ -137,7 +137,7 @@ const StripePaymentButton = ({
   return (
     <>
       <Button
-        disabled={disabled || notReady}
+        disabled={disabled || notReady || submitting}
         onClick={handlePayment}
         size="large"
         isLoading={submitting}
@@ -177,7 +177,7 @@ const ManualTestPaymentButton = ({ notReady }: { notReady: boolean }) => {
   return (
     <>
       <Button
-        disabled={notReady}
+        disabled={notReady || submitting}
         isLoading={submitting}
         onClick={handlePayment}
         size="large"
@@ -217,7 +217,7 @@ const MercadoPagoPaymentButton = ({ notReady }: { notReady: boolean }) => {
   return (
     <>
       <Button
-        disabled={notReady}
+        disabled={notReady || submitting}
         isLoading={submitting}
         onClick={handlePayment}
         size="large"
