@@ -329,10 +329,13 @@ export default function ProductActions({
         // If fetch fails, proceed anyway — Medusa validates at checkout
       }
 
+      const variantImage = variantThumbnails[selectedVariant.id]
+
       await addToCart({
         variantId: selectedVariant.id,
         quantity: quantity,
         countryCode,
+        ...(variantImage ? { metadata: { variant_image: variantImage } } : {}),
       })
     } catch {
       // Medusa will reject if truly out of stock

@@ -88,7 +88,7 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
           className="w-16 flex-shrink-0"
         >
           <Thumbnail
-            thumbnail={item.thumbnail}
+            thumbnail={(item.metadata?.variant_image as string) || item.thumbnail}
             images={item.variant?.product?.images}
             size="square"
           />
@@ -123,7 +123,7 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
             className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100"
           >
             <Thumbnail
-              thumbnail={item.thumbnail}
+              thumbnail={(item.metadata?.variant_image as string) || item.thumbnail}
               images={item.variant?.product?.images}
               size="square"
             />
@@ -192,7 +192,7 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
             className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100"
           >
             <Thumbnail
-              thumbnail={item.thumbnail}
+              thumbnail={(item.metadata?.variant_image as string) || item.thumbnail}
               images={item.variant?.product?.images}
               size="square"
             />
