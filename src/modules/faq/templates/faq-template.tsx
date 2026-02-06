@@ -32,8 +32,9 @@ const faqItems: FAQItem[] = [
         question: "¿Tienen descuentos por mayoreo?",
         answer: (
             <>
-                Por mayoreo manejamos un descuento de <strong>20% a partir de 12 piezas</strong>. Pueden ser de productos diferentes, salvo algunas piezas seleccionadas.
-                <p className="mt-2">El descuento para los pedidos realizados por la página web entrará automáticamente cuando seleccione 12 piezas o más.</p>
+                Por mayoreo manejamos un descuento de <strong>20% a partir de 12 piezas</strong>. Pueden ser de productos diferentes.
+                <p className="mt-2">El descuento <strong>no aplica</strong> a productos por kilo ni a productos que ya cuenten con un descuento o promoción activa.</p>
+                <p className="mt-2">El descuento para los pedidos realizados por la página web entrará automáticamente cuando seleccione 12 piezas o más. En el carrito podrá ver a qué productos se les aplicó el descuento.</p>
             </>
         )
     },

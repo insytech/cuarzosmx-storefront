@@ -1,4 +1,5 @@
 import repeat from "@lib/util/repeat"
+import { calculateBulkDiscount } from "@lib/util/bulk-discount"
 import { HttpTypes } from "@medusajs/types"
 
 import Item from "@modules/cart/components/item"
@@ -10,6 +11,8 @@ type ItemsTemplateProps = {
 
 const ItemsTemplate = ({ cart }: ItemsTemplateProps) => {
   const items = cart?.items
+  const bulkDiscount = calculateBulkDiscount(cart ?? null)
+  const bulkActive = bulkDiscount.hasBackendDiscount && bulkDiscount.discountAmount > 0
   return (
     <div>
       <div className="pb-4 border-b border-gray-100 mb-4">
@@ -40,6 +43,7 @@ const ItemsTemplate = ({ cart }: ItemsTemplateProps) => {
                   key={item.id}
                   item={item}
                   currencyCode={cart?.currency_code}
+                  bulkActive={bulkActive}
                 />
               )
             })

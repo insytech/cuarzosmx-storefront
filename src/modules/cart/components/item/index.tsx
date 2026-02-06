@@ -1,6 +1,7 @@
 "use client"
 
 import { updateLineItem } from "@lib/data/cart"
+import { BULK_DISCOUNT_CODE } from "@lib/util/bulk-discount"
 import { HttpTypes } from "@medusajs/types"
 import ErrorMessage from "@modules/checkout/components/error-message"
 import DeleteButton from "@modules/common/components/delete-button"
@@ -21,9 +22,10 @@ type ItemProps = {
   item: HttpTypes.StoreCartLineItem
   type?: "full" | "preview"
   currencyCode: string
+  bulkActive?: boolean
 }
 
-const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
+const Item = ({ item, type = "full", currencyCode, bulkActive = false }: ItemProps) => {
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [liveInventory, setLiveInventory] = useState<number | null>(null)
@@ -79,6 +81,13 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
   const maxQuantity = canAddUnlimited
     ? Infinity
     : liveInventory ?? MAX_CART_QUANTITY
+
+  // Detect if this item is excluded from bulk discount
+  const itemAny = item as any
+  const hasBulkAdjustment = (itemAny.adjustments || []).some(
+    (adj: any) => adj?.code === BULK_DISCOUNT_CODE
+  )
+  const showBulkExclusion = bulkActive && !hasBulkAdjustment
 
   if (type === "preview") {
     return (
@@ -136,6 +145,9 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
               </p>
             </LocalizedClientLink>
             <LineItemOptions variant={item.variant} data-testid="product-variant" />
+            {showBulkExclusion && (
+              <p className="text-xs text-gray-400 mt-1">No aplica desc. mayoreo</p>
+            )}
 
             <div className="mt-2 flex items-center justify-between">
               <LineItemPrice
@@ -205,6 +217,9 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
               </p>
             </LocalizedClientLink>
             <LineItemOptions variant={item.variant} data-testid="product-variant" />
+            {showBulkExclusion && (
+              <p className="text-xs text-gray-400">No aplica desc. mayoreo</p>
+            )}
             <DeleteButton
               id={item.id}
               data-testid="product-delete-button"
