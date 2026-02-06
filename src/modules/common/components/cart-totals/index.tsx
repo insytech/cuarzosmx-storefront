@@ -38,6 +38,9 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
   const bulkDiscount = calculateBulkDiscount(totals as HttpTypes.StoreCart)
   const showBulkDiscount = bulkDiscount.hasBackendDiscount && bulkDiscount.discountAmount > 0
 
+  // Separar descuento de promoción del bulk para no duplicar visualmente
+  const promoDiscountOnly = Math.max(0, (discount_total ?? 0) - (showBulkDiscount ? bulkDiscount.discountAmount : 0))
+
   return (
     <div>
       <div className="flex flex-col gap-y-3 text-sm">
@@ -50,7 +53,7 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
           </span>
         </div>
 
-        {!!discount_total && (
+        {promoDiscountOnly > 0 && (
           <div className="flex items-center justify-between">
             <span className="text-gray-600 flex items-center gap-1">
               <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -61,9 +64,9 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
             <span
               className="font-medium text-green-600"
               data-testid="cart-discount"
-              data-value={discount_total || 0}
+              data-value={promoDiscountOnly}
             >
-              - {convertToLocale({ amount: discount_total ?? 0, currency_code })}
+              - {convertToLocale({ amount: promoDiscountOnly, currency_code })}
             </span>
           </div>
         )}
