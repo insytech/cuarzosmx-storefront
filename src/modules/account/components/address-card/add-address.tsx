@@ -88,16 +88,18 @@ const AddAddress = ({
                 data-testid="company-input"
               />
               <Input
-                label="Address"
+                label="Calle y número"
                 name="address_1"
                 required
                 autoComplete="address-line1"
                 data-testid="address-1-input"
               />
               <Input
-                label="Apartment, suite, etc."
+                label="Colonia"
                 name="address_2"
+                required
                 autoComplete="address-line2"
+                validationMessage="Ingresa la colonia"
                 data-testid="address-2-input"
               />
               <div className="grid grid-cols-[144px_1fr] gap-x-2">
