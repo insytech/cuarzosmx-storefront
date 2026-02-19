@@ -77,7 +77,7 @@ const PaymentContainer: React.FC<PaymentContainerProps> = ({
             <p><strong>Nombre:</strong> Mario Alberto Trujillo Dueñas</p>
             <p><strong>CLABE:</strong> 002930701038297964</p>
             <p><strong>Cuenta:</strong> 70103829796</p>
-            <p><strong>ó para Deposito en Oxxo:</strong> 5206 9877 3441 6596</p>
+
           </div>
           <Text className="text-xs text-blue-600 mt-3">
             Una vez realizada la transferencia, envía tu comprobante a <strong>mineralzac@hotmail.com</strong> o enviar al número <strong>+52 492 127 7919</strong> con tu número de pedido.
