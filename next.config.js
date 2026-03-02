@@ -24,16 +24,10 @@ const nextConfig = {
   // Optimizaciones de rendimiento
   poweredByHeader: false,
   compress: true,
-  // Optimización de imágenes DESACTIVADA temporalmente
-  // Razón: Límite de 5,000 transformaciones gratuitas de Vercel alcanzado
-  // Las imágenes se sirven directamente desde R2 (Cloudflare CDN)
-  // TODO: Re-activar después de pre-optimizar imágenes en R2
   images: {
-    unoptimized: true,  // Desactiva transformaciones de Vercel
-    // Configuración anterior (comentada para referencia):
-    // formats: ["image/webp"],
-    // deviceSizes: [640, 828, 1200, 1920],
-    // imageSizes: [64, 128, 256],
+    formats: ["image/webp"],
+    deviceSizes: [640, 828, 1200, 1920],
+    imageSizes: [64, 128, 256],
     remotePatterns: [
       {
         protocol: "http",
