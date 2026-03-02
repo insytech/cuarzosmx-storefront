@@ -2,6 +2,7 @@ import { Metadata } from "next"
 import { Montserrat } from "next/font/google"
 import "styles/globals.css"
 import CookieConsentWrapper from "@modules/common/components/cookie-consent-wrapper"
+import GoogleTagManager from "@modules/common/components/google-tag-manager"
 import LazySpeedInsights from "@modules/common/components/lazy-speed-insights"
 
 const montserrat = Montserrat({
@@ -84,8 +85,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    // Agregar cuando tengas las verificaciones
-    // google: "tu-codigo-de-verificacion",
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
   },
   alternates: {
     canonical: siteUrl,
@@ -143,8 +143,20 @@ export default function RootLayout(props: { children: React.ReactNode }) {
       </head>
       <body>
         <CookieConsentWrapper>
+          <GoogleTagManager />
           <main className="relative">{props.children}</main>
         </CookieConsentWrapper>
+        {/* GTM noscript fallback */}
+        {process.env.NEXT_PUBLIC_GTM_ID && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${process.env.NEXT_PUBLIC_GTM_ID}`}
+              height="0"
+              width="0"
+              style={{ display: "none", visibility: "hidden" }}
+            />
+          </noscript>
+        )}
         <LazySpeedInsights />
       </body>
     </html>
