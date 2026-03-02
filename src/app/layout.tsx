@@ -4,6 +4,7 @@ import "styles/globals.css"
 import CookieConsentWrapper from "@modules/common/components/cookie-consent-wrapper"
 import GoogleTagManager from "@modules/common/components/google-tag-manager"
 import LazySpeedInsights from "@modules/common/components/lazy-speed-insights"
+import NavigationSchema from "@modules/common/components/navigation-schema"
 
 const montserrat = Montserrat({
   subsets: ["latin", "latin-ext"],
@@ -140,6 +141,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
+        <NavigationSchema />
       </head>
       <body>
         <CookieConsentWrapper>
