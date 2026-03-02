@@ -139,6 +139,7 @@ const CartDropdown = ({
                             thumbnail={(item.metadata?.variant_image as string) || item.thumbnail}
                             images={item.variant?.product?.images}
                             size="square"
+                            alt={item.product_title || "Producto CuarzosMX"}
                           />
                         </LocalizedClientLink>
                         <div className="flex flex-col justify-between flex-1">

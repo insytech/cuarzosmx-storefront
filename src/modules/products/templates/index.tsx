@@ -151,6 +151,7 @@ const ProductTemplate = async ({
               thumbnail={product?.thumbnail}
               initialVariantId={initialVariantId}
               initialVariantImages={initialVariantImages}
+              productName={product?.title || "Producto"}
             />
           </div>
 

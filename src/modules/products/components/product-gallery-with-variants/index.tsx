@@ -17,6 +17,7 @@ type ProductGalleryWithVariantsProps = {
     thumbnail?: string | null
     initialVariantId?: string
     initialVariantImages?: Array<{ id: string; url: string }>
+    productName?: string
 }
 
 /**
@@ -32,6 +33,7 @@ const ProductGalleryWithVariants = ({
     thumbnail,
     initialVariantId,
     initialVariantImages = [],
+    productName,
 }: ProductGalleryWithVariantsProps) => {
     const [currentVariantId, setCurrentVariantId] = useState<string | undefined>(initialVariantId)
     const [variantImages, setVariantImages] = useState(initialVariantImages)
@@ -113,6 +115,7 @@ const ProductGalleryWithVariants = ({
             key={currentVariantId || "default"}
             images={displayImages}
             thumbnail={variantImages.length > 0 ? undefined : thumbnail}
+            productName={productName}
         />
     )
 }

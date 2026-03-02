@@ -100,6 +100,7 @@ const Item = ({ item, type = "full", currencyCode, bulkActive = false }: ItemPro
             thumbnail={(item.metadata?.variant_image as string) || item.thumbnail}
             images={item.variant?.product?.images}
             size="square"
+            alt={item.product_title || "Producto CuarzosMX"}
           />
         </LocalizedClientLink>
         <div className="flex flex-col flex-1 justify-between min-w-0">
@@ -135,6 +136,7 @@ const Item = ({ item, type = "full", currencyCode, bulkActive = false }: ItemPro
               thumbnail={(item.metadata?.variant_image as string) || item.thumbnail}
               images={item.variant?.product?.images}
               size="square"
+              alt={item.product_title || "Producto CuarzosMX"}
             />
           </LocalizedClientLink>
 
@@ -207,6 +209,7 @@ const Item = ({ item, type = "full", currencyCode, bulkActive = false }: ItemPro
               thumbnail={(item.metadata?.variant_image as string) || item.thumbnail}
               images={item.variant?.product?.images}
               size="square"
+              alt={item.product_title || "Producto CuarzosMX"}
             />
           </LocalizedClientLink>
 

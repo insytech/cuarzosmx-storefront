@@ -7,9 +7,10 @@ import { useState, useEffect, useCallback } from "react"
 type ImageGalleryProps = {
   images: HttpTypes.StoreProductImage[]
   thumbnail?: string | null
+  productName?: string
 }
 
-const ImageGallery = ({ images, thumbnail }: ImageGalleryProps) => {
+const ImageGallery = ({ images, thumbnail, productName = "Producto" }: ImageGalleryProps) => {
   // Build the display list: if thumbnail exists and isn't already in images, prepend it
   const allImages = (() => {
     if (!thumbnail) return images || []
@@ -75,7 +76,7 @@ const ImageGallery = ({ images, thumbnail }: ImageGalleryProps) => {
               src={mainImage}
               priority
               className="object-cover hover:scale-105 transition-transform duration-500"
-              alt="Product main image"
+              alt={productName}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
             />
@@ -147,7 +148,7 @@ const ImageGallery = ({ images, thumbnail }: ImageGalleryProps) => {
                   <Image
                     src={image.url}
                     className="object-cover"
-                    alt={`Product image ${index + 1}`}
+                    alt={`${productName} - Imagen ${index + 1}`}
                     fill
                     sizes="120px"
                   />
@@ -198,7 +199,7 @@ const ImageGallery = ({ images, thumbnail }: ImageGalleryProps) => {
               <Image
                 src={mainImage}
                 className="object-contain"
-                alt="Product image enlarged"
+                alt={`${productName} - Vista ampliada`}
                 fill
                 sizes="100vw"
                 quality={100}
@@ -255,7 +256,7 @@ const ImageGallery = ({ images, thumbnail }: ImageGalleryProps) => {
                     <Image
                       src={image.url}
                       className="object-cover"
-                      alt={`Thumbnail ${index + 1}`}
+                      alt={`${productName} - Miniatura ${index + 1}`}
                       fill
                       sizes="64px"
                     />

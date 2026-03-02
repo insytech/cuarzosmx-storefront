@@ -32,6 +32,7 @@ export default async function ProductPreview({
             images={product.images}
             size="square"
             isFeatured={isFeatured}
+            alt={product.title || "Producto CuarzosMX"}
             className={imageClassName ? imageClassName : "transition-transform duration-300 ease-in-out group-hover/image:scale-110 object-cover w-full h-full"}
           />
           {/* Sale badge */}

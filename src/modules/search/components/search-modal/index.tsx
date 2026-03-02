@@ -283,6 +283,7 @@ const SearchModal = ({ isOpen, onClose, onNavigate }: SearchModalProps) => {
                                                                 thumbnail={product.thumbnail}
                                                                 images={product.images}
                                                                 size="square"
+                                                                alt={product.title || "Producto CuarzosMX"}
                                                             />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
