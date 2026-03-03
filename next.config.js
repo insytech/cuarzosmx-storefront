@@ -33,6 +33,11 @@ const nextConfig = {
         protocol: "http",
         hostname: "localhost",
       },
+      // Medusa media storage (cuarzos.mx)
+      {
+        protocol: "https",
+        hostname: "media.cuarzos.mx",
+      },
       {
         protocol: "https",
         hostname: "medusa-public-images.s3.eu-west-1.amazonaws.com",
