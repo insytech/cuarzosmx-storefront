@@ -68,7 +68,17 @@ const PaymentDetails = ({ order }: PaymentDetailsProps) => {
                   <p><strong>Nombre:</strong> Mario Alberto Trujillo Dueñas</p>
                   <p><strong>CLABE:</strong> 002930701038297964</p>
                   <p><strong>Cuenta:</strong> 70103829796</p>
+                  <p><strong>Número de Tarjeta:</strong> 5206 9877 3441 6596</p>
 
+                </div>
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <Text className="text-sm font-semibold text-blue-800 mb-2">
+                    Para depósito en Oxxo
+                  </Text>
+                  <div className="space-y-2 text-sm text-blue-700">
+                    <p><strong>Banco:</strong> Banorte</p>
+                    <p><strong>Número de Tarjeta:</strong> 4189 1400 9976 5082</p>
+                  </div>
                 </div>
                 <Text className="text-xs text-blue-600 mt-3">
                   Una vez realizada la transferencia, envía tu comprobante con el número de pedido.
