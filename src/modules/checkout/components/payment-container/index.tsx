@@ -2,7 +2,7 @@ import { Radio as RadioGroupOption } from "@headlessui/react"
 import { Text, clx } from "@medusajs/ui"
 import React, { useCallback, useContext, useEffect, useMemo, useState, type JSX } from "react"
 import { HttpTypes } from "@medusajs/types"
-import { initMercadoPago, Wallet, CardPayment, Payment as MercadoPagoPayment } from "@mercadopago/sdk-react"
+import { initMercadoPago, Wallet, CardPayment } from "@mercadopago/sdk-react"
 
 import Radio from "@modules/common/components/radio"
 
@@ -357,129 +357,6 @@ export const StripeCardContainerES = ({
   )
 }
 
-export const MercadoPagoCardContainer = ({
-  paymentProviderId,
-  selectedPaymentOptionId,
-  paymentInfoMap,
-  disabled,
-  cart,
-  setCardComplete,
-  setError,
-  onPaymentSuccess,
-}: Omit<PaymentContainerProps, "children"> & {
-  cart: HttpTypes.StoreCart | null
-  setCardComplete: (complete: boolean) => void
-  setError: (error: string | null) => void
-  onPaymentSuccess?: (paymentId: string) => void
-}) => {
-  const [isReady, setIsReady] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
-
-  const initialization = useMemo(() => {
-    if (!cart) return { amount: 0 }
-    return {
-      amount: cart.total ? cart.total / 100 : 0,
-    }
-  }, [cart])
-
-  const customization = useMemo(() => ({
-    visual: {
-      style: {
-        theme: "default" as const,
-      },
-    },
-    paymentMethods: {
-      maxInstallments: 12,
-    },
-  }), [])
-
-  const onReady = useCallback(() => {
-    setIsReady(true)
-  }, [])
-
-  const onSubmit = useCallback(async (formData: any) => {
-    if (!cart?.id) {
-      setError("No se encontró el carrito")
-      return Promise.reject(new Error("No cart"))
-    }
-
-    setIsProcessing(true)
-    setError(null)
-
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
-      const response = await fetch(`${backendUrl}/store/mercadopago-card-payment`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
-        },
-        body: JSON.stringify({
-          cart_id: cart.id,
-          ...formData
-        }),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || result.error || "Error procesando el pago")
-      }
-
-
-      setCardComplete(true)
-
-      if (onPaymentSuccess) {
-        onPaymentSuccess(result.payment_id)
-      }
-
-      return Promise.resolve()
-    } catch (error: any) {
-      console.error("Error en pago:", error)
-      setError(error.message || "Error procesando el pago")
-      setCardComplete(false)
-      return Promise.reject(error)
-    } finally {
-      setIsProcessing(false)
-    }
-  }, [cart, setError, setCardComplete, onPaymentSuccess])
-
-  const onError = useCallback((error: any) => {
-    console.error("MercadoPago CardPayment error:", error)
-    setError(error?.message || "Error en el formulario de pago")
-    setCardComplete(false)
-  }, [setError, setCardComplete])
-
-  return (
-    <PaymentContainer
-      paymentProviderId={paymentProviderId}
-      selectedPaymentOptionId={selectedPaymentOptionId}
-      paymentInfoMap={paymentInfoMap}
-      disabled={disabled}
-    >
-      {selectedPaymentOptionId === paymentProviderId && (
-        <div className="my-4 transition-all duration-150 ease-in-out">
-          {!isReady && <SkeletonCardDetails />}
-          <div className={!isReady ? "hidden" : ""}>
-            <CardPayment
-              initialization={initialization}
-              customization={customization}
-              onReady={onReady}
-              onSubmit={onSubmit}
-              onError={onError}
-            />
-            {isProcessing && (
-              <div className="mt-2 text-center text-sm text-gray-500">
-                Procesando pago...
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </PaymentContainer>
-  )
-}
-
 // Payment Brick Container - Uses CardPayment for tokenization, payment is processed in review step
 export const MercadoPagoPaymentBrickContainer = ({
   paymentProviderId,
@@ -509,17 +386,9 @@ export const MercadoPagoPaymentBrickContainer = ({
     }
   }, [selectedPaymentOptionId, paymentProviderId])
 
-  // Calculate amount - MedusaJS stores prices in cents, MercadoPago expects pesos
+  // Medusa v2 cart totals are already in currency units (pesos) — use as-is
   const amount = useMemo(() => {
-    if (!cart?.total) return 0
-    // Debug: log the raw total to understand the format
-
-    // If total is already in pesos (e.g., 400), use it directly
-    // If total is in cents (e.g., 40000), divide by 100
-    // MedusaJS v2 typically stores in cents
-    const totalInPesos = cart.total > 10000 ? cart.total / 100 : cart.total
-
-    return totalInPesos
+    return cart?.total ?? 0
   }, [cart?.total])
 
   const initialization = useMemo(() => {

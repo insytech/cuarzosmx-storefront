@@ -536,6 +536,45 @@ export async function completeMercadoPagoOrder(
   }
 
   try {
+    // Verify server-side (against the MercadoPago API) that this cart has an
+    // APPROVED payment matching the cart total BEFORE completing the order.
+    const backendUrl =
+      process.env.MEDUSA_BACKEND_URL ||
+      process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+      "http://localhost:9000"
+
+    const validationResponse = await fetch(
+      `${backendUrl}/store/mercadopago-validate-payment`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-publishable-api-key":
+            process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+          ...headers,
+        },
+        body: JSON.stringify({ cart_id: id }),
+      }
+    )
+
+    const validation = await validationResponse.json().catch(() => null)
+
+    if (!validationResponse.ok || !validation?.valid) {
+      console.error(
+        `[mercadopago] PAYMENT VALIDATION FAILED for cart_id=${id}: ` +
+          `expected_amount=${validation?.expected_amount} ` +
+          `approved_payments=${JSON.stringify(
+            validation?.approved_payments ?? []
+          )}. Order NOT completed.`
+      )
+      return {
+        success: false,
+        error:
+          validation?.message ||
+          "No pudimos verificar tu pago con Mercado Pago. El pedido no fue completado.",
+      }
+    }
+
     // First, get the cart to check if payment session exists
     const cart = await retrieveCart(id)
 
