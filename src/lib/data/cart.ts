@@ -498,6 +498,9 @@ export async function createMercadoPagoPreference(cartId?: string) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      // All /store/* routes require the publishable API key
+      "x-publishable-api-key":
+        process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
       ...headers,
     },
     body: JSON.stringify({ cart_id: id }),
@@ -514,7 +517,10 @@ export async function createMercadoPagoPreference(cartId?: string) {
 /**
  * Completes the order after a successful MercadoPago payment
  * @param cartId - The ID of the cart to complete
- * @param paymentId - The MercadoPago payment ID for reference
+ * @param paymentId - The MercadoPago payment ID. When provided, the backend
+ *   validates it via the strongly consistent GET /v1/payments/{id} instead of
+ *   the eventually consistent payments/search (which can miss payments created
+ *   seconds ago and wrongly block completion).
  * @param providerId - The payment provider ID (e.g., pp_mercadopago_mercadopago)
  * @returns The order confirmation URL or null if failed
  */
@@ -553,7 +559,10 @@ export async function completeMercadoPagoOrder(
             process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
           ...headers,
         },
-        body: JSON.stringify({ cart_id: id }),
+        body: JSON.stringify({
+          cart_id: id,
+          ...(paymentId ? { payment_id: paymentId } : {}),
+        }),
       }
     )
 
