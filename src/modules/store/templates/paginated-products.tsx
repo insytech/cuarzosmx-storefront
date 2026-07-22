@@ -1,4 +1,6 @@
-import { listProductsWithSort } from "@lib/data/products"
+import { HttpTypes } from "@medusajs/types"
+import { listProducts, listProductsWithSort } from "@lib/data/products"
+import { sortProducts } from "@lib/util/sort-products"
 import { getRegion } from "@lib/data/regions"
 import ProductPreview from "@modules/products/components/product-preview"
 import { Pagination } from "@modules/store/components/pagination"
@@ -71,14 +73,60 @@ export default async function PaginatedProducts({
     return null
   }
 
-  const {
-    response: { products: paginatedProducts, count },
-  } = await listProductsWithSort({
-    page,
-    queryParams,
-    sortBy,
-    countryCode,
-  })
+  const hasPriceFilter = minPrice !== undefined || maxPrice !== undefined
+  const isPriceSort = sortBy === "price_asc" || sortBy === "price_desc"
+
+  let paginatedProducts: HttpTypes.StoreProduct[]
+  let count: number
+
+  if (hasPriceFilter || isPriceSort) {
+    // Medusa v2 can't order or filter by calculated_price at the API layer
+    // (ProductVariant.calculated_price is not a real column — the API 500s), so
+    // fetch the full matching set and sort/filter/paginate in memory.
+    // ponytail: fetch-all works for this small (~22 product) catalog; if it grows,
+    // add a precomputed min_price field and paginate server-side.
+    const {
+      response: { products: allProducts },
+    } = await listProducts({
+      pageParam: 1,
+      queryParams: { ...queryParams, limit: 1000 },
+      countryCode,
+    })
+
+    const getMinPrice = (p: HttpTypes.StoreProduct) =>
+      p.variants && p.variants.length > 0
+        ? Math.min(
+            ...p.variants.map(
+              (v) => v?.calculated_price?.calculated_amount ?? Infinity
+            )
+          )
+        : Infinity
+
+    const filtered = allProducts.filter((p) => {
+      if (!hasPriceFilter) return true
+      const price = getMinPrice(p)
+      if (price === Infinity) return false
+      if (minPrice !== undefined && price < minPrice) return false
+      if (maxPrice !== undefined && price > maxPrice) return false
+      return true
+    })
+
+    const sorted = sortProducts(filtered, sortBy || "created_at")
+    count = sorted.length
+    const start = (page - 1) * PRODUCT_LIMIT
+    paginatedProducts = sorted.slice(start, start + PRODUCT_LIMIT)
+  } else {
+    const {
+      response: { products, count: total },
+    } = await listProductsWithSort({
+      page,
+      queryParams,
+      sortBy,
+      countryCode,
+    })
+    paginatedProducts = products
+    count = total
+  }
 
   const totalPages = Math.ceil(count / PRODUCT_LIMIT)
 
