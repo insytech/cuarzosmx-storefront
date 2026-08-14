@@ -34,6 +34,18 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
     shipping_subtotal,
   } = totals
 
+  // A shipping method is only "free" once one has actually been chosen and the
+  // backend resolved its cost to 0 (store pickup, free-shipping promos, ...).
+  // Deciding this from the method NAME would show "Gratis" for any option whose
+  // label happens to contain "tienda"/"recoger" even when we do charge for it.
+  const hasShippingMethod =
+    ((totals as any).shipping_methods?.length ?? 0) > 0
+  // NB: Number(null) === 0, so check the type instead of coercing.
+  const shippingAmount =
+    typeof shipping_subtotal === "number" && Number.isFinite(shipping_subtotal)
+      ? shipping_subtotal
+      : null
+
   // Detectar si hay descuento bulk aplicado (viene del backend)
   const bulkDiscount = calculateBulkDiscount(totals as HttpTypes.StoreCart)
   const showBulkDiscount = bulkDiscount.hasBackendDiscount && bulkDiscount.discountAmount > 0
@@ -101,7 +113,11 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
             Envío
           </span>
           <span className="font-medium text-gray-900" data-testid="cart-shipping" data-value={shipping_subtotal || 0}>
-            {shipping_subtotal ? convertToLocale({ amount: shipping_subtotal ?? 0, currency_code }) : 'Por calcular'}
+            {shippingAmount !== null && shippingAmount > 0
+              ? convertToLocale({ amount: shippingAmount, currency_code })
+              : shippingAmount === 0 && hasShippingMethod
+                ? 'Gratis'
+                : 'Por calcular'}
           </span>
         </div>
 

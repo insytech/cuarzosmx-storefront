@@ -232,9 +232,12 @@ const Payment = ({
                             { scroll: false }
                           )
                         }}
+                        // Brick errors are already rendered inside the card panel
+                        // by MercadoPagoPaymentBrickContainer. Setting the shared
+                        // `error` state here rendered the SAME message a second
+                        // time under the whole payment section, so we only log.
                         onPaymentError={(error) => {
                           console.error("Error de pago:", error)
-                          setError(error.message || "Error en el pago")
                         }}
                       />
                     ) : (

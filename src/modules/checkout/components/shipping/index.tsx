@@ -16,6 +16,37 @@ import { useEffect, useState } from "react"
 const PICKUP_OPTION_ON = "__PICKUP_ON"
 const PICKUP_OPTION_OFF = "__PICKUP_OFF"
 
+/**
+ * Renders a shipping price without ever producing "MX$NaN".
+ *
+ * `/store/shipping-options` maps `amount: price?.calculated_amount`
+ * (core-flows list-shipping-options-for-cart.js), so an option whose price set
+ * has no price matching the cart's pricing context comes back with
+ * `amount === undefined`. Passing that straight to Intl.NumberFormat is what
+ * produced "MX$NaN" for the "Recoger en tienda" pickup option.
+ *
+ * - a real price  -> formatted amount
+ * - 0, or a pickup option with no price configured -> "Gratis"
+ * - anything else (genuinely unknown) -> "—"
+ */
+const formatShippingAmount = (
+  amount: number | null | undefined,
+  currency_code: string,
+  { freeWhenUnknown = false }: { freeWhenUnknown?: boolean } = {}
+): string => {
+  if (typeof amount === "number" && Number.isFinite(amount) && amount > 0) {
+    return convertToLocale({ amount, currency_code })
+  }
+
+  if (amount === 0) {
+    return "Gratis"
+  }
+
+  // amount is null/undefined/NaN: pickup has no shipping cost by definition,
+  // for a delivery option we don't know the price yet.
+  return freeWhenUnknown ? "Gratis" : "—"
+}
+
 type ShippingProps = {
   cart: HttpTypes.StoreCart
   availableShippingMethods: HttpTypes.StoreCartShippingOption[] | null
@@ -195,6 +226,11 @@ const Shipping: React.FC<ShippingProps> = ({
     setError(null)
   }, [isOpen])
 
+  const selectedMethod = cart.shipping_methods?.at(-1)
+  const selectedIsPickup = _pickupMethods?.some(
+    (m) => m.id === selectedMethod?.shipping_option_id
+  )
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <div className="flex flex-row items-center justify-between mb-6">
@@ -334,15 +370,16 @@ const Shipping: React.FC<ShippingProps> = ({
                           </div>
                           <span className="justify-self-end text-gray-600 font-medium">
                             {option.price_type === "flat" ? (
-                              convertToLocale({
-                                amount: option.amount!,
-                                currency_code: cart?.currency_code,
-                              })
-                            ) : calculatedPricesMap[option.id] ? (
-                              convertToLocale({
-                                amount: calculatedPricesMap[option.id],
-                                currency_code: cart?.currency_code,
-                              })
+                              formatShippingAmount(
+                                option.amount,
+                                cart?.currency_code
+                              )
+                            ) : typeof calculatedPricesMap[option.id] ===
+                              "number" ? (
+                              formatShippingAmount(
+                                calculatedPricesMap[option.id],
+                                cart?.currency_code
+                              )
                             ) : isLoadingPrices ? (
                               <Loader />
                             ) : (
@@ -410,10 +447,11 @@ const Shipping: React.FC<ShippingProps> = ({
                             </div>
                           </div>
                           <span className="justify-self-end text-gray-600 font-medium">
-                            {convertToLocale({
-                              amount: option.amount!,
-                              currency_code: cart?.currency_code,
-                            })}
+                            {formatShippingAmount(
+                              option.amount,
+                              cart?.currency_code,
+                              { freeWhenUnknown: true }
+                            )}
                           </span>
                         </Radio>
                       )
@@ -451,11 +489,12 @@ const Shipping: React.FC<ShippingProps> = ({
                     Método de Envío
                   </Text>
                   <Text className="txt-medium text-ui-fg-subtle">
-                    {cart.shipping_methods?.at(-1)?.name}{" "}
-                    {cart.shipping_methods?.at(-1)?.amount && convertToLocale({
-                      amount: cart.shipping_methods.at(-1)?.amount || 0,
-                      currency_code: cart?.currency_code,
-                    })}
+                    {selectedMethod?.name}{" "}
+                    {formatShippingAmount(
+                      selectedMethod?.amount,
+                      cart?.currency_code,
+                      { freeWhenUnknown: !!selectedIsPickup }
+                    )}
                   </Text>
                   {/* Mostrar info del proveedor si está disponible */}
                   {(() => {

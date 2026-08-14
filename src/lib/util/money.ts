@@ -16,6 +16,12 @@ export const convertToLocale = ({
   maximumFractionDigits,
   locale = "en-US",
 }: ConvertToLocaleParams) => {
+  // Safety net: Intl.NumberFormat().format(undefined) renders "MX$NaN".
+  // A missing/invalid amount must never be shown as a price to a customer.
+  if (!Number.isFinite(amount)) {
+    return "—"
+  }
+
   return currency_code && !isEmpty(currency_code)
     ? new Intl.NumberFormat(locale, {
       style: "currency",
