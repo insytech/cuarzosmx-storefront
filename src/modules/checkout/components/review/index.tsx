@@ -25,16 +25,24 @@ const Review = ({
   const [error, setError] = useState<string | null>(null)
   // MercadoPago payment id of an ALREADY-charged card payment. Persisted so a
   // retry after a failed order completion never charges the card again.
-  const [paidPaymentId, setPaidPaymentId] = useState<string | null>(() => {
-    if (typeof window === "undefined" || !cart?.id) {
-      return null
+  //
+  // Read after mount rather than in the state initializer: sessionStorage does
+  // not exist on the server, so seeding it during the first render made the
+  // server and the browser disagree on the submit button label and broke
+  // hydration on exactly the retry path this value exists to protect.
+  const [paidPaymentId, setPaidPaymentId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!cart?.id) {
+      return
     }
     try {
-      return sessionStorage.getItem(`mp_paid_payment_${cart.id}`)
+      setPaidPaymentId(sessionStorage.getItem(`mp_paid_payment_${cart.id}`))
     } catch {
-      return null
+      // Private browsing or a blocked storage API — worst case the shopper
+      // sees the default label; the charge guard below still applies.
     }
-  })
+  }, [cart?.id])
 
   const isOpen = searchParams.get("step") === "review"
 
