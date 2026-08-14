@@ -5,6 +5,7 @@ import { HttpTypes } from "@medusajs/types"
 import { initMercadoPago, Wallet, CardPayment } from "@mercadopago/sdk-react"
 
 import Radio from "@modules/common/components/radio"
+import { reportCheckoutError } from "@lib/util/report-checkout-error"
 
 // Initialize Mercado Pago SDK with your Public Key
 const mercadopagoPublicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
@@ -706,6 +707,13 @@ export const MercadoPagoPaymentBrickContainer = ({
       return Promise.resolve()
     } catch (error: any) {
       console.error("Error en tokenización:", error)
+      reportCheckoutError({
+        code: typeof error?.message === "string" ? error.message : "tokenization_failed",
+        cause: typeof error?.cause === "string" ? error.cause : undefined,
+        type: "critical",
+        cartId: cart.id,
+        step: "payment_tokenization",
+      })
       setError(getMercadoPagoErrorMessage(error))
       if (onPaymentError) {
         onPaymentError(error)
@@ -739,6 +747,16 @@ export const MercadoPagoPaymentBrickContainer = ({
       `MercadoPago CardPayment error (${isFatal ? "critical" : "non_critical"}):`,
       rawMessage
     )
+
+    // ...and is reported to the backend so payment-step drop-off is visible in
+    // the Railway logs. Fire-and-forget: never awaited, never throws, no PII.
+    reportCheckoutError({
+      code: rawMessage,
+      cause: typeof error?.cause === "string" ? error.cause : undefined,
+      type: isFatal ? "critical" : "non_critical",
+      cartId: latest.current.cart?.id,
+      step: isFatal ? "payment_brick_mount" : "payment",
+    })
 
     setError(getMercadoPagoErrorMessage(error))
 
