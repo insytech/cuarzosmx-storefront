@@ -161,20 +161,18 @@ export const listProductsWithSort = async ({
 }> => {
   const limit = queryParams?.limit || 12
 
-  // Map sortBy to Medusa order param
-  let order: string | undefined
-  switch (sortBy) {
-    case "price_asc":
-      order = "variants.calculated_price.calculated_amount"
-      break
-    case "price_desc":
-      order = "-variants.calculated_price.calculated_amount"
-      break
-    case "created_at":
-    default:
-      order = "-created_at"
-      break
-  }
+  // Order by id, not created_at. Product ids are ULIDs, so "-id" reads as
+  // newest-first just like "-created_at", but it is a *total* order: a bulk
+  // import left dozens of products sharing the same created_at, and with those
+  // ties Postgres gives no stable order across offset pages, so paging the
+  // catalog repeated some products and never showed others (28 of 487 were
+  // unreachable this way).
+  //
+  // Price sorting never reaches this function — it is handled in memory by
+  // PaginatedProducts, because Medusa v2 cannot order by calculated_price and
+  // returns a 500 if asked to. Falling back here keeps that 500 from coming
+  // back if a future caller passes a price sort.
+  const order = "-id"
 
   const {
     response: { products, count },
