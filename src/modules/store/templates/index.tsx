@@ -130,6 +130,7 @@ const StoreTemplate = async ({
                 maxPrice={maxPrice}
                 categoryIds={categoryIds}
                 inStock={inStock}
+                allCategories={categories}
               />
             </Suspense>
           </div>
