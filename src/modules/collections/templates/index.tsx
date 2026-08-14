@@ -7,20 +7,34 @@ import { SortOptions } from "@modules/store/components/refinement-list/sort-prod
 import PaginatedProducts from "@modules/store/templates/paginated-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { HttpTypes } from "@medusajs/types"
+import { listCategories } from "@lib/data/categories"
 
-export default function CollectionTemplate({
+export default async function CollectionTemplate({
   sortBy,
   collection,
   page,
   countryCode,
+  minPrice,
+  maxPrice,
+  categories: categoryIds,
+  inStock,
 }: {
   sortBy?: SortOptions
   collection: HttpTypes.StoreCollection
   page?: string
   countryCode: string
+  minPrice?: number
+  maxPrice?: number
+  categories?: string[]
+  inStock?: boolean
 }) {
   const pageNumber = page ? parseInt(page) : 1
   const sort = sortBy || "created_at"
+
+  // A collection page is not scoped to a category, so the Categorías block is a
+  // genuine refinement here (collection_id AND category_id) — pass the list so
+  // the block renders and actually works.
+  const categories = await listCategories()
 
   // Obtener la imagen del signo zodiacal basado en el handle de la colección
   const getCollectionImage = (handle: string) => {
@@ -96,7 +110,11 @@ export default function CollectionTemplate({
         <div className="flex flex-col lg:flex-row lg:items-start gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-64 flex-shrink-0">
-            <RefinementList sortBy={sort} data-testid="sort-by-container" />
+            <RefinementList
+              sortBy={sort}
+              categories={categories}
+              data-testid="sort-by-container"
+            />
           </div>
 
           {/* Products Grid */}
@@ -113,6 +131,11 @@ export default function CollectionTemplate({
                 page={pageNumber}
                 collectionId={collection.id}
                 countryCode={countryCode}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                categoryIds={categoryIds}
+                inStock={inStock}
+                allCategories={categories}
               />
             </Suspense>
           </div>

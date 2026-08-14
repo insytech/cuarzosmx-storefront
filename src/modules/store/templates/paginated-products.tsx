@@ -1,6 +1,8 @@
 import { HttpTypes } from "@medusajs/types"
 import { listProducts, listProductsWithSort } from "@lib/data/products"
-import { sortProducts } from "@lib/util/sort-products"
+import { getSortableMinPrice, sortProducts } from "@lib/util/sort-products"
+import { expandCategoryIds } from "@lib/util/category-tree"
+import { listCategories } from "@lib/data/categories"
 import { getRegion } from "@lib/data/regions"
 import ProductPreview from "@modules/products/components/product-preview"
 import { Pagination } from "@modules/store/components/pagination"
@@ -9,6 +11,13 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 
 const PRODUCT_LIMIT = 12
 
+// Page size used when the whole matching set has to be pulled into memory.
+const BULK_PAGE_SIZE = 200
+// Hard ceiling on the in-memory path so a runaway catalog can never turn a
+// single page view into an unbounded number of backend calls. If this trips we
+// log loudly instead of silently truncating the result set.
+const BULK_MAX_PRODUCTS = 5000
+
 type PaginatedProductsParams = {
   limit: number
   collection_id?: string[]
@@ -16,6 +25,67 @@ type PaginatedProductsParams = {
   id?: string[]
   order?: string
   q?: string
+}
+
+/**
+ * A product is considered available when at least one of its variants can
+ * actually be bought. Products flagged as sellable without stock
+ * (`manage_inventory: false`) or with backorders enabled stay visible on
+ * purpose — only genuinely depleted, inventory-managed products are hidden.
+ */
+const isAvailable = (product: HttpTypes.StoreProduct) =>
+  (product.variants ?? []).some(
+    (variant) =>
+      variant.manage_inventory === false ||
+      variant.allow_backorder === true ||
+      (variant.inventory_quantity ?? 0) > 0
+  )
+
+/**
+ * Fetches every product matching `queryParams`, page by page.
+ *
+ * Medusa v2 cannot order or filter by `calculated_price` at the API layer, and
+ * stock availability depends on per-variant flags, so those filters have to run
+ * in memory over the full matching set.
+ */
+const fetchAllMatchingProducts = async (
+  queryParams: PaginatedProductsParams,
+  countryCode: string
+): Promise<HttpTypes.StoreProduct[]> => {
+  const bulkParams = { ...queryParams, limit: BULK_PAGE_SIZE }
+
+  const {
+    response: { products: firstPage, count: total },
+  } = await listProducts({ pageParam: 1, queryParams: bulkParams, countryCode })
+
+  const reachable = Math.min(total, BULK_MAX_PRODUCTS)
+  const pages = Math.ceil(reachable / BULK_PAGE_SIZE)
+
+  let products = firstPage
+
+  if (pages > 1) {
+    const rest = await Promise.all(
+      Array.from({ length: pages - 1 }, (_, index) =>
+        listProducts({
+          pageParam: index + 2,
+          queryParams: bulkParams,
+          countryCode,
+        })
+      )
+    )
+    products = products.concat(...rest.map((r) => r.response.products))
+  }
+
+  if (total > BULK_MAX_PRODUCTS) {
+    console.warn(
+      `[paginated-products] In-memory filtering truncated: ${total} products match ` +
+        `but only ${products.length} were fetched (cap: ${BULK_MAX_PRODUCTS}). ` +
+        `Price/stock filters are now returning incomplete results — add a ` +
+        `precomputed min_price/availability field and filter server-side.`
+    )
+  }
+
+  return products
 }
 
 export default async function PaginatedProducts({
@@ -30,6 +100,7 @@ export default async function PaginatedProducts({
   maxPrice,
   categoryIds,
   inStock,
+  allCategories,
 }: {
   sortBy?: SortOptions
   page: number
@@ -42,6 +113,14 @@ export default async function PaginatedProducts({
   maxPrice?: number
   categoryIds?: string[]
   inStock?: boolean
+  /**
+   * Full category list, used to expand a selected category into its
+   * subcategories. Optional: callers that already fetched it (StoreTemplate,
+   * CollectionTemplate) pass it down to avoid a second fetch; anyone else gets
+   * a fallback fetch below, which is cheap because listCategories() is
+   * force-cached.
+   */
+  allCategories?: HttpTypes.StoreProductCategory[]
 }) {
   const queryParams: PaginatedProductsParams = {
     limit: PRODUCT_LIMIT,
@@ -51,11 +130,27 @@ export default async function PaginatedProducts({
     queryParams.collection_id = [collectionId]
   }
 
-  // Usar categoryIds del filtro o el categoryId individual
-  if (categoryIds && categoryIds.length > 0) {
-    queryParams.category_id = categoryIds
-  } else if (categoryId) {
-    queryParams.category_id = [categoryId]
+  // Usar categoryIds del filtro o el categoryId individual.
+  //
+  // Medusa v2's `category_id[]` filter is not recursive: it matches only the
+  // products assigned *directly* to the given categories. Filtering by (or
+  // browsing) a parent like "Cuarzos Decorativos" therefore hid every product
+  // that lives only in one of its subcategories — 16 of 82 were visible.
+  //
+  // Both entry points (the /store sidebar filter and the /categories/[handle]
+  // page) expand to "self + every descendant, any depth" through the same
+  // helper, so they can never drift apart. Leaf categories have no
+  // descendants, so expandCategoryIds is a no-op for them.
+  const selectedCategoryIds =
+    categoryIds && categoryIds.length > 0
+      ? categoryIds
+      : categoryId
+        ? [categoryId]
+        : []
+
+  if (selectedCategoryIds.length > 0) {
+    const categories = allCategories ?? (await listCategories())
+    queryParams.category_id = expandCategoryIds(categories, selectedCategoryIds)
   }
 
   if (productsIds) {
@@ -75,37 +170,29 @@ export default async function PaginatedProducts({
 
   const hasPriceFilter = minPrice !== undefined || maxPrice !== undefined
   const isPriceSort = sortBy === "price_asc" || sortBy === "price_desc"
+  const hasStockFilter = inStock === true
 
   let paginatedProducts: HttpTypes.StoreProduct[]
   let count: number
 
-  if (hasPriceFilter || isPriceSort) {
+  if (hasPriceFilter || isPriceSort || hasStockFilter) {
     // Medusa v2 can't order or filter by calculated_price at the API layer
-    // (ProductVariant.calculated_price is not a real column — the API 500s), so
-    // fetch the full matching set and sort/filter/paginate in memory.
-    // ponytail: fetch-all works for this small (~22 product) catalog; if it grows,
-    // add a precomputed min_price field and paginate server-side.
-    const {
-      response: { products: allProducts },
-    } = await listProducts({
-      pageParam: 1,
-      queryParams: { ...queryParams, limit: 1000 },
-      countryCode,
-    })
-
-    const getMinPrice = (p: HttpTypes.StoreProduct) =>
-      p.variants && p.variants.length > 0
-        ? Math.min(
-            ...p.variants.map(
-              (v) => v?.calculated_price?.calculated_amount ?? Infinity
-            )
-          )
-        : Infinity
+    // (ProductVariant.calculated_price is not a real column — the API 500s),
+    // and stock availability depends on per-variant flags, so fetch the full
+    // matching set and filter/sort/paginate in memory.
+    // The catalog is ~487 products as of 2026-08; fetchAllMatchingProducts
+    // pages through it and warns instead of truncating silently.
+    const allProducts = await fetchAllMatchingProducts(queryParams, countryCode)
 
     const filtered = allProducts.filter((p) => {
+      if (hasStockFilter && !isAvailable(p)) return false
+
       if (!hasPriceFilter) return true
-      const price = getMinPrice(p)
-      if (price === Infinity) return false
+
+      // A price of 0 or a missing price means "no price" (WhatsApp showcase
+      // items): they stay in the catalog but fall out of explicit price ranges.
+      const price = getSortableMinPrice(p)
+      if (price === null) return false
       if (minPrice !== undefined && price < minPrice) return false
       if (maxPrice !== undefined && price > maxPrice) return false
       return true
@@ -145,7 +232,7 @@ export default async function PaginatedProducts({
         <p className="text-gray-500 mb-6 max-w-md">
           {searchQuery
             ? `No hay productos que coincidan con "${searchQuery}". Intenta con otros términos o explora nuestras categorías.`
-            : (categoryIds && categoryIds.length > 0)
+            : ((categoryIds && categoryIds.length > 0) || hasPriceFilter || hasStockFilter)
               ? "No hay productos que coincidan con los filtros seleccionados. Prueba ajustando los filtros."
               : "Pronto agregaremos más productos a nuestra tienda."}
         </p>

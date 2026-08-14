@@ -15,11 +15,17 @@ export default function CategoryTemplate({
   sortBy,
   page,
   countryCode,
+  minPrice,
+  maxPrice,
+  inStock,
 }: {
   category: HttpTypes.StoreProductCategory
   sortBy?: SortOptions
   page?: string
   countryCode: string
+  minPrice?: number
+  maxPrice?: number
+  inStock?: boolean
 }) {
   const pageNumber = page ? parseInt(page) : 1
   const sort = sortBy || "created_at"
@@ -144,6 +150,11 @@ export default function CategoryTemplate({
         <div className="flex flex-col lg:flex-row lg:items-start gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-64 flex-shrink-0">
+            {/* No `categories` prop on purpose: this page is already scoped to a
+                category, and PaginatedProducts lets `categoryIds` override
+                `categoryId`, so a category picker here would silently replace
+                the category you are browsing. Sort + Precio + Disponibilidad
+                are all wired through below, so every block shown is honest. */}
             <RefinementList sortBy={sort} data-testid="sort-by-container" />
           </div>
 
@@ -161,6 +172,9 @@ export default function CategoryTemplate({
                 page={pageNumber}
                 categoryId={category.id}
                 countryCode={countryCode}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                inStock={inStock}
               />
             </Suspense>
           </div>
