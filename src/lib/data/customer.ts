@@ -19,7 +19,18 @@ export const retrieveCustomer =
   async (): Promise<HttpTypes.StoreCustomer | null> => {
     const authHeaders = await getAuthHeaders()
 
-    if (!authHeaders) return null
+    // Se comprueba la CLAVE, no la truthiness del objeto: `getAuthHeaders` devuelve
+    // `{}` cuando no hay token (cookies.ts:11-13), y `{}` es truthy, asi que
+    // `if (!authHeaders)` no se cumplia NUNCA. Cada render de servidor de un visitante
+    // anonimo llamaba a `/store/customers/me` sin cabecera de autorizacion y recibia un
+    // 401 — el 24 % de todo el trafico del backend en produccion, y ruido que entierra
+    // los errores reales en los logs.
+    //
+    // Se arregla aqui y no en `getAuthHeaders` a proposito: esta es la UNICA guarda de
+    // ese tipo en el repo; los otros 37 consumidores hacen spread (`...authHeaders`), y
+    // esparcir `{}` es un no-op correcto. Cambiar el tipo de retorno moveria riesgo al
+    // camino del carrito y del pedido sin necesidad.
+    if (!("authorization" in authHeaders)) return null
 
     const headers = {
       ...authHeaders,
