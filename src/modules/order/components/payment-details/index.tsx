@@ -1,6 +1,11 @@
 import { Container, Heading, Text } from "@medusajs/ui"
 
-import { isStripe, isManual, paymentInfoMap } from "@lib/constants"
+import {
+  isStripe,
+  isManual,
+  isMercadoPago,
+  paymentInfoMap,
+} from "@lib/constants"
 import Divider from "@modules/common/components/divider"
 import { convertToLocale } from "@lib/util/money"
 import { HttpTypes } from "@medusajs/types"
@@ -11,6 +16,20 @@ type PaymentDetailsProps = {
 
 const PaymentDetails = ({ order }: PaymentDetailsProps) => {
   const payment = order.payment_collections?.[0].payments?.[0]
+
+  // Los dos flujos de Mercado Pago comparten `provider_id`
+  // (`pp_mercadopago_mercadopago`): el formulario de tarjeta del sitio y el
+  // redirect de Checkout Pro / Mercado Credito. En el checkout la etiqueta "Pago
+  // con tarjeta" es correcta porque distingue esa opcion de la de cuotas, pero en
+  // el recibo solo tenemos el provider, asi que afirmar "tarjeta" es falso para
+  // quien pago con dinero en cuenta, cuotas o efectivo. El correo de confirmacion
+  // ya dice "Mercado Pago"; esto lo alinea.
+  const metodoDePago =
+    payment && isMercadoPago(payment.provider_id)
+      ? "Mercado Pago"
+      : payment
+        ? paymentInfoMap[payment.provider_id]?.title
+        : undefined
 
   return (
     <div>
@@ -29,7 +48,7 @@ const PaymentDetails = ({ order }: PaymentDetailsProps) => {
                   className="txt-medium text-gray-600"
                   data-testid="payment-method"
                 >
-                  {paymentInfoMap[payment.provider_id].title}
+                  {metodoDePago}
                 </Text>
               </div>
               <div className="flex flex-col w-2/3">
