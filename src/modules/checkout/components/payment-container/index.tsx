@@ -151,6 +151,17 @@ const PaymentContainer: React.FC<PaymentContainerProps> = ({
 
 export default PaymentContainer
 
+/**
+ * ⚠️ CODIGO MUERTO: este componente esta importado en
+ * `checkout/components/payment/index.tsx` pero NUNCA se renderiza — cero
+ * `<MercadoPagoContainer` en todo el repo. Y arrastra el mismo bug de la preferencia
+ * congelada que se arreglo en `MercadoCreditoContainer` (mas abajo): su `useEffect` no
+ * depende de `cart.total`, asi que quien lo enchufe heredara cobros sin pedido.
+ * Si se va a usar, copiar antes el patron de `preferenceTotal`. Si no, borrarlo — pero
+ * OJO: entre este componente y `MercadoPagoPaymentBrickContainer` viven constantes y
+ * helpers que SI se usan (`MP_ERROR_MESSAGES`, `isFatalMercadoPagoError`, ...), asi que
+ * no vale cortar por posicion.
+ */
 export const MercadoPagoContainer = ({
   paymentProviderId,
   selectedPaymentOptionId,
@@ -857,10 +868,22 @@ export const MercadoCreditoContainer = ({
   onPaymentSuccess?: () => void
 }) => {
   const [preferenceId, setPreferenceId] = useState<string | null>(null)
+  /**
+   * Total con el que se creo la preferencia vigente.
+   *
+   * Sin esto la preferencia se CONGELABA: el efecto solo dependia de
+   * `[isSelected, cart?.id, preferenceId]` y cortaba con `if (preferenceId) return`, asi
+   * que si el cliente volvia atras y cambiaba el envio (p. ej. Estandar $120 -> Express
+   * $260) seguia pagando la preferencia vieja. El webhook validaba lo pagado contra el
+   * total NUEVO, la diferencia superaba los 0.5 MXN y el pedido no se creaba: cliente
+   * cobrado, sin pedido y con reembolso manual.
+   */
+  const [preferenceTotal, setPreferenceTotal] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isSelected = selectedPaymentOptionId === paymentProviderId
+  const cartTotal = cart?.total ?? null
 
   // Create MercadoPago preference when this payment method is selected
   useEffect(() => {
@@ -869,8 +892,8 @@ export const MercadoCreditoContainer = ({
         return
       }
 
-      // Don't create a new preference if we already have one
-      if (preferenceId) {
+      // Se reutiliza la preferencia SOLO si sigue siendo por el mismo importe.
+      if (preferenceId && preferenceTotal === cartTotal) {
         return
       }
 
@@ -902,6 +925,7 @@ export const MercadoCreditoContainer = ({
 
         const data = await response.json()
         setPreferenceId(data.preference_id)
+        setPreferenceTotal(cartTotal)
       } catch (err: any) {
         console.error('Error creating MercadoPago Credits preference:', err)
         setError(err.message || "Error al crear preferencia de Mercado Crédito")
@@ -911,7 +935,9 @@ export const MercadoCreditoContainer = ({
     }
 
     createPreference()
-  }, [isSelected, cart?.id, preferenceId])
+    // `cartTotal` en las dependencias es lo que hace que la preferencia se recree
+    // cuando cambia el importe a cobrar.
+  }, [isSelected, cart?.id, cartTotal, preferenceId, preferenceTotal])
 
   // Reset preference when payment method changes
   useEffect(() => {
