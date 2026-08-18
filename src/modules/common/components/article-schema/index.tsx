@@ -17,7 +17,7 @@ const ArticleSchema = ({
     dateModified,
     authorName = "CuarzosMX",
 }: ArticleSchemaProps) => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzosmx.com"
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzos.mx"
 
     const schema = {
         "@context": "https://schema.org",

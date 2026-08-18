@@ -9,11 +9,11 @@
 </p>
 
 <h1 align="center">
-  Medusa Next.js Starter Template
+  Cuarzosmx Storefront
 </h1>
 
 <p align="center">
-Combine Medusa's modules for your commerce backend with the newest Next.js 15 features for a performant storefront.</p>
+Storefront de Cuarzos MX sobre Next.js 15 (App Router) y Medusa v2, con pagos por <strong>Mercado Pago</strong>.</p>
 
 <p align="center">
   <a href="https://github.com/medusajs/medusa/blob/master/CONTRIBUTING.md">
@@ -27,16 +27,11 @@ Combine Medusa's modules for your commerce backend with the newest Next.js 15 fe
   </a>
 </p>
 
-### Prerequisites
+### Requisitos previos
 
-To use the [Next.js Starter Template](https://medusajs.com/nextjs-commerce/), you should have a Medusa server running locally on port 9000.
-For a quick setup, run:
-
-```shell
-npx create-medusa-app@latest
-```
-
-Check out [create-medusa-app docs](https://docs.medusajs.com/learn/installation) for more details and troubleshooting.
+El backend de Medusa (`../cuarzosmx/`) tiene que estar corriendo en `http://localhost:9000`,
+con una region **MX / MXN** que tenga `pp_mercadopago_mercadopago` habilitado. Ese estado lo
+deja `pnpm seed:mx` en el backend; ver `../cuarzosmx/README.md`.
 
 # Overview
 
@@ -54,7 +49,7 @@ Features include:
   - Product Overview Page
   - Product Collections
   - Cart
-  - Checkout with Stripe
+  - Checkout con Mercado Pago (Checkout API / Bricks y Checkout Pro)
   - User Accounts
   - Order Details
 - Full Next.js 15 support:
@@ -67,48 +62,77 @@ Features include:
 
 # Quickstart
 
-### Setting up the environment variables
-
-Navigate into your projects directory and get your environment variables ready:
+### Variables de entorno
 
 ```shell
-cd nextjs-starter-medusa/
-mv .env.template .env.local
+cd cuarzosmx-storefront
+cp .env.template .env.local
 ```
 
-### Install dependencies
+Minimo necesario en `.env.local`:
 
-Use Yarn to install all dependencies.
+| Variable | Para que sirve |
+| --- | --- |
+| `NEXT_PUBLIC_MEDUSA_BACKEND_URL` | URL del backend (`http://localhost:9000`) |
+| `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` | publishable key de Medusa (la imprime `pnpm seed:mx`) |
+| `NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY` | public key de Mercado Pago para tokenizar la tarjeta en el navegador |
+| `NEXT_PUBLIC_DEFAULT_REGION` | `mx` |
+
+`NEXT_PUBLIC_*` se **inlinea en tiempo de compilacion**: al cambiarlas hay que reiniciar
+el dev server.
+
+### Instalar dependencias
+
+El proyecto usa **pnpm**. `package.json` declara `packageManager: pnpm@8.15.4` pero el
+lockfile es v9, asi que **todo comando pnpm de este paquete** necesita el flag:
 
 ```shell
-yarn
+pnpm --config.manage-package-manager-versions=false install
 ```
 
-### Start developing
-
-You are now ready to start up your project.
+### Desarrollo
 
 ```shell
-yarn dev
+pnpm --config.manage-package-manager-versions=false dev
 ```
 
-### Open the code and start customizing
+El sitio queda en http://localhost:8000 (redirige a `/mx`).
 
-Your site is now running at http://localhost:8000!
-
-# Payment integrations
-
-By default this starter supports the following payment integrations
-
-- [Stripe](https://stripe.com/)
-
-To enable the integrations you need to add the following to your `.env.local` file:
+### Tests E2E
 
 ```shell
-NEXT_PUBLIC_STRIPE_KEY=<your-stripe-public-key>
+pnpm --config.manage-package-manager-versions=false test:e2e
 ```
 
-You'll also need to setup the integrations in your Medusa server. See the [Medusa documentation](https://docs.medusajs.com) for more information on how to configure [Stripe](https://docs.medusajs.com/resources/commerce-modules/payment/payment-provider/stripe#main).
+**Los tests E2E completan una compra real contra el sandbox de Mercado Pago.** Antes de
+correrlos hay que leer `tests/README.md`: explica las credenciales, la tarjeta de prueba
+MLM y las trampas del Brick.
+
+# Pagos: Mercado Pago
+
+Este storefront **no usa Stripe**. La pasarela es **Mercado Pago**, por dos caminos:
+
+- **Checkout API / CardPayment Brick** ("Pago con tarjeta"): la tarjeta se tokeniza en el
+  navegador con `NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY` y el cobro lo hace el backend.
+- **Checkout Pro / Wallet Brick** ("Hasta 12 pagos sin tarjeta con Mercado Pago"):
+  redireccion al flujo de Mercado Pago con una preferencia creada por el backend.
+
+```shell
+NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY=<tu-public-key-de-mercado-pago>
+```
+
+El provider correspondiente (`pp_mercadopago_mercadopago`) se configura en el backend:
+ver `../cuarzosmx/medusa-config.ts` y `../cuarzosmx/README.md`.
+
+**En sandbox, el CardPayment Brick exige credenciales con prefijo `TEST-`** (son las de
+una aplicacion de *Checkout API*). Las credenciales de prueba de una aplicacion de
+*Checkout Pro* salen como `APP_USR-` y Mercado Pago responde
+`401 code 7 Unauthorized use of live credentials`. Es una limitacion **solo de sandbox**:
+en produccion Checkout Pro funciona con normalidad, asi que **no hay que cambiar
+produccion por esto**. Detalle completo en `tests/README.md`.
+
+`NEXT_PUBLIC_STRIPE_KEY` puede seguir apareciendo en `.env.local` por herencia de la
+plantilla: **no se usa**.
 
 # Resources
 

@@ -6,7 +6,7 @@ interface ProductSchemaProps {
 }
 
 const ProductSchema = ({ product, url }: ProductSchemaProps) => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzosmx.com"
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzos.mx"
 
     // Obtener precio del producto
     const variant = product.variants?.[0]
@@ -34,7 +34,9 @@ const ProductSchema = ({ product, url }: ProductSchemaProps) => {
             "@type": "Offer",
             url: `${siteUrl}${url}`,
             priceCurrency: currencyCode.toUpperCase(),
-            price: price ? (price / 100).toFixed(2) : undefined,
+            // `calculated_amount` ya viene en unidades mayores (MXN), igual que en
+            // convertToLocale: dividir entre 100 publicaba precios 100x menores a Google.
+            price: price ? price.toFixed(2) : undefined,
             availability: inStock
                 ? "https://schema.org/InStock"
                 : "https://schema.org/OutOfStock",
