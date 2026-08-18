@@ -67,8 +67,14 @@ export default async function Checkout({
       let destino: string | undefined
 
       try {
+        // `/store/mercadopago-recover-order` y NO `/store/carts/:id/complete`:
+        // en Checkout Pro el carrito puede no tener payment collection en Medusa
+        // (lo que se crea es una PREFERENCIA en MP), y completar a pelo devuelve
+        // 400 "Payment collection has not been initiated for cart". Esa ruta valida
+        // el pago contra MP, crea la sesion si falta y completa, reusando las mismas
+        // funciones que el webhook y el job de reconciliacion.
         const respuesta = await fetch(
-          `${backendUrl}/store/carts/${encodeURIComponent(cartId)}/complete`,
+          `${backendUrl}/store/mercadopago-recover-order`,
           {
             method: "POST",
             headers: {
@@ -76,18 +82,18 @@ export default async function Checkout({
               "x-publishable-api-key":
                 process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? "",
             },
-            body: "{}",
+            body: JSON.stringify({
+              cart_id: cartId,
+              payment_id: params.payment_id || params.collection_id,
+            }),
             cache: "no-store",
           }
         )
 
         const datos = await respuesta.json()
 
-        if (respuesta.ok && datos?.type === "order" && datos.order?.id) {
-          const pais =
-            datos.order.shipping_address?.country_code?.toLowerCase() ||
-            countryCode
-          destino = `/${pais}/order/${datos.order.id}/confirmed`
+        if (respuesta.ok && datos?.order_id) {
+          destino = `/${countryCode}/order/${datos.order_id}/confirmed`
         } else {
           console.error(
             `[checkout] no se pudo resolver el pedido de un pago aprobado ` +
