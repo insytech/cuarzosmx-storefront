@@ -299,34 +299,48 @@ export default function ProductActions({
     setStockError(null)
 
     try {
-      // Live inventory check: verify stock before adding to cart
-      // This is the only moment we hit the backend — not on every page view
+      // Comprobacion de inventario en vivo: es un ATAJO para avisar antes de
+      // agregar, no una autoridad. Medusa valida el stock de verdad al agregar y
+      // al completar el pedido.
+      //
+      // Va en su PROPIO try: antes estaba dentro del try grande, con `addToCart`
+      // despues, asi que un fetch que LANZA (CORS, red caida, bloqueador de
+      // anuncios) saltaba al catch de abajo y la adicion no ocurria nunca — el
+      // cliente pulsaba y no pasaba nada, sin mensaje. El comentario decia
+      // "proceed anyway", pero eso solo valia para una respuesta no-ok, no para
+      // una excepcion.
       if (selectedVariant.manage_inventory && !selectedVariant.allow_backorder) {
-        const url = new URL(`${BACKEND_URL}/store/products/${product.id}`)
-        url.searchParams.set("fields", "+variants.inventory_quantity")
-        const res = await fetch(url.toString(), {
-          headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
-          cache: "no-store",
-        })
-        if (res.ok) {
-          const data = await res.json()
-          const liveVariant = (data.product?.variants || []).find(
-            (v: any) => v.id === selectedVariant.id
-          )
-          const liveQty = liveVariant?.inventory_quantity ?? 0
-          const availableAfterCart = liveQty - quantityInCart
-
-          if (availableAfterCart < quantity) {
-            setStockError(
-              availableAfterCart <= 0
-                ? "Este producto se acaba de agotar"
-                : `Solo quedan ${availableAfterCart} disponible${availableAfterCart > 1 ? "s" : ""}`
+        try {
+          const url = new URL(`${BACKEND_URL}/store/products/${product.id}`)
+          url.searchParams.set("fields", "+variants.inventory_quantity")
+          const res = await fetch(url.toString(), {
+            headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
+            cache: "no-store",
+          })
+          if (res.ok) {
+            const data = await res.json()
+            const liveVariant = (data.product?.variants || []).find(
+              (v: any) => v.id === selectedVariant.id
             )
-            setIsAdding(false)
-            return
+            const liveQty = liveVariant?.inventory_quantity ?? 0
+            const availableAfterCart = liveQty - quantityInCart
+
+            if (availableAfterCart < quantity) {
+              setStockError(
+                availableAfterCart <= 0
+                  ? "Este producto se acaba de agotar"
+                  : `Solo quedan ${availableAfterCart} disponible${availableAfterCart > 1 ? "s" : ""}`
+              )
+              return
+            }
           }
+        } catch (error: any) {
+          // No bloquea: seguimos y que Medusa decida.
+          console.warn(
+            `[product-actions] no se pudo comprobar el inventario en vivo de ` +
+              `${selectedVariant.id}, se agrega igual: ${error?.message}`
+          )
         }
-        // If fetch fails, proceed anyway — Medusa validates at checkout
       }
 
       const variantImage = variantThumbnails[selectedVariant.id]
@@ -337,8 +351,15 @@ export default function ProductActions({
         countryCode,
         ...(variantImage ? { metadata: { variant_image: variantImage } } : {}),
       })
-    } catch {
-      // Medusa will reject if truly out of stock
+    } catch (error: any) {
+      // Fallar en silencio deja al cliente pulsando un boton que no hace nada.
+      setStockError(
+        "No pudimos agregar el producto al carrito. Vuelve a intentarlo."
+      )
+      console.error(
+        `[product-actions] addToCart fallo para ${selectedVariant.id} ` +
+          `cantidad=${quantity}: ${error?.message}`
+      )
     } finally {
       setIsAdding(false)
     }
