@@ -4,7 +4,7 @@ import { listCollections } from "@lib/data/collections"
 import { listCategories } from "@lib/data/categories"
 import { blogApi } from "@lib/util/blog-api"
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzosmx.com"
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzos.mx"
 const countryCode = process.env.NEXT_PUBLIC_DEFAULT_REGION || "mx"
 
 export const revalidate = 3600

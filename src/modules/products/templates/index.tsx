@@ -89,23 +89,24 @@ const ProductTemplate = async ({
 
   // Breadcrumb items para Schema.org
   const breadcrumbItems = [
-    { name: "Inicio", url: "/" },
-    { name: "Tienda", url: "/store" },
+    { name: "Inicio", url: `/${countryCode}` },
+    { name: "Tienda", url: `/${countryCode}/store` },
     ...(product.collection
       ? [
         {
           name: product.collection.title,
-          url: `/collections/${product.collection.handle}`,
+          url: `/${countryCode}/collections/${product.collection.handle}`,
         },
       ]
       : []),
-    { name: product.title, url: `/products/${product.handle}` },
+    { name: product.title, url: `/${countryCode}/products/${product.handle}` },
   ]
 
   return (
     <>
       {/* Schema.org JSON-LD */}
-      <ProductSchema product={product} url={`/products/${product.handle}`} />
+      {/* El segmento de país es obligatorio: /products/... sin él es 404 para Google */}
+      <ProductSchema product={product} url={`/${countryCode}/products/${product.handle}`} />
       <BreadcrumbSchema items={breadcrumbItems} />
 
       {/* Breadcrumb */}
