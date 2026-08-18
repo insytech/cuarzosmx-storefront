@@ -56,3 +56,7 @@ dump.rdb
 /blob-report/
 /playwright/.cache/
 /playwright/.auth
+
+# Impeccable design hook: cache de dedupe y overrides por desarrollador
+.impeccable/hook.cache.json
+.impeccable/config.local.json

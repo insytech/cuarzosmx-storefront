@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "ai-color-palette",
+        "value": "purple",
+        "createdAt": "2026-08-18T00:03:01.919Z",
+        "reason": "El morado es la paleta de marca de CuarzosMX (main-color #9C72AF, amatista), entregada por el cliente"
+      }
+    ]
+  }
+}
