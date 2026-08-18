@@ -1,18 +1,20 @@
-import { Metadata } from "next"
 import { Suspense } from "react"
 
 import { listCartOptions, retrieveCart } from "@lib/data/cart"
 import { retrieveCustomer } from "@lib/data/customer"
-import { getBaseURL } from "@lib/util/env"
 import { StoreCartShippingOption } from "@medusajs/types"
 import CartMismatchBanner from "@modules/layout/components/cart-mismatch-banner"
 import Footer from "@modules/layout/templates/footer"
 import Nav from "@modules/layout/templates/nav"
 import FreeShippingPriceNudge from "@modules/shipping/components/free-shipping-price-nudge"
 
-export const metadata: Metadata = {
-  metadataBase: new URL(getBaseURL()),
-}
+// OJO: aqui NO se declara `metadata`. Este layout envuelve todas las paginas
+// publicas, y cualquier `metadataBase` que fije pisa el del layout raiz
+// (`src/app/layout.tsx`, que usa NEXT_PUBLIC_SITE_URL). Antes fijaba
+// `new URL(getBaseURL())`, la URL del BACKEND, y como los `canonical` de las
+// paginas son relativos, Next los resolvia contra el dominio de la API:
+// <link rel="canonical" href="https://cuarzosmx-production.up.railway.app/...">
+// `getBaseURL()` es para llamar a la API, nunca para la URL publica.
 
 // Separate async component for cart-related features
 // This allows the page to render without waiting for cart/customer data
