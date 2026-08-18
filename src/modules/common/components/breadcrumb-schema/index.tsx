@@ -1,3 +1,4 @@
+import { SITE_URL } from "@lib/util/seo"
 interface BreadcrumbItem {
     name: string
     url: string
@@ -8,7 +9,7 @@ interface BreadcrumbSchemaProps {
 }
 
 const BreadcrumbSchema = ({ items }: BreadcrumbSchemaProps) => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzos.mx"
+    const siteUrl = SITE_URL
 
     const schema = {
         "@context": "https://schema.org",

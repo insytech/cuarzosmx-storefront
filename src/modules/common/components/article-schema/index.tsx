@@ -1,3 +1,4 @@
+import { SITE_URL } from "@lib/util/seo"
 interface ArticleSchemaProps {
     title: string
     description: string
@@ -17,7 +18,7 @@ const ArticleSchema = ({
     dateModified,
     authorName = "CuarzosMX",
 }: ArticleSchemaProps) => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzos.mx"
+    const siteUrl = SITE_URL
 
     const schema = {
         "@context": "https://schema.org",

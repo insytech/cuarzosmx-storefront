@@ -43,4 +43,4 @@ User-agent: SearchmetricsBot
 Disallow: /
 
 # Sitemap
-Sitemap: https://cuarzos.mx/sitemap.xml
+Sitemap: https://www.cuarzos.mx/sitemap.xml

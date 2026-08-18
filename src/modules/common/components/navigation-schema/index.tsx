@@ -1,5 +1,6 @@
+import { SITE_URL } from "@lib/util/seo"
 const NavigationSchema = () => {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzos.mx"
+  const siteUrl = SITE_URL
   const countryCode = process.env.NEXT_PUBLIC_DEFAULT_REGION || "mx"
 
   const navItems = [

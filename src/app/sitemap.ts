@@ -3,8 +3,9 @@ import { listProducts } from "@lib/data/products"
 import { listCollections } from "@lib/data/collections"
 import { listCategories } from "@lib/data/categories"
 import { blogApi } from "@lib/util/blog-api"
+import { SITE_URL } from "@lib/util/seo"
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzos.mx"
+const siteUrl = SITE_URL
 const countryCode = process.env.NEXT_PUBLIC_DEFAULT_REGION || "mx"
 
 export const revalidate = 3600

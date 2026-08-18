@@ -1,4 +1,5 @@
 import { HttpTypes } from "@medusajs/types"
+import { SITE_URL } from "@lib/util/seo"
 
 interface ProductSchemaProps {
     product: HttpTypes.StoreProduct
@@ -6,7 +7,7 @@ interface ProductSchemaProps {
 }
 
 const ProductSchema = ({ product, url }: ProductSchemaProps) => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzos.mx"
+    const siteUrl = SITE_URL
 
     // Obtener precio del producto
     const variant = product.variants?.[0]

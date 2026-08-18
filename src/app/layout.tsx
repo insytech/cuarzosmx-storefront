@@ -5,6 +5,7 @@ import CookieConsentWrapper from "@modules/common/components/cookie-consent-wrap
 import GoogleTagManager from "@modules/common/components/google-tag-manager"
 import LazySpeedInsights from "@modules/common/components/lazy-speed-insights"
 import NavigationSchema from "@modules/common/components/navigation-schema"
+import { SITE_URL } from "@lib/util/seo"
 
 const montserrat = Montserrat({
   subsets: ["latin", "latin-ext"],
@@ -12,7 +13,7 @@ const montserrat = Montserrat({
   variable: "--font-montserrat",
 })
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cuarzos.mx"
+const siteUrl = SITE_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
