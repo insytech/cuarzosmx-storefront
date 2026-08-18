@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { listProducts } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
 import ProductTemplate from "@modules/products/templates"
+import { OG_IMAGE } from "@lib/util/seo"
 
 // ISR: Revalidate every hour to reduce function invocations
 export const revalidate = 3600
@@ -71,6 +72,11 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       title: `${seoTitle} | CuarzosMX`,
       description: seoDescription,
       type: "website",
+      // Un producto sin foto se quedaba SIN `og:image`, porque un array vacio no
+      // hereda nada del layout. Antes lo tapaba `src/app/opengraph-image.jpg`
+      // (la plantilla de Medusa, con una lampara), y al borrarla quedo al aire.
+      // Con la imagen de marca como respaldo, cualquier producto se comparte con
+      // algo nuestro.
       images: product.thumbnail
         ? [
           {
@@ -80,13 +86,13 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
             alt: product.title,
           },
         ]
-        : [],
+        : [OG_IMAGE],
     },
     twitter: {
       card: "summary_large_image",
       title: `${seoTitle} | CuarzosMX`,
       description: seoDescription,
-      images: product.thumbnail ? [product.thumbnail] : [],
+      images: product.thumbnail ? [product.thumbnail] : [OG_IMAGE.url],
     },
     alternates: {
       canonical: `/products/${handle}`,
