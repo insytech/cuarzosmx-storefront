@@ -40,7 +40,7 @@ export async function retrieveCart(cartId?: string) {
       method: "GET",
       query: {
         fields:
-          "*items, *region, *items.product, *items.variant, *items.thumbnail, *items.metadata, +items.total, *promotions, +shipping_methods.name",
+          "*items, *region, *items.product, *items.variant, *items.thumbnail, *items.metadata, +items.total, *promotions, +shipping_methods.name, +completed_at",
       },
       headers,
       next,
@@ -58,6 +58,23 @@ export async function getOrSetCart(countryCode: string) {
   }
 
   let cart = await retrieveCart()
+
+  // Un carrito YA COMPLETADO sigue respondiendo 200 en `GET /store/carts/:id`, asi
+  // que `retrieveCart` lo devuelve como si estuviera vivo y todo lo que venga
+  // despues le mete lineas y recibe 400 "Cart is already completed".
+  //
+  // Pasa de verdad y deja la tienda inservible para ese comprador: `removeCartId()`
+  // solo se llama en el camino del navegador, asi que cuando el WEBHOOK completa el
+  // carrito (Checkout Pro / Mercado Credito, o cualquier pago donde el webhook gane
+  // la carrera) la cookie del navegador se queda apuntando al carrito comprado. A
+  // partir de ahi ningun "agregar al carrito" vuelve a funcionar hasta que el
+  // cliente borre cookies.
+  // `completed_at` no esta en el tipo `StoreCart` de @medusajs/types aunque la API
+  // lo devuelve cuando se pide en `fields`.
+  if ((cart as { completed_at?: string | null } | null)?.completed_at) {
+    await removeCartId()
+    cart = null
+  }
 
   const headers = {
     ...(await getAuthHeaders()),
@@ -137,16 +154,52 @@ export async function addToCart({
       ...(await getAuthHeaders()),
     }
 
-    await sdk.store.cart.createLineItem(
-      cart.id,
-      {
-        variant_id: variantId,
-        quantity,
-        ...(metadata ? { metadata } : {}),
-      },
-      {},
-      headers
-    )
+    const anadirLinea = async (cartId: string) =>
+      sdk.store.cart.createLineItem(
+        cartId,
+        {
+          variant_id: variantId,
+          quantity,
+          ...(metadata ? { metadata } : {}),
+        },
+        {},
+        headers
+      )
+
+    try {
+      await anadirLinea(cart.id)
+    } catch (error: any) {
+      // "Cart is already completed": la cookie apunta a un carrito que YA se
+      // convirtio en pedido.
+      //
+      // `getOrSetCart` ya comprueba `completed_at`, pero lee de la cache de datos
+      // de Next: cuando el pedido lo completa el SERVIDOR (webhook, ruta de
+      // recuperacion, job) nadie invalida la cache de esa sesion, asi que la
+      // lectura cacheada aun no trae `completed_at` y la guarda no dispara. El
+      // sintoma es un 400 en cada intento y una tienda inservible para ese
+      // comprador hasta que algo refresque la cache.
+      //
+      // Aqui el estado ya no es ambiguo: el backend acaba de decir que el carrito
+      // esta completado. Se tira la cookie, se abre uno nuevo y se reintenta UNA
+      // vez. Sin bucle: si el segundo intento falla, el error sube.
+      const mensaje =
+        error?.response?.data?.message || error?.message || ""
+
+      if (!/already completed/i.test(mensaje)) {
+        throw error
+      }
+
+      await removeCartId()
+      const cartCacheTagPrevio = await getCacheTag("carts")
+      revalidateTag(cartCacheTagPrevio)
+
+      const nuevo = await getOrSetCart(countryCode)
+      if (!nuevo) {
+        return { success: false, error: "No se pudo obtener o crear el carrito" }
+      }
+
+      await anadirLinea(nuevo.id)
+    }
 
     const cartCacheTag = await getCacheTag("carts")
     revalidateTag(cartCacheTag)
