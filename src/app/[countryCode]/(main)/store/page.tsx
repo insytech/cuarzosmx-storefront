@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import { buildOpenGraph, buildTwitter } from "@lib/util/seo"
 
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import StoreTemplate from "@modules/store/templates"
@@ -10,17 +11,16 @@ export const metadata: Metadata = {
   title: "Tienda | Todos los Productos",
   description:
     "Explora todos nuestros cristales, cuarzos y joyería artesanal. Amatistas, cuarzo rosa, obsidiana, turmalina y más. Envíos a todo México.",
-  openGraph: {
+  openGraph: buildOpenGraph({
     title: "Tienda | CuarzosMX",
     description:
       "Explora todos nuestros cristales, cuarzos y joyería artesanal. Piezas únicas con envío a todo México.",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
+    path: "/store",
+  }),
+  twitter: buildTwitter({
     title: "Tienda | CuarzosMX",
     description: "Explora todos nuestros cristales, cuarzos y joyería artesanal.",
-  },
+  }),
   alternates: {
     canonical: "/store",
   },

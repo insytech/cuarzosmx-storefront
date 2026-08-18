@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import { buildOpenGraph, buildTwitter } from "@lib/util/seo"
 import { notFound } from "next/navigation"
 
 import { getCollectionByHandle, listCollections } from "@lib/data/collections"
@@ -64,16 +65,15 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     title: seoTitle,
     description: seoDescription,
     keywords: seoKeywords ? seoKeywords.split(',').map(k => k.trim()) : undefined,
-    openGraph: {
+    openGraph: buildOpenGraph({
       title: `${seoTitle} | CuarzosMX`,
       description: seoDescription,
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
+      path: `/collections/${params.handle}`,
+    }),
+    twitter: buildTwitter({
       title: `${seoTitle} | CuarzosMX`,
       description: seoDescription,
-    },
+    }),
     alternates: {
       canonical: `/collections/${params.handle}`,
     },

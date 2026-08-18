@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import { buildOpenGraph } from "@lib/util/seo"
 import { Suspense } from "react"
 
 import HeroBlock from "@modules/home/components/hero-block"
@@ -18,12 +19,12 @@ export const metadata: Metadata = {
   title: "Inicio | Cristales, Cuarzos y Joyería Artesanal en México",
   description:
     "Explora nuestra colección de cristales, cuarzos y joyería artesanal. Amatistas, cuarzo rosa, obsidiana y más. Envíos a todo México con garantía de calidad.",
-  openGraph: {
+  openGraph: buildOpenGraph({
     title: "CuarzosMX - Cristales, Cuarzos y Joyería Artesanal",
     description:
       "Explora nuestra colección de cristales, cuarzos y joyería artesanal. Piezas únicas con envíos a todo México.",
-    type: "website",
-  },
+    path: "/",
+  }),
 }
 
 export default async function Home(props: {

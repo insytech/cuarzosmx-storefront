@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import { buildOpenGraph, buildTwitter } from "@lib/util/seo"
 import { notFound } from "next/navigation"
 
 import { getCategoryByHandle, listCategories } from "@lib/data/categories"
@@ -53,16 +54,15 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       title: seoTitle,
       description: seoDescription,
       keywords: seoKeywords ? seoKeywords.split(',').map(k => k.trim()) : undefined,
-      openGraph: {
+      openGraph: buildOpenGraph({
         title: `${seoTitle} | CuarzosMX`,
         description: seoDescription,
-        type: "website",
-      },
-      twitter: {
-        card: "summary_large_image",
+        path: `/categories/${params.category.join("/")}`,
+      }),
+      twitter: buildTwitter({
         title: `${seoTitle} | CuarzosMX`,
         description: seoDescription,
-      },
+      }),
       alternates: {
         canonical: `/categories/${params.category.join("/")}`,
       },
