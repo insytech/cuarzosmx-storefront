@@ -3,6 +3,11 @@
 End-to-end coverage of the purchase funnel against Mercado Pago:
 product → cart → checkout (address, delivery, payment, review) → order confirmation.
 
+> **Full runbook (Spanish):** how to run these against the MP sandbox with the
+> webhook competing, the manual Checkout Pro flow, where each test credential
+> comes from, and how to verify each run lives in the backend repo:
+> [`cuarzosmx/docs/pruebas-de-pagos.md`](../../cuarzosmx/docs/pruebas-de-pagos.md).
+
 ---
 
 ## ⚠️ Safety gate — read before running
