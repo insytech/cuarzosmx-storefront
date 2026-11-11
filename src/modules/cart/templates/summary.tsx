@@ -3,12 +3,15 @@
 import CartTotals from "@modules/common/components/cart-totals"
 import DiscountCode from "@modules/checkout/components/discount-code"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import TierProgress from "@modules/common/components/tier-progress"
 import { HttpTypes } from "@medusajs/types"
+import type { StorePromotionState } from "@lib/util/store-promotion"
 
 type SummaryProps = {
   cart: HttpTypes.StoreCart & {
     promotions: HttpTypes.StorePromotion[]
   }
+  promotionState?: StorePromotionState
 }
 
 function getCheckoutStep(cart: HttpTypes.StoreCart) {
@@ -21,8 +24,9 @@ function getCheckoutStep(cart: HttpTypes.StoreCart) {
   }
 }
 
-const Summary = ({ cart }: SummaryProps) => {
+const Summary = ({ cart, promotionState }: SummaryProps) => {
   const step = getCheckoutStep(cart)
+  const promotion = promotionState?.promotion ?? null
 
   return (
     <div className="flex flex-col gap-y-4">
@@ -30,13 +34,23 @@ const Summary = ({ cart }: SummaryProps) => {
         Resumen del pedido
       </h2>
 
+      {/* Progreso hacia el siguiente rango de la promoción vigente */}
+      {promotion && (
+        <TierProgress
+          promotion={promotion}
+          items={cart.items}
+          currencyCode={cart.currency_code}
+          variant="card"
+        />
+      )}
+
       {/* Discount Code */}
       <div className="pb-4 border-b border-gray-100">
         <DiscountCode cart={cart} />
       </div>
 
       {/* Totals */}
-      <CartTotals totals={cart} />
+      <CartTotals totals={cart} bulk={promotionState?.bulk} />
 
       {/* Checkout Button */}
       <LocalizedClientLink
@@ -64,6 +78,13 @@ const Summary = ({ cart }: SummaryProps) => {
         </svg>
         ¿Dudas? Escríbenos
       </a>
+
+      {promotion && (
+        <p className="text-xs text-grey-50">
+          El descuento se calcula sobre el subtotal de productos, sin envío.
+          Solo aplica el rango más alto que alcances.
+        </p>
+      )}
     </div>
   )
 }

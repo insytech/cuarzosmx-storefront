@@ -7,10 +7,12 @@ import {
   Transition,
 } from "@headlessui/react"
 import { convertToLocale } from "@lib/util/money"
+import { calculateBulkDiscount } from "@lib/util/bulk-discount"
 import {
-  calculateBulkDiscount,
-  BULK_DISCOUNT_PERCENTAGE,
-} from "@lib/util/bulk-discount"
+  FALLBACK_BULK_STATE,
+  getTierDiscount,
+} from "@lib/util/store-promotion"
+import { useActiveStorePromotion } from "@lib/util/store-promotion-client"
 import { HttpTypes } from "@medusajs/types"
 import { Button } from "@medusajs/ui"
 import DeleteButton from "@modules/common/components/delete-button"
@@ -18,6 +20,7 @@ import LineItemOptions from "@modules/common/components/line-item-options"
 import LineItemPrice from "@modules/common/components/line-item-price"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import BulkDiscountBanner from "@modules/common/components/bulk-discount-banner"
+import TierProgress from "@modules/common/components/tier-progress"
 import Thumbnail from "@modules/products/components/thumbnail"
 import { usePathname } from "next/navigation"
 import { Fragment, useEffect, useRef, useState } from "react"
@@ -31,6 +34,10 @@ const CartDropdown = ({
     undefined
   )
   const [cartDropdownOpen, setCartDropdownOpen] = useState(false)
+  // null while loading → render nothing promotional until we know the state
+  const promotionState = useActiveStorePromotion()
+  const promotion = promotionState?.promotion ?? null
+  const bulk = promotionState?.bulk ?? FALLBACK_BULK_STATE
 
   const open = () => setCartDropdownOpen(true)
   const close = () => setCartDropdownOpen(false)
@@ -44,8 +51,11 @@ const CartDropdown = ({
   const subtotal = cartState?.subtotal ?? 0
 
   // Detectar si hay descuento bulk aplicado por el backend
-  const bulkDiscount = calculateBulkDiscount(cartState ?? null)
+  const bulkDiscount = calculateBulkDiscount(cartState ?? null, bulk.threshold)
   const hasDiscount = bulkDiscount.hasBackendDiscount && bulkDiscount.discountAmount > 0
+
+  // Descuento por monto de la promoción vigente (ya aplicado por el backend)
+  const tierDiscount = getTierDiscount(cartState?.items)
 
   const itemRef = useRef<number>(totalItems || 0)
 
@@ -187,8 +197,23 @@ const CartDropdown = ({
                     ))}
                 </div>
                 <div className="p-4 flex flex-col gap-y-4 text-small-regular">
-                  {/* Bulk Discount Banner */}
-                  <BulkDiscountBanner cart={cartState} variant="compact" />
+                  {/* Progreso de la promoción vigente, o banner de mayoreo */}
+                  {promotion ? (
+                    <TierProgress
+                      promotion={promotion}
+                      items={cartState.items}
+                      currencyCode={cartState.currency_code}
+                      variant="compact"
+                    />
+                  ) : (
+                    promotionState && (
+                      <BulkDiscountBanner
+                        cart={cartState}
+                        variant="compact"
+                        bulk={bulk}
+                      />
+                    )
+                  )}
 
                   {/* Subtotal - ya incluye descuento bulk del backend */}
                   <div className="flex flex-col gap-y-2">
@@ -198,11 +223,30 @@ const CartDropdown = ({
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
-                          Descuento {BULK_DISCOUNT_PERCENTAGE}% incluido
+                          Descuento {bulk.percentage}% incluido
                         </span>
                         <span className="text-green-600 font-medium">
                           -{convertToLocale({
                             amount: bulkDiscount.discountAmount,
+                            currency_code: cartState.currency_code,
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    {tierDiscount && (
+                      <div
+                        className="flex items-center justify-between text-sm font-semibold text-green-700"
+                        data-testid="cart-dropdown-tier-discount"
+                      >
+                        <span>
+                          {tierDiscount.name}
+                          {tierDiscount.percentage !== null &&
+                            ` −${tierDiscount.percentage}%`}{" "}
+                          incluido
+                        </span>
+                        <span>
+                          −{convertToLocale({
+                            amount: tierDiscount.amount,
                             currency_code: cartState.currency_code,
                           })}
                         </span>

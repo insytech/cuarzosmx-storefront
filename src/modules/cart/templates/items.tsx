@@ -7,11 +7,18 @@ import SkeletonLineItem from "@modules/skeletons/components/skeleton-line-item"
 
 type ItemsTemplateProps = {
   cart?: HttpTypes.StoreCart
+  /** A tiered store promotion is in force (shows per-item promo labels). */
+  promotionActive?: boolean
+  bulkThreshold?: number
 }
 
-const ItemsTemplate = ({ cart }: ItemsTemplateProps) => {
+const ItemsTemplate = ({
+  cart,
+  promotionActive = false,
+  bulkThreshold,
+}: ItemsTemplateProps) => {
   const items = cart?.items
-  const bulkDiscount = calculateBulkDiscount(cart ?? null)
+  const bulkDiscount = calculateBulkDiscount(cart ?? null, bulkThreshold)
   const bulkActive = bulkDiscount.hasBackendDiscount && bulkDiscount.discountAmount > 0
   return (
     <div>
@@ -44,6 +51,7 @@ const ItemsTemplate = ({ cart }: ItemsTemplateProps) => {
                   item={item}
                   currencyCode={cart?.currency_code}
                   bulkActive={bulkActive}
+                  promotionActive={promotionActive}
                 />
               )
             })

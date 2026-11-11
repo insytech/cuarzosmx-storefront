@@ -1,4 +1,5 @@
 import { convertToLocale } from "@lib/util/money"
+import { getTierDiscount } from "@lib/util/store-promotion"
 import { HttpTypes } from "@medusajs/types"
 
 type OrderSummaryProps = {
@@ -17,6 +18,16 @@ const OrderSummary = ({ order }: OrderSummaryProps) => {
     })
   }
 
+  // Descuento por monto (Buen Fin, ...) detectado por la descripción del ajuste.
+  // Solo se separa si el pedido trae los ajustes de sus líneas.
+  const tierDiscount = getTierDiscount(order.items)
+  const otherDiscount = Math.max(
+    0,
+    Math.round(
+      ((order.discount_total ?? 0) - (tierDiscount?.amount ?? 0)) * 100
+    ) / 100
+  )
+
   return (
     <div>
       <h2 className="text-base-semi text-gray-800">Resumen del Pedido</h2>
@@ -26,10 +37,23 @@ const OrderSummary = ({ order }: OrderSummaryProps) => {
           <span>{getAmount(order.subtotal)}</span>
         </div>
         <div className="flex flex-col gap-y-1">
-          {order.discount_total > 0 && (
+          {tierDiscount && (
+            <div
+              className="flex items-center justify-between font-semibold text-green-700"
+              data-testid="order-tier-discount"
+            >
+              <span>
+                {tierDiscount.name}
+                {tierDiscount.percentage !== null &&
+                  ` −${tierDiscount.percentage}%`}
+              </span>
+              <span>−{getAmount(tierDiscount.amount)}</span>
+            </div>
+          )}
+          {otherDiscount > 0 && (
             <div className="flex items-center justify-between">
               <span>Descuento</span>
-              <span className="text-green-600">- {getAmount(order.discount_total)}</span>
+              <span className="text-green-600">- {getAmount(otherDiscount)}</span>
             </div>
           )}
           {order.gift_card_total > 0 && (

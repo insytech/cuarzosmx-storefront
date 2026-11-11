@@ -4,8 +4,9 @@ import EmptyCartMessage from "../components/empty-cart-message"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import BulkDiscountBanner from "@modules/common/components/bulk-discount-banner"
 import { HttpTypes } from "@medusajs/types"
+import { getActiveStorePromotion } from "@lib/data/store-promotions"
 
-const CartTemplate = ({
+const CartTemplate = async ({
   cart,
   customer,
 }: {
@@ -13,6 +14,7 @@ const CartTemplate = ({
   customer: HttpTypes.StoreCustomer | null
 }) => {
   const itemCount = cart?.items?.reduce((acc, item) => acc + item.quantity, 0) || 0
+  const promotionState = await getActiveStorePromotion()
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -51,11 +53,19 @@ const CartTemplate = ({
             <div className="lg:col-span-2">
               {/* Bulk Discount Banner */}
               <div className="mb-6">
-                <BulkDiscountBanner cart={cart} variant="full" />
+                <BulkDiscountBanner
+                  cart={cart}
+                  variant="full"
+                  bulk={promotionState.bulk}
+                />
               </div>
 
               <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
-                <ItemsTemplate cart={cart} />
+                <ItemsTemplate
+                  cart={cart}
+                  promotionActive={!!promotionState.promotion}
+                  bulkThreshold={promotionState.bulk.threshold}
+                />
               </div>
 
               {/* Continue Shopping */}
@@ -76,7 +86,7 @@ const CartTemplate = ({
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 lg:sticky lg:top-24">
                 {cart?.region && (
-                  <Summary cart={cart as any} />
+                  <Summary cart={cart as any} promotionState={promotionState} />
                 )}
               </div>
 

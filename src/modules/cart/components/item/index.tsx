@@ -2,6 +2,10 @@
 
 import { updateLineItem } from "@lib/data/cart"
 import { BULK_DISCOUNT_CODE } from "@lib/util/bulk-discount"
+import {
+  getItemTierAdjustment,
+  isItemDiscountable,
+} from "@lib/util/store-promotion"
 import { HttpTypes } from "@medusajs/types"
 import ErrorMessage from "@modules/checkout/components/error-message"
 import DeleteButton from "@modules/common/components/delete-button"
@@ -23,9 +27,17 @@ type ItemProps = {
   type?: "full" | "preview"
   currencyCode: string
   bulkActive?: boolean
+  /** A tiered store promotion (Buen Fin, ...) is in force. */
+  promotionActive?: boolean
 }
 
-const Item = ({ item, type = "full", currencyCode, bulkActive = false }: ItemProps) => {
+const Item = ({
+  item,
+  type = "full",
+  currencyCode,
+  bulkActive = false,
+  promotionActive = false,
+}: ItemProps) => {
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [liveInventory, setLiveInventory] = useState<number | null>(null)
@@ -83,11 +95,28 @@ const Item = ({ item, type = "full", currencyCode, bulkActive = false }: ItemPro
     : liveInventory ?? MAX_CART_QUANTITY
 
   // Detect if this item is excluded from bulk discount
-  const itemAny = item as any
-  const hasBulkAdjustment = (itemAny.adjustments || []).some(
-    (adj: any) => adj?.code === BULK_DISCOUNT_CODE
+  const hasBulkAdjustment = (item.adjustments ?? []).some(
+    (adj) => adj?.code === BULK_DISCOUNT_CODE
   )
   const showBulkExclusion = bulkActive && !hasBulkAdjustment
+
+  // Tiered promotion: per-item label, or "not discountable" (by kilo, S5)
+  const tierAdjustment = getItemTierAdjustment(item)
+  const showNotDiscountable = promotionActive && !isItemDiscountable(item)
+  const tierLabel = tierAdjustment ? (
+    <span
+      className="block text-xs font-semibold text-green-700"
+      data-testid="product-tier-discount"
+    >
+      {tierAdjustment.percentage !== null && `−${tierAdjustment.percentage}% `}
+      {tierAdjustment.name}
+    </span>
+  ) : null
+  const notDiscountableLabel = showNotDiscountable ? (
+    <p className="text-xs text-grey-50 mt-0.5" data-testid="product-not-discountable">
+      No participa en descuentos
+    </p>
+  ) : null
 
   if (type === "preview") {
     return (
@@ -109,14 +138,18 @@ const Item = ({ item, type = "full", currencyCode, bulkActive = false }: ItemPro
               {item.product_title}
             </p>
             <LineItemOptions variant={item.variant} data-testid="product-variant" />
+            {notDiscountableLabel}
           </div>
           <div className="flex items-center justify-between mt-1">
             <span className="text-sm text-gray-500">{item.quantity}x</span>
-            <LineItemPrice
-              item={item}
-              style="tight"
-              currencyCode={currencyCode}
-            />
+            <div className="text-right">
+              <LineItemPrice
+                item={item}
+                style="tight"
+                currencyCode={currencyCode}
+              />
+              {tierLabel}
+            </div>
           </div>
         </div>
       </div>
@@ -150,13 +183,17 @@ const Item = ({ item, type = "full", currencyCode, bulkActive = false }: ItemPro
             {showBulkExclusion && (
               <p className="text-xs text-gray-400 mt-1">No aplica desc. mayoreo</p>
             )}
+            {notDiscountableLabel}
 
             <div className="mt-2 flex items-center justify-between">
-              <LineItemPrice
-                item={item}
-                style="tight"
-                currencyCode={currencyCode}
-              />
+              <div>
+                <LineItemPrice
+                  item={item}
+                  style="tight"
+                  currencyCode={currencyCode}
+                />
+                {tierLabel}
+              </div>
             </div>
           </div>
         </div>
@@ -223,6 +260,7 @@ const Item = ({ item, type = "full", currencyCode, bulkActive = false }: ItemPro
             {showBulkExclusion && (
               <p className="text-xs text-gray-400">No aplica desc. mayoreo</p>
             )}
+            {notDiscountableLabel}
             <DeleteButton
               id={item.id}
               data-testid="product-delete-button"
@@ -277,6 +315,7 @@ const Item = ({ item, type = "full", currencyCode, bulkActive = false }: ItemPro
             style="tight"
             currencyCode={currencyCode}
           />
+          {tierLabel}
         </div>
       </div>
     </div>

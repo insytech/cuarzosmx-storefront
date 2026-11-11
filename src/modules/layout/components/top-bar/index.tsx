@@ -1,20 +1,33 @@
 import { BannerResponse } from "../../../../types/global"
 import { fetchBanners } from "@util/banner-api"
+import { getActiveStorePromotion } from "@lib/data/store-promotions"
+import { getDefaultTopbarMessage } from "@lib/util/store-promotion"
 
 export default async function TopBar() {
     let displayMessage = "20% DE DESCUENTO POR LA COMPRA DE MÁS DE 12 PRODUCTOS"
 
-    try {
-        const response: BannerResponse = await fetchBanners()
-        if (response.promotionMessage?.message) {
-            displayMessage = response.promotionMessage.message
+    const { promotion } = await getActiveStorePromotion()
+
+    if (promotion) {
+        // Promoción por monto vigente: su mensaje reemplaza al del admin (S10)
+        displayMessage =
+            promotion.topbar_message ?? getDefaultTopbarMessage(promotion)
+    } else {
+        try {
+            const response: BannerResponse = await fetchBanners()
+            if (response.promotionMessage?.message) {
+                displayMessage = response.promotionMessage.message
+            }
+        } catch (err) {
+            console.error("Error loading promotion message:", err)
         }
-    } catch (err) {
-        console.error("Error loading promotion message:", err)
     }
 
     return (
-        <div className="w-full bg-main-color text-white text-center text-[10px] sm:text-xs py-1.5 sm:py-2 font-semibold flex justify-between items-center px-3 sm:px-8">
+        <div
+            data-testid="top-bar"
+            data-season={promotion ? "promotion" : undefined}
+            className={`w-full ${promotion ? "bg-[#DC3545]" : "bg-main-color"} text-white text-center text-[10px] sm:text-xs py-1.5 sm:py-2 font-semibold flex justify-between items-center px-3 sm:px-8`}>
             <span className="truncate flex-1 mr-2">{displayMessage}</span>
             <div className="flex gap-3 sm:gap-4 flex-shrink-0">
                 <a href="https://www.instagram.com/cuarzosmx_oficial/" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">

@@ -2,6 +2,12 @@
 
 import { useState } from "react"
 import { Heading } from "@medusajs/ui"
+import {
+    BULK_FAQ_QUESTION,
+    FALLBACK_PROMOTION_STATE,
+    getBulkFaqParagraphs,
+    type StorePromotionState,
+} from "@lib/util/store-promotion"
 
 type FAQItem = {
     question: string
@@ -29,14 +35,9 @@ const faqItems: FAQItem[] = [
         )
     },
     {
-        question: "¿Tienen descuentos por mayoreo?",
-        answer: (
-            <>
-                Por mayoreo manejamos un descuento de <strong>20% a partir de 12 piezas</strong>. Pueden ser de productos diferentes.
-                <p className="mt-2">El descuento <strong>no aplica</strong> a productos por kilo ni a productos que ya cuenten con un descuento o promoción activa.</p>
-                <p className="mt-2">El descuento para los pedidos realizados por la página web entrará automáticamente cuando seleccione 12 piezas o más. En el carrito podrá ver a qué productos se les aplicó el descuento.</p>
-            </>
-        )
+        // Respuesta dinámica: ver getBulkAnswer (S13)
+        question: BULK_FAQ_QUESTION,
+        answer: null
     },
     {
         question: "¿Cuentan con servicio de envíos?",
@@ -114,8 +115,40 @@ function FAQAccordion({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boole
     )
 }
 
-export default function FAQTemplate() {
+/** Mayoreo answer for the current state: promotion in force, bulk on or off. */
+function getBulkAnswer(state: StorePromotionState): React.ReactNode {
+    const { bulk, promotion } = state
+    if (!promotion && bulk.enabled) {
+        return (
+            <>
+                Por mayoreo manejamos un descuento de <strong>{bulk.percentage}% a partir de {bulk.threshold} piezas</strong>. Pueden ser de productos diferentes.
+                <p className="mt-2">El descuento <strong>no aplica</strong> a productos por kilo ni a productos que ya cuenten con un descuento o promoción activa.</p>
+                <p className="mt-2">El descuento para los pedidos realizados por la página web entrará automáticamente cuando seleccione {bulk.threshold} piezas o más. En el carrito podrá ver a qué productos se les aplicó el descuento.</p>
+            </>
+        )
+    }
+    const [first, ...rest] = getBulkFaqParagraphs(state)
+    return (
+        <>
+            {first}
+            {rest.map((text) => (
+                <p key={text} className="mt-2">{text}</p>
+            ))}
+        </>
+    )
+}
+
+export default function FAQTemplate({
+    promotionState = FALLBACK_PROMOTION_STATE,
+}: {
+    promotionState?: StorePromotionState
+}) {
     const [openIndex, setOpenIndex] = useState<number | null>(0)
+    const items = faqItems.map((item) =>
+        item.question === BULK_FAQ_QUESTION
+            ? { ...item, answer: getBulkAnswer(promotionState) }
+            : item
+    )
 
     const handleToggle = (index: number) => {
         setOpenIndex(openIndex === index ? null : index)
@@ -145,7 +178,7 @@ export default function FAQTemplate() {
             <section className="w-full py-16 md:py-20 bg-white">
                 <div className="content-container max-w-3xl mx-auto px-4 lg:px-8">
                     <div className="space-y-4">
-                        {faqItems.map((item, index) => (
+                        {items.map((item, index) => (
                             <FAQAccordion
                                 key={index}
                                 item={item}

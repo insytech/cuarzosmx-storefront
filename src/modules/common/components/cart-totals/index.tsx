@@ -1,11 +1,12 @@
 "use client"
 
 import { convertToLocale } from "@lib/util/money"
+import { calculateBulkDiscount } from "@lib/util/bulk-discount"
 import {
-  calculateBulkDiscount,
-  BULK_DISCOUNT_PERCENTAGE,
-  BULK_DISCOUNT_THRESHOLD,
-} from "@lib/util/bulk-discount"
+  FALLBACK_BULK_STATE,
+  getTierDiscount,
+  type StoreBulkState,
+} from "@lib/util/store-promotion"
 import { HttpTypes } from "@medusajs/types"
 import React from "react"
 
@@ -21,9 +22,14 @@ type CartTotalsProps = {
     shipping_subtotal?: number | null
     items?: HttpTypes.StoreCartLineItem[]
   }
+  /** Live bulk values (label only); the amount always comes from adjustments. */
+  bulk?: StoreBulkState
 }
 
-const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
+const CartTotals: React.FC<CartTotalsProps> = ({
+  totals,
+  bulk = FALLBACK_BULK_STATE,
+}) => {
   const {
     currency_code,
     total,
@@ -47,11 +53,26 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
       : null
 
   // Detectar si hay descuento bulk aplicado (viene del backend)
-  const bulkDiscount = calculateBulkDiscount(totals as HttpTypes.StoreCart)
+  const bulkDiscount = calculateBulkDiscount(
+    totals as HttpTypes.StoreCart,
+    bulk.threshold
+  )
   const showBulkDiscount = bulkDiscount.hasBackendDiscount && bulkDiscount.discountAmount > 0
 
-  // Separar descuento de promoción del bulk para no duplicar visualmente
-  const promoDiscountOnly = Math.max(0, (discount_total ?? 0) - (showBulkDiscount ? bulkDiscount.discountAmount : 0))
+  // Descuento por monto (Buen Fin, etc.): detectado por la descripción del ajuste
+  const tierDiscount = getTierDiscount(totals.items)
+
+  // Separar descuento de promoción (cupones) del bulk y del descuento por monto
+  // para no duplicar visualmente
+  const promoDiscountOnly = Math.max(
+    0,
+    Math.round(
+      ((discount_total ?? 0) -
+        (showBulkDiscount ? bulkDiscount.discountAmount : 0) -
+        (tierDiscount?.amount ?? 0)) *
+        100
+    ) / 100
+  )
 
   return (
     <div>
@@ -83,6 +104,22 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
           </div>
         )}
 
+        {/* Descuento por monto de la promoción vigente - ya aplicado por backend */}
+        {tierDiscount && (
+          <div className="flex items-center justify-between bg-green-50 text-green-700 font-semibold -mx-2 px-2 py-2 rounded-lg">
+            <span>
+              {tierDiscount.name}
+              {tierDiscount.percentage !== null && ` −${tierDiscount.percentage}%`}
+            </span>
+            <span
+              data-testid="cart-tier-discount"
+              data-value={tierDiscount.amount}
+            >
+              −{convertToLocale({ amount: tierDiscount.amount, currency_code })}
+            </span>
+          </div>
+        )}
+
         {/* Descuento por volumen (Bulk Discount) - ya aplicado por backend */}
         {showBulkDiscount && (
           <div className="flex items-center justify-between bg-green-50 -mx-2 px-2 py-2 rounded-lg">
@@ -91,7 +128,7 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className="font-medium">
-                Descuento {BULK_DISCOUNT_PERCENTAGE}% (+{BULK_DISCOUNT_THRESHOLD} productos)
+                Descuento {bulk.percentage}% (+{bulk.threshold} productos)
               </span>
             </span>
             <span
@@ -154,7 +191,16 @@ const CartTotals: React.FC<CartTotalsProps> = ({ totals }) => {
             {convertToLocale({ amount: total ?? 0, currency_code })}
           </span>
         </div>
-
+        {tierDiscount && (
+          <p
+            className="mt-1 text-right text-[13px] font-semibold text-green-700"
+            data-testid="cart-tier-savings"
+          >
+            Ahorras{" "}
+            {convertToLocale({ amount: tierDiscount.amount, currency_code })} con{" "}
+            {tierDiscount.name}
+          </p>
+        )}
       </div>
     </div>
   )

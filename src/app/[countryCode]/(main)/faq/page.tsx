@@ -1,6 +1,11 @@
 import { Metadata } from "next"
 import FAQTemplate from "@modules/faq/templates/faq-template"
 import FAQSchema from "@modules/common/components/faq-schema"
+import { getActiveStorePromotion } from "@lib/data/store-promotions"
+import {
+    BULK_FAQ_QUESTION,
+    getBulkFaqParagraphs,
+} from "@lib/util/store-promotion"
 
 export const metadata: Metadata = {
     title: "Preguntas Frecuentes | CuarzosMX",
@@ -46,11 +51,20 @@ const faqSchemaItems = [
     },
 ]
 
-export default function FAQPage() {
+export default async function FAQPage() {
+    const promotionState = await getActiveStorePromotion()
+    // La respuesta de mayoreo refleja el estado actual (promoción o bulk, S13)
+    const schemaItems = faqSchemaItems.map((item) =>
+        item.question === BULK_FAQ_QUESTION &&
+        (promotionState.promotion || !promotionState.bulk.enabled)
+            ? { ...item, answer: getBulkFaqParagraphs(promotionState).join(" ") }
+            : item
+    )
+
     return (
         <>
-            <FAQSchema items={faqSchemaItems} />
-            <FAQTemplate />
+            <FAQSchema items={schemaItems} />
+            <FAQTemplate promotionState={promotionState} />
         </>
     )
 }

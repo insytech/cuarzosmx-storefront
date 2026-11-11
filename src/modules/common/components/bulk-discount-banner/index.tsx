@@ -1,23 +1,32 @@
 "use client"
 
 import { convertToLocale } from "@lib/util/money"
+import { calculateBulkDiscount } from "@lib/util/bulk-discount"
 import {
-    calculateBulkDiscount,
-    BULK_DISCOUNT_THRESHOLD,
-    BULK_DISCOUNT_PERCENTAGE,
-} from "@lib/util/bulk-discount"
+    FALLBACK_BULK_STATE,
+    type StoreBulkState,
+} from "@lib/util/store-promotion"
 import { HttpTypes } from "@medusajs/types"
 
 type BulkDiscountBannerProps = {
     cart: HttpTypes.StoreCart | null
     variant?: "full" | "compact" | "mini"
+    /** Live bulk switch/values from GET /store/promotions/active. */
+    bulk?: StoreBulkState
 }
 
 const BulkDiscountBanner = ({
     cart,
     variant = "full",
+    bulk = FALLBACK_BULK_STATE,
 }: BulkDiscountBannerProps) => {
-    const bulkDiscount = calculateBulkDiscount(cart)
+    const { threshold, percentage } = bulk
+    const bulkDiscount = calculateBulkDiscount(cart, threshold)
+
+    // Bulk switched off in admin, or paused by a tiered promotion in force.
+    if (!bulk.applies) {
+        return null
+    }
     const currencyCode = cart?.currency_code ?? "MXN"
 
     // Si el descuento ya fue aplicado por el backend
@@ -40,7 +49,7 @@ const BulkDiscountBanner = ({
                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                     </svg>
-                    <span>-{BULK_DISCOUNT_PERCENTAGE}% aplicado</span>
+                    <span>-{percentage}% aplicado</span>
                 </div>
             )
         }
@@ -109,9 +118,9 @@ const BulkDiscountBanner = ({
                             </h3>
                         </div>
                         <p className="text-sm text-green-700 mb-2">
-                            Por tener más de {BULK_DISCOUNT_THRESHOLD} productos, obtuviste{" "}
+                            Por tener más de {threshold} productos, obtuviste{" "}
                             <span className="font-bold">
-                                {BULK_DISCOUNT_PERCENTAGE}% de descuento
+                                {percentage}% de descuento
                             </span>{" "}
                             en productos sin promoción.
                         </p>
@@ -135,14 +144,14 @@ const BulkDiscountBanner = ({
     // Si le faltan productos para el descuento
     if (bulkDiscount.itemsNeeded > 0 && bulkDiscount.totalItems > 0) {
         const progress = Math.min(
-            (bulkDiscount.totalItems / BULK_DISCOUNT_THRESHOLD) * 100,
+            (bulkDiscount.totalItems / threshold) * 100,
             100
         )
 
         if (variant === "mini") {
             return (
                 <div className="text-xs text-purple-600">
-                    ¡Agrega {bulkDiscount.itemsNeeded} más para -{BULK_DISCOUNT_PERCENTAGE}
+                    ¡Agrega {bulkDiscount.itemsNeeded} más para -{percentage}
                     %!
                 </div>
             )
@@ -174,7 +183,7 @@ const BulkDiscountBanner = ({
                                 productos!
                             </p>
                             <p className="text-xs text-purple-600">
-                                Para obtener {BULK_DISCOUNT_PERCENTAGE}% de descuento
+                                Para obtener {percentage}% de descuento
                             </p>
                         </div>
                     </div>
@@ -212,7 +221,7 @@ const BulkDiscountBanner = ({
                         <h3 className="text-lg font-bold text-purple-800 mb-1">
                             💎 ¡Estás muy cerca del{" "}
                             <span className="text-indigo-600">
-                                {BULK_DISCOUNT_PERCENTAGE}%
+                                {percentage}%
                             </span>{" "}
                             de descuento!
                         </h3>
@@ -224,7 +233,7 @@ const BulkDiscountBanner = ({
                             {bulkDiscount.itemsNeeded === 1 ? "producto más" : "productos más"}{" "}
                             a tu carrito y obtén{" "}
                             <span className="font-bold">
-                                {BULK_DISCOUNT_PERCENTAGE}% de descuento
+                                {percentage}% de descuento
                             </span>{" "}
                             en productos sin promoción.
                         </p>
@@ -236,13 +245,13 @@ const BulkDiscountBanner = ({
                             >
                                 {progress > 20 && (
                                     <span className="text-[10px] text-white font-bold">
-                                        {bulkDiscount.totalItems}/{BULK_DISCOUNT_THRESHOLD}
+                                        {bulkDiscount.totalItems}/{threshold}
                                     </span>
                                 )}
                             </div>
                         </div>
                         <p className="text-xs text-purple-500 mt-1">
-                            {bulkDiscount.totalItems} de {BULK_DISCOUNT_THRESHOLD}{" "}
+                            {bulkDiscount.totalItems} de {threshold}{" "}
                             productos necesarios
                         </p>
                     </div>

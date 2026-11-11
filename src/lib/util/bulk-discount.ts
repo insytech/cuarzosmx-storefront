@@ -1,7 +1,12 @@
 import { HttpTypes } from "@medusajs/types"
+import { FALLBACK_BULK_STATE, type PromoLineItemLike } from "./store-promotion"
 
-export const BULK_DISCOUNT_THRESHOLD = 12
-export const BULK_DISCOUNT_PERCENTAGE = 20
+/**
+ * Fallback values only. The live threshold/percentage come from
+ * GET /store/promotions/active (`bulk`), see `@lib/data/store-promotions`.
+ */
+export const BULK_DISCOUNT_THRESHOLD = FALLBACK_BULK_STATE.threshold
+export const BULK_DISCOUNT_PERCENTAGE = FALLBACK_BULK_STATE.percentage
 export const BULK_DISCOUNT_CODE = "BULK_20_AUTO"
 
 export interface BulkDiscountResult {
@@ -12,45 +17,47 @@ export interface BulkDiscountResult {
     hasBackendDiscount: boolean // Si el descuento ya fue aplicado por el backend
 }
 
+interface BulkCartLike {
+    items?: PromoLineItemLike[] | null
+}
+
 /**
  * Detecta el descuento por volumen (bulk discount) para un carrito.
  * El descuento se aplica en el backend, esta función solo detecta si está aplicado.
- * - Se aplica cuando hay más de 12 productos
+ * - Se aplica a partir de `threshold` productos (por defecto 12)
  * - Solo aplica a productos que NO tienen otro descuento previo
- * - Descuento del 20% sobre productos elegibles
  */
 export function calculateBulkDiscount(
-    cart: HttpTypes.StoreCart | null
+    cart: HttpTypes.StoreCart | BulkCartLike | null,
+    threshold: number = BULK_DISCOUNT_THRESHOLD
 ): BulkDiscountResult {
     const defaultResult: BulkDiscountResult = {
         isEligible: false,
         totalItems: 0,
-        itemsNeeded: BULK_DISCOUNT_THRESHOLD + 1,
+        itemsNeeded: threshold + 1,
         discountAmount: 0,
         hasBackendDiscount: false,
     }
 
-    if (!cart?.items?.length) {
+    const items = (cart?.items ?? []) as PromoLineItemLike[]
+    if (!items.length) {
         return defaultResult
     }
 
     // Contar total de items
-    const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0)
-    const itemsNeeded = Math.max(0, BULK_DISCOUNT_THRESHOLD - totalItems)
-    const isEligible = totalItems >= BULK_DISCOUNT_THRESHOLD
+    const totalItems = items.reduce((sum, item) => sum + (item.quantity ?? 0), 0)
+    const itemsNeeded = Math.max(0, threshold - totalItems)
+    const isEligible = totalItems >= threshold
 
     // Buscar si hay descuentos bulk ya aplicados en los items (por el backend)
     let bulkDiscountTotal = 0
     let hasBulkAdjustment = false
 
-    for (const item of cart.items) {
-        const itemAny = item as any
-        if (itemAny.adjustments) {
-            for (const adj of itemAny.adjustments) {
-                if (adj?.code === BULK_DISCOUNT_CODE) {
-                    bulkDiscountTotal += adj.amount || 0
-                    hasBulkAdjustment = true
-                }
+    for (const item of items) {
+        for (const adj of item.adjustments ?? []) {
+            if (adj?.code === BULK_DISCOUNT_CODE) {
+                bulkDiscountTotal += Number(adj.amount) || 0
+                hasBulkAdjustment = true
             }
         }
     }
