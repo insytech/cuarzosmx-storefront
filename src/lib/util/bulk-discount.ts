@@ -9,6 +9,23 @@ export const BULK_DISCOUNT_THRESHOLD = FALLBACK_BULK_STATE.threshold
 export const BULK_DISCOUNT_PERCENTAGE = FALLBACK_BULK_STATE.percentage
 export const BULK_DISCOUNT_CODE = "BULK_20_AUTO"
 
+/**
+ * The backend writes the bulk adjustment without a `code` and marks it by its
+ * description ("Descuento 20% mayoreo (+12 productos)"). The legacy code is kept
+ * for adjustments created before that change.
+ */
+export function isBulkAdjustment(
+    adj: { code?: string | null; description?: string | null } | null | undefined
+): boolean {
+    if (!adj) {
+        return false
+    }
+    if (adj.code === BULK_DISCOUNT_CODE) {
+        return true
+    }
+    return !adj.code && /^Descuento \d+(\.\d+)?% mayoreo/.test(adj.description ?? "")
+}
+
 export interface BulkDiscountResult {
     isEligible: boolean
     totalItems: number
@@ -55,7 +72,7 @@ export function calculateBulkDiscount(
 
     for (const item of items) {
         for (const adj of item.adjustments ?? []) {
-            if (adj?.code === BULK_DISCOUNT_CODE) {
+            if (isBulkAdjustment(adj)) {
                 bulkDiscountTotal += Number(adj.amount) || 0
                 hasBulkAdjustment = true
             }

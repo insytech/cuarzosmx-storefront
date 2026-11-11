@@ -1,7 +1,7 @@
 "use client"
 
 import { updateLineItem } from "@lib/data/cart"
-import { BULK_DISCOUNT_CODE } from "@lib/util/bulk-discount"
+import { isBulkAdjustment } from "@lib/util/bulk-discount"
 import {
   getItemTierAdjustment,
   isItemDiscountable,
@@ -96,7 +96,7 @@ const Item = ({
 
   // Detect if this item is excluded from bulk discount
   const hasBulkAdjustment = (item.adjustments ?? []).some(
-    (adj) => adj?.code === BULK_DISCOUNT_CODE
+    (adj) => isBulkAdjustment(adj)
   )
   const showBulkExclusion = bulkActive && !hasBulkAdjustment
 
