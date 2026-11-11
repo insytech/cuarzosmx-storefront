@@ -32,7 +32,15 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // Machine policy: never the Playwright-bundled Chromium. Use the
+        // system Brave with its sandbox ON (no --no-sandbox).
+        launchOptions: {
+          executablePath: process.env.CHROME_PATH || "/opt/brave-bin/brave",
+          chromiumSandbox: true,
+        },
+      },
     },
   ],
 })
