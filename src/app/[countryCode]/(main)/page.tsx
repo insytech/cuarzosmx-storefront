@@ -9,6 +9,8 @@ import InterstitialBanner from "@modules/home/components/interstitial-banner"
 import EditorialBlock from "@modules/home/components/editorial-block"
 import LifestyleBlock from "@modules/home/components/lifestyle-block"
 import CategoryGrid from "@modules/home/components/category-grid"
+import SeasonBand from "@modules/home/components/season-band"
+import { getActiveStorePromotion } from "@lib/data/store-promotions"
 import { getRegion } from "@lib/data/regions"
 import { getTrendingProducts } from "@lib/data/home-products"
 
@@ -34,9 +36,10 @@ export default async function Home(props: {
 
   const { countryCode } = params
 
-  const [region, trendingSection] = await Promise.all([
+  const [region, trendingSection, promotionState] = await Promise.all([
     getRegion(countryCode),
     getTrendingProducts(countryCode, 4),
+    getActiveStorePromotion(),
   ])
 
   if (!region) {
@@ -45,6 +48,9 @@ export default async function Home(props: {
 
   return (
     <>
+      {/* 0. Franja de temporada (Buen Fin): solo con promoción vigente */}
+      <SeasonBand promotion={promotionState.promotion} />
+
       {/* 1. Sección Hero */}
       <Suspense
         fallback={

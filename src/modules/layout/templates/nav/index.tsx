@@ -7,9 +7,13 @@ import TopBar from "@modules/layout/components/top-bar"
 import CategoriesPopover from "./categories-dropdown.tsx"
 import MobileMenu from "@modules/layout/components/mobile-menu"
 import SearchButton from "@modules/search/components/search-button"
+import { getActiveStorePromotion } from "@lib/data/store-promotions"
 
 export default async function Nav() {
-  const regions = await listRegions().then((regions: StoreRegion[]) => regions)
+  const [regions, { promotion }] = await Promise.all([
+    listRegions().then((regions: StoreRegion[]) => regions),
+    getActiveStorePromotion(),
+  ])
 
   return (
     <div className="sticky top-0 inset-x-0 z-50 group">
@@ -48,6 +52,15 @@ export default async function Nav() {
             <LocalizedClientLink href="/store" className=" font-semibold text-gray-700 hover:text-gray-900 transition-colors">
               Tienda
             </LocalizedClientLink>
+            {promotion && (
+              <LocalizedClientLink
+                href="/buen-fin"
+                className="font-semibold text-[#A71D2A] hover:text-[#DC3545] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-main-color-dark rounded-sm"
+                data-testid="nav-buen-fin-link"
+              >
+                Buen Fin
+              </LocalizedClientLink>
+            )}
 
             <LocalizedClientLink href="/about" className=" font-semibold text-gray-700 hover:text-gray-900 transition-colors">
               Acerca de Nosotros
@@ -62,6 +75,17 @@ export default async function Nav() {
 
           {/* Acciones Derecha */}
           <div className="flex items-center gap-3 lg:gap-6 lg:pl-8">
+            {/* Buen Fin - Mobile (el menú móvil no lista la promoción) */}
+            {promotion && (
+              <LocalizedClientLink
+                href="/buen-fin"
+                className="lg:hidden inline-flex items-center min-h-[44px] px-1 text-sm font-bold text-[#A71D2A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-main-color-dark rounded-sm"
+                data-testid="nav-buen-fin-link-mobile"
+              >
+                Buen Fin
+              </LocalizedClientLink>
+            )}
+
             {/* Buscador */}
             <SearchButton className="hidden sm:block" />
 
