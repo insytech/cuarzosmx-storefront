@@ -48,10 +48,16 @@ async function CartFeatures() {
   )
 }
 
+// Mientras el Nav hace streaming. La franja va en un gris neutro y sin texto: si
+// fuera morada (el color por defecto de TopBar) parpadeaba morado->rojo durante una
+// promocion vigente (S10, T15). Mismas clases de tamano que TopBar: sin salto.
 function NavFallback() {
   return (
-    <div className="sticky top-0 inset-x-0 z-50">
-      <div className="w-full bg-main-color text-white text-center text-[10px] sm:text-xs py-1.5 sm:py-2 font-semibold px-3 sm:px-8">
+    <div className="sticky top-0 inset-x-0 z-50" aria-hidden="true">
+      <div
+        data-testid="top-bar-placeholder"
+        className="w-full bg-gray-200 text-center text-[10px] sm:text-xs py-1.5 sm:py-2 font-semibold px-3 sm:px-8"
+      >
         &nbsp;
       </div>
       <header className="h-16 lg:h-20 mx-auto bg-white px-4 lg:px-8 shadow-sm" />
