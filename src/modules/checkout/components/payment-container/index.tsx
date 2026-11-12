@@ -887,6 +887,30 @@ export const MercadoCreditoContainer = ({
   const isSelected = selectedPaymentOptionId === paymentProviderId
   const cartTotal = cart?.total ?? null
   const router = useRouter()
+  /**
+   * P2b (T15): total de pantalla viejo con el que se detecto que el backend ya tenia
+   * otro. Mientras `cartTotal` siga siendo ese, se espera a que `router.refresh()`
+   * traiga el nuevo en vez de crear otra preferencia en cada ciclo.
+   */
+  const staleCartTotalRef = useRef<number | null>(null)
+  const totalSyncAttemptsRef = useRef(0)
+  const [totalSyncStuck, setTotalSyncStuck] = useState(false)
+
+  // Si el refresco no trae el total nuevo en unos segundos, se deja de esperar y se
+  // pide recargar en vez de dejar el spinner para siempre.
+  useEffect(() => {
+    if (
+      !isSelected ||
+      !preferenceId ||
+      preferenceTotal === null ||
+      preferenceTotal === cartTotal
+    ) {
+      setTotalSyncStuck(false)
+      return
+    }
+    const timer = setTimeout(() => setTotalSyncStuck(true), 10_000)
+    return () => clearTimeout(timer)
+  }, [isSelected, preferenceId, preferenceTotal, cartTotal])
 
   // Create MercadoPago preference when this payment method is selected
   useEffect(() => {
@@ -897,6 +921,21 @@ export const MercadoCreditoContainer = ({
 
       // Se reutiliza la preferencia SOLO si sigue siendo por el mismo importe.
       if (preferenceId && preferenceTotal === cartTotal) {
+        staleCartTotalRef.current = null
+        totalSyncAttemptsRef.current = 0
+        return
+      }
+
+      // Ya se detecto que el total de pantalla esta viejo y se pidio refrescar: no se
+      // crea otra preferencia hasta que `cartTotal` cambie.
+      if (preferenceId && staleCartTotalRef.current === cartTotal) {
+        return
+      }
+
+      // Tope de seguridad: si el total sigue sin converger, no se crean mas
+      // preferencias; el render pide recargar la pagina.
+      if (totalSyncAttemptsRef.current >= 2) {
+        setTotalSyncStuck(true)
         return
       }
 
@@ -937,6 +976,8 @@ export const MercadoCreditoContainer = ({
           const backendTotal = await syncCheckoutCartTotal(cartTotal)
           if (backendTotal !== null && Math.abs(backendTotal - cartTotal) > 0.005) {
             total = backendTotal
+            staleCartTotalRef.current = cartTotal
+            totalSyncAttemptsRef.current += 1
             router.refresh()
           }
         }
@@ -961,6 +1002,9 @@ export const MercadoCreditoContainer = ({
     if (!isSelected) {
       setPreferenceId(null)
       setError(null)
+      staleCartTotalRef.current = null
+      totalSyncAttemptsRef.current = 0
+      setTotalSyncStuck(false)
     }
   }, [isSelected])
 
@@ -984,7 +1028,18 @@ export const MercadoCreditoContainer = ({
             </ol>
           </div>
 
-          {error ? (
+          {totalSyncStuck && !error ? (
+            <div
+              className="text-center py-4 border border-amber-200 rounded-md bg-amber-50"
+              data-testid="preference-total-stuck"
+              role="status"
+            >
+              <Text className="text-sm text-amber-800">
+                El total de tu carrito cambió. Recarga la página para continuar con
+                Mercado Pago.
+              </Text>
+            </div>
+          ) : error ? (
             <div className="text-center py-4 border border-red-200 rounded-md bg-red-50">
               <Text className="text-sm text-red-600 mb-2">
                 Error al configurar Mercado Crédito
