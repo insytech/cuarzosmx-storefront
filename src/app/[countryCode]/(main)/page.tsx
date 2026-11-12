@@ -48,7 +48,7 @@ export default async function Home(props: {
 
   return (
     <>
-      {/* 0. Franja de temporada (Buen Fin): solo con promoción vigente */}
+      {/* 0. Franja de temporada: solo con promoción vigente */}
       <SeasonBand promotion={promotionState.promotion} />
 
       {/* 1. Sección Hero */}

@@ -166,7 +166,7 @@ test.describe("Buen Fin - home", () => {
       const cta = page.getByTestId("season-band-cta")
       await expect(cta).toHaveText("Ver promociones →")
       await cta.click()
-      await page.waitForURL(`**/${COUNTRY_CODE}/buen-fin`)
+      await page.waitForURL(`**/${COUNTRY_CODE}/promociones/buen-fin`)
       await expect(page.getByTestId("buen-fin-page")).toBeVisible()
     }
   )
@@ -217,14 +217,14 @@ test.describe("Buen Fin - home", () => {
   )
 })
 
-test.describe("Buen Fin - /buen-fin page", () => {
+test.describe("Buen Fin - /promociones/buen-fin page", () => {
   test(
     "hero, tier card with examples, how it works and terms",
     { tag: ["@buen-fin", "@BUEN-FIN-003"] },
     async ({ page }) => {
       await page.setViewportSize({ width: 1440, height: 900 })
       const activePromotion = waitForActivePromotion(page)
-      await page.goto(`/${COUNTRY_CODE}/buen-fin`, { waitUntil: "domcontentloaded" })
+      await page.goto(`/${COUNTRY_CODE}/promociones/buen-fin`, { waitUntil: "domcontentloaded" })
       const { bulk } = await activePromotion
 
       const root = page.getByTestId("buen-fin-page")
@@ -367,7 +367,7 @@ test.describe("Buen Fin - mini cart and checkout", () => {
       await expectTotal(page, "MX$1,280.00", 1280)
 
       // Mini cart (nav dropdown) on a non-cart page
-      await page.goto(`/${COUNTRY_CODE}/buen-fin`, { waitUntil: "domcontentloaded" })
+      await page.goto(`/${COUNTRY_CODE}/promociones/buen-fin`, { waitUntil: "domcontentloaded" })
       const cartLink = page.getByTestId("nav-cart-link").locator("visible=true").first()
       await expect(cartLink).toHaveText("Carrito (4)")
       await cartLink.hover()

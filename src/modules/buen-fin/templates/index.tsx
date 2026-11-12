@@ -5,7 +5,9 @@ import {
   formatPromotionDateRange,
   formatPromotionValidity,
   formatTierAmount,
-  getMaxPercentage,
+  getPromotionPageHeadline,
+  getPromotionPageSubtitle,
+  getSeasonPalette,
   getTierExampleAmount,
   type StorePromotionState,
 } from "@lib/util/store-promotion"
@@ -58,7 +60,11 @@ function NoPromotion() {
   )
 }
 
-/** Dedicated promotion page (design 08, S12). */
+/**
+ * Dedicated promotion page (design 08, S12). Colours, headline and subtitle
+ * come from the promotion's identity; the admin colour is applied through
+ * `style`, never as a Tailwind class.
+ */
 export default function BuenFinTemplate({
   promotionState,
 }: {
@@ -67,7 +73,7 @@ export default function BuenFinTemplate({
   const { promotion, bulk } = promotionState
   if (!promotion) return <NoPromotion />
 
-  const maxPct = getMaxPercentage(promotion.tiers)
+  const palette = getSeasonPalette(promotion.season_color)
   const dates = formatPromotionDateRange(promotion.starts_at, promotion.ends_at)
   const countdown = formatCountdown(promotion.starts_at, promotion.ends_at)
   const logo = promotion.band_logo_url
@@ -80,7 +86,10 @@ export default function BuenFinTemplate({
       {/* Hero */}
       <section
         aria-labelledby="bf-h1"
-        className={`mx-4 sm:mx-6 lg:mx-8 xl:mx-12 rounded-2xl text-white bg-[radial-gradient(120%_120%_at_80%_0%,#E4505F_0%,#DC3545_45%,#A71D2A_100%)] flex flex-col gap-8 px-5 py-8 sm:px-8 lg:grid lg:items-center lg:gap-10 lg:px-12 lg:py-10 ${
+        style={{
+          backgroundImage: `radial-gradient(120% 120% at 80% 0%, ${palette.light} 0%, ${palette.base} 45%, ${palette.dark} 100%)`,
+        }}
+        className={`mx-4 sm:mx-6 lg:mx-8 xl:mx-12 rounded-2xl text-white flex flex-col gap-8 px-5 py-8 sm:px-8 lg:grid lg:items-center lg:gap-10 lg:px-12 lg:py-10 ${
           logo
             ? "lg:grid-cols-[minmax(0,240px)_1fr_minmax(0,400px)] xl:grid-cols-[300px_1fr_400px]"
             : "lg:grid-cols-[1fr_minmax(0,400px)]"
@@ -101,11 +110,10 @@ export default function BuenFinTemplate({
             id="bf-h1"
             className="text-3xl sm:text-4xl lg:text-[44px] leading-[1.05] font-bold mt-1.5 mb-2.5"
           >
-            Entre más cristales llevas, más ahorras
+            {getPromotionPageHeadline(promotion)}
           </h1>
           <p className="text-base opacity-95">
-            Hasta {maxPct}% de descuento en toda la tienda, aplicado
-            automáticamente en tu carrito. Se combina con cupones.
+            {getPromotionPageSubtitle(promotion)}
           </p>
           <span className="inline-block mt-[18px] bg-black/20 rounded-full px-3.5 py-1.5 font-semibold text-sm">
             {dates}
@@ -127,7 +135,10 @@ export default function BuenFinTemplate({
                   key={tier.min_amount}
                   className="grid grid-cols-[84px_1fr] items-center py-2.5 border-t border-grey-20 first:border-t-0"
                 >
-                  <b className="text-[32px] text-[#DC3545] font-extrabold leading-none">
+                  <b
+                    className="text-[32px] font-extrabold leading-none"
+                    style={{ color: palette.base }}
+                  >
                     {tier.percentage}%
                   </b>
                   <span className="text-sm">
@@ -207,7 +218,10 @@ export default function BuenFinTemplate({
               />
               <div className="px-3.5 py-3">
                 <h3 className="text-sm font-semibold mb-1">{cat.name}</h3>
-                <span className="block text-xs font-semibold text-[#A71D2A]">
+                <span
+                  className="block text-xs font-semibold"
+                  style={{ color: palette.dark }}
+                >
                   Todo suma para tu descuento
                 </span>
               </div>

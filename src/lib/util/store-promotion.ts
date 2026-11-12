@@ -26,7 +26,24 @@ export interface StorePromotion {
   show_band: boolean
   band_logo_url: string | null
   topbar_message: string | null
+  /** Season identity (always present after parsing, see the fallbacks below). */
+  menu_label: string
+  page_slug: string
+  /** "#RRGGBB", upper case. */
+  season_color: string
+  /** null → DEFAULT_PAGE_HEADLINE / getDefaultPageSubtitle(). */
+  page_headline: string | null
+  page_subtitle: string | null
 }
+
+/**
+ * Identity used when the backend does not send one (older backend) or sends
+ * something malformed: the Buen Fin look the store had before identities.
+ */
+export const DEFAULT_MENU_LABEL = "Buen Fin"
+export const DEFAULT_PAGE_SLUG = "buen-fin"
+export const DEFAULT_SEASON_COLOR = "#DC3545"
+export const DEFAULT_PAGE_HEADLINE = "Entre más cristales llevas, más ahorras"
 
 export interface StoreBulkState {
   enabled: boolean
@@ -105,6 +122,21 @@ function parseTiers(value: unknown): StorePromotionTier[] {
   return tiers.sort((a, b) => a.min_amount - b.min_amount)
 }
 
+const PAGE_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
+const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i
+
+function parsePageSlug(value: unknown): string {
+  const slug = typeof value === "string" ? value.trim() : ""
+  return PAGE_SLUG_PATTERN.test(slug) ? slug : DEFAULT_PAGE_SLUG
+}
+
+function parseSeasonColor(value: unknown): string {
+  const color = typeof value === "string" ? value.trim() : ""
+  return HEX_COLOR_PATTERN.test(color)
+    ? color.toUpperCase()
+    : DEFAULT_SEASON_COLOR
+}
+
 function isValidDate(value: unknown): value is string {
   return typeof value === "string" && !Number.isNaN(Date.parse(value))
 }
@@ -126,6 +158,11 @@ function parsePromotion(value: unknown): StorePromotion | null {
     show_band: value.show_band === true,
     band_logo_url: nonEmpty(value.band_logo_url),
     topbar_message: nonEmpty(value.topbar_message),
+    menu_label: nonEmpty(value.menu_label) ?? DEFAULT_MENU_LABEL,
+    page_slug: parsePageSlug(value.page_slug),
+    season_color: parseSeasonColor(value.season_color),
+    page_headline: nonEmpty(value.page_headline),
+    page_subtitle: nonEmpty(value.page_subtitle),
   }
 }
 
@@ -169,6 +206,116 @@ export function resolvePromotionState(
     bulk: { ...state.bulk, applies: state.bulk.enabled },
     promotion: null,
   }
+}
+
+// ---------------------------------------------------------------------------
+// Season identity (menu, page address, colour, page texts)
+// ---------------------------------------------------------------------------
+
+/** Storefront path of a promotion page, without the country prefix. */
+export function getPromotionPagePath(slug: string): string {
+  return `/promociones/${slug}`
+}
+
+export interface SeasonPalette {
+  /** The season colour itself. */
+  base: string
+  /** Darker shade: gradient end, link and CTA text. */
+  dark: string
+  /** Lighter shade: highlight of the page hero gradient. */
+  light: string
+}
+
+/** Design-approved shades of the default red; other colours are derived. */
+const DEFAULT_SEASON_PALETTE: SeasonPalette = {
+  base: DEFAULT_SEASON_COLOR,
+  dark: "#A71D2A",
+  light: "#E4505F",
+}
+
+/** Lightness ratio/offset between the approved red and its two shades. */
+const DARK_LIGHTNESS_RATIO = 0.718
+const LIGHT_LIGHTNESS_OFFSET = 0.069
+
+interface Hsl {
+  h: number
+  s: number
+  l: number
+}
+
+function hexToHsl(hex: string): Hsl {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const delta = max - min
+  const l = (max + min) / 2
+  if (delta === 0) return { h: 0, s: 0, l }
+  const s = delta / (1 - Math.abs(2 * l - 1))
+  let h: number
+  if (max === r) h = ((g - b) / delta) % 6
+  else if (max === g) h = (b - r) / delta + 2
+  else h = (r - g) / delta + 4
+  return { h: (h * 60 + 360) % 360, s, l }
+}
+
+function hslToHex({ h, s, l }: Hsl): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = l - c / 2
+  const sector = Math.floor(h / 60) % 6
+  const [r, g, b] = [
+    [c, x, 0],
+    [x, c, 0],
+    [0, c, x],
+    [0, x, c],
+    [x, 0, c],
+    [c, 0, x],
+  ][sector]
+  const channel = (v: number) =>
+    Math.round(Math.min(1, Math.max(0, v + m)) * 255)
+      .toString(16)
+      .padStart(2, "0")
+  return `#${channel(r)}${channel(g)}${channel(b)}`.toUpperCase()
+}
+
+/**
+ * Shades used with a season colour (gradients, link and CTA text). Same hue
+ * and saturation, only the lightness moves, in the proportion the approved
+ * Buen Fin red keeps with its shades (#DC3545 → #A71D2A / #E4505F). Anything
+ * that is not "#RRGGBB" falls back to the default red.
+ */
+export function getSeasonPalette(seasonColor: string): SeasonPalette {
+  if (!HEX_COLOR_PATTERN.test(seasonColor)) return DEFAULT_SEASON_PALETTE
+  const base = seasonColor.toUpperCase()
+  if (base === DEFAULT_SEASON_COLOR) return DEFAULT_SEASON_PALETTE
+  const hsl = hexToHsl(base)
+  return {
+    base,
+    dark: hslToHex({ ...hsl, l: hsl.l * DARK_LIGHTNESS_RATIO }),
+    light: hslToHex({
+      ...hsl,
+      l: Math.min(1, hsl.l + LIGHT_LIGHTNESS_OFFSET),
+    }),
+  }
+}
+
+/** Promotion page headline: the admin text or today's default. */
+export function getPromotionPageHeadline(promotion: StorePromotion): string {
+  return promotion.page_headline ?? DEFAULT_PAGE_HEADLINE
+}
+
+export function getDefaultPageSubtitle(maxPercentage: number): string {
+  return `Hasta ${maxPercentage}% de descuento en toda la tienda, aplicado automáticamente en tu carrito. Se combina con cupones.`
+}
+
+/** Promotion page subtitle: the admin text or today's default. */
+export function getPromotionPageSubtitle(promotion: StorePromotion): string {
+  return (
+    promotion.page_subtitle ??
+    getDefaultPageSubtitle(getMaxPercentage(promotion.tiers))
+  )
 }
 
 // ---------------------------------------------------------------------------

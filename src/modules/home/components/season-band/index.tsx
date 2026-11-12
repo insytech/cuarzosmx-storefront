@@ -3,6 +3,8 @@ import {
   formatPromotionDateRange,
   formatTierAmount,
   getMaxPercentage,
+  getPromotionPagePath,
+  getSeasonPalette,
   isPromotionInForce,
   type StorePromotion,
 } from "@lib/util/store-promotion"
@@ -13,8 +15,9 @@ type SeasonBandProps = {
 
 /**
  * Home band above the hero grid (design 07, S11). Rendered only while the
- * promotion is in force AND its "Franja en el inicio" switch is on. Dates and
- * tiers come from the admin. The grid banners are not touched.
+ * promotion is in force AND its "Franja en el inicio" switch is on. Dates,
+ * tiers and the season identity (colour, page address) come from the admin.
+ * The grid banners are not touched.
  */
 export default function SeasonBand({ promotion }: SeasonBandProps) {
   if (!isPromotionInForce(promotion) || !promotion.show_band) {
@@ -24,6 +27,8 @@ export default function SeasonBand({ promotion }: SeasonBandProps) {
   const maxPct = getMaxPercentage(promotion.tiers)
   const dates = formatPromotionDateRange(promotion.starts_at, promotion.ends_at)
   const logo = promotion.band_logo_url
+  // Admin-chosen colour: applied through `style`, never as a Tailwind class.
+  const palette = getSeasonPalette(promotion.season_color)
 
   return (
     // 24px gap under the nav; side padding matches the hero grid below.
@@ -31,7 +36,10 @@ export default function SeasonBand({ promotion }: SeasonBandProps) {
       <section
         aria-label={promotion.name}
         data-testid="season-band"
-        className={`rounded-xl bg-gradient-to-r from-[#A71D2A] to-[#DC3545] text-white flex flex-col items-center text-center gap-4 px-4 pt-[14px] pb-5 lg:grid lg:items-center lg:text-left lg:gap-7 lg:px-8 lg:py-[14px] ${
+        style={{
+          backgroundImage: `linear-gradient(to right, ${palette.dark}, ${palette.base})`,
+        }}
+        className={`rounded-xl text-white flex flex-col items-center text-center gap-4 px-4 pt-[14px] pb-5 lg:grid lg:items-center lg:text-left lg:gap-7 lg:px-8 lg:py-[14px] ${
           logo
             ? "lg:grid-cols-[132px_1fr_auto_auto]"
             : "lg:grid-cols-[1fr_auto_auto]"
@@ -66,7 +74,10 @@ export default function SeasonBand({ promotion }: SeasonBandProps) {
               key={tier.min_amount}
               className="bg-white text-black rounded-[10px] px-2 lg:px-3.5 py-2 text-center"
             >
-              <b className="block text-[#DC3545] text-2xl leading-none font-extrabold">
+              <b
+                className="block text-2xl leading-none font-extrabold"
+                style={{ color: palette.base }}
+              >
                 {tier.percentage}%
               </b>
               <span className="block text-xs font-semibold text-grey-70 lg:whitespace-nowrap">
@@ -77,8 +88,9 @@ export default function SeasonBand({ promotion }: SeasonBandProps) {
         </ul>
 
         <LocalizedClientLink
-          href="/buen-fin"
-          className="block w-full lg:w-auto text-center bg-white text-[#A71D2A] font-bold rounded-xl px-[22px] py-3 whitespace-nowrap hover:bg-grey-5 transition-colors focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-white"
+          href={getPromotionPagePath(promotion.page_slug)}
+          style={{ color: palette.dark }}
+          className="block w-full lg:w-auto text-center bg-white font-bold rounded-xl px-[22px] py-3 whitespace-nowrap hover:bg-grey-5 transition-colors focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-white"
           data-testid="season-band-cta"
         >
           Ver promociones →

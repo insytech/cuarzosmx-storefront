@@ -1,4 +1,4 @@
-import { Suspense } from "react"
+import { Suspense, type CSSProperties } from "react"
 import { listRegions } from "@lib/data/regions"
 import { StoreRegion } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
@@ -8,12 +8,27 @@ import CategoriesPopover from "./categories-dropdown.tsx"
 import MobileMenu from "@modules/layout/components/mobile-menu"
 import SearchButton from "@modules/search/components/search-button"
 import { getActiveStorePromotion } from "@lib/data/store-promotions"
+import {
+  getPromotionPagePath,
+  getSeasonPalette,
+} from "@lib/util/store-promotion"
 
 export default async function Nav() {
   const [regions, { promotion }] = await Promise.all([
     listRegions().then((regions: StoreRegion[]) => regions),
     getActiveStorePromotion(),
   ])
+
+  // Identidad de la temporada vigente: texto, dirección y color del enlace.
+  // El color llega del admin, así que viaja en variables CSS (no en clases).
+  const palette = promotion ? getSeasonPalette(promotion.season_color) : null
+  const seasonHref = promotion ? getPromotionPagePath(promotion.page_slug) : ""
+  const seasonLinkStyle = palette
+    ? ({
+        "--season-link": palette.dark,
+        "--season-link-hover": palette.base,
+      } as CSSProperties)
+    : undefined
 
   return (
     <div className="sticky top-0 inset-x-0 z-50 group">
@@ -54,11 +69,12 @@ export default async function Nav() {
             </LocalizedClientLink>
             {promotion && (
               <LocalizedClientLink
-                href="/buen-fin"
-                className="font-semibold text-[#A71D2A] hover:text-[#DC3545] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-main-color-dark rounded-sm"
+                href={seasonHref}
+                style={seasonLinkStyle}
+                className="font-semibold text-[color:var(--season-link)] hover:text-[color:var(--season-link-hover)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-main-color-dark rounded-sm"
                 data-testid="nav-buen-fin-link"
               >
-                Buen Fin
+                {promotion.menu_label}
               </LocalizedClientLink>
             )}
 
@@ -75,14 +91,15 @@ export default async function Nav() {
 
           {/* Acciones Derecha */}
           <div className="flex items-center gap-3 lg:gap-6 lg:pl-8">
-            {/* Buen Fin - Mobile (el menú móvil no lista la promoción) */}
+            {/* Temporada - Mobile (el menú móvil no lista la promoción) */}
             {promotion && (
               <LocalizedClientLink
-                href="/buen-fin"
-                className="lg:hidden inline-flex items-center min-h-[44px] px-1 text-sm font-bold text-[#A71D2A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-main-color-dark rounded-sm"
+                href={seasonHref}
+                style={seasonLinkStyle}
+                className="lg:hidden inline-flex items-center min-h-[44px] px-1 text-sm font-bold text-[color:var(--season-link)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-main-color-dark rounded-sm"
                 data-testid="nav-buen-fin-link-mobile"
               >
-                Buen Fin
+                {promotion.menu_label}
               </LocalizedClientLink>
             )}
 

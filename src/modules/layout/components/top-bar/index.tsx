@@ -27,7 +27,9 @@ export default async function TopBar() {
         <div
             data-testid="top-bar"
             data-season={promotion ? "promotion" : undefined}
-            className={`w-full ${promotion ? "bg-[#DC3545]" : "bg-main-color"} text-white text-center text-[10px] sm:text-xs py-1.5 sm:py-2 font-semibold flex justify-between items-center px-3 sm:px-8`}>
+            // Color de temporada del admin: va en style, no en una clase.
+            style={promotion ? { backgroundColor: promotion.season_color } : undefined}
+            className={`w-full ${promotion ? "" : "bg-main-color "}text-white text-center text-[10px] sm:text-xs py-1.5 sm:py-2 font-semibold flex justify-between items-center px-3 sm:px-8`}>
             <span className="truncate flex-1 mr-2">{displayMessage}</span>
             <div className="flex gap-3 sm:gap-4 flex-shrink-0">
                 <a href="https://www.instagram.com/cuarzosmx_oficial/" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">
