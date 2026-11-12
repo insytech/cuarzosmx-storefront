@@ -128,6 +128,146 @@ export async function updateCart(data: HttpTypes.StoreUpdateCart) {
     .catch(medusaError)
 }
 
+/** Proveedor de transferencia bancaria (mismo criterio que `isManual` en lib/constants). */
+const TRANSFER_PROVIDER_PREFIX = "pp_system_default"
+
+const CHECKOUT_CART_FIELDS =
+  "id, total, region_id, completed_at, *payment_collection, *payment_collection.payment_sessions"
+
+type CheckoutCartSnapshot = HttpTypes.StoreCart & { completed_at?: string | null }
+
+/** Lee el carrito SIN cache: la cache `carts` es justo lo que puede estar viejo. */
+async function fetchCheckoutCartFresh(
+  cartId: string,
+  headers: Record<string, string>
+): Promise<CheckoutCartSnapshot | null> {
+  return sdk.client
+    .fetch<HttpTypes.StoreCartResponse>(`/store/carts/${cartId}`, {
+      method: "GET",
+      query: { fields: CHECKOUT_CART_FIELDS },
+      headers,
+      cache: "no-store",
+    })
+    .then(({ cart }) => cart as CheckoutCartSnapshot)
+    .catch(() => null)
+}
+
+function transferProviderOf(cart: CheckoutCartSnapshot | null): string | null {
+  const session = cart?.payment_collection?.payment_sessions?.find((s) =>
+    s.provider_id?.startsWith(TRANSFER_PROVIDER_PREFIX)
+  )
+  return session?.provider_id ?? null
+}
+
+export type CheckoutCartRefresh = {
+  /** false si no hubo carrito vivo o fallo el recalculo (el checkout sigue igual). */
+  ok: boolean
+  total: number | null
+  /** Se volvio a crear la sesion de transferencia que el recalculo borro (P3). */
+  transferRestored: boolean
+}
+
+/**
+ * P2a/P3 (odd/tasks/buen-fin-promociones.md T15): recalcula el carrito en el
+ * backend al entrar al paso de pago.
+ *
+ * Los descuentos automaticos (mayoreo, rangos de Buen Fin) solo se recalculan en un
+ * refresh del carrito; un `POST /store/carts/:id` vacio dispara
+ * `refreshCartItemsWorkflow`. Sin esto, si la promocion empezo o termino mientras el
+ * cliente estaba en el checkout, la pantalla (cache `force-cache`) y el Brick usaban
+ * el total viejo y la ruta de tarjeta respondia 400 "monto no coincide".
+ *
+ * Si el total cambia, Medusa borra las sesiones de pago; si el cliente ya habia
+ * elegido transferencia, se vuelve a crear con la misma llamada que usa la UI.
+ */
+export async function refreshCheckoutCart(): Promise<CheckoutCartRefresh> {
+  const failed: CheckoutCartRefresh = {
+    ok: false,
+    total: null,
+    transferRestored: false,
+  }
+  const cartId = await getCartId()
+
+  if (!cartId) {
+    return failed
+  }
+
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+  const cartCacheTag = await getCacheTag("carts")
+
+  try {
+    const before = await fetchCheckoutCartFresh(cartId, headers)
+
+    // Carrito ya pagado (webhook, otra pestana): actualizarlo lanza y no hay
+    // nada que recalcular.
+    if (!before || before.completed_at) {
+      return failed
+    }
+
+    const transferProvider = transferProviderOf(before)
+
+    await sdk.store.cart.update(cartId, {}, {}, headers)
+
+    const after = await fetchCheckoutCartFresh(cartId, headers)
+    let transferRestored = false
+
+    if (
+      transferProvider &&
+      after &&
+      !after.completed_at &&
+      transferProviderOf(after) === null
+    ) {
+      await sdk.store.payment.initiatePaymentSession(
+        after,
+        { provider_id: transferProvider },
+        {},
+        headers
+      )
+      transferRestored = true
+    }
+
+    return {
+      ok: true,
+      total: after?.total ?? null,
+      transferRestored,
+    }
+  } catch (error) {
+    console.error("[checkout] no se pudo recalcular el carrito al entrar a pago:", error)
+    return failed
+  } finally {
+    revalidateTag(cartCacheTag)
+  }
+}
+
+/**
+ * Checkout Pro (P2b): total actual del carrito en el backend, sin cache. Si no
+ * coincide con el que ve el cliente, revalida la cache `carts` para que un
+ * `router.refresh()` muestre el nuevo antes de redirigir a Mercado Pago.
+ */
+export async function syncCheckoutCartTotal(
+  shownTotal: number
+): Promise<number | null> {
+  const cartId = await getCartId()
+
+  if (!cartId) {
+    return null
+  }
+
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+  const cart = await fetchCheckoutCartFresh(cartId, headers)
+  const total = cart?.total ?? null
+
+  if (total !== null && Math.abs(total - shownTotal) > 0.005) {
+    revalidateTag(await getCacheTag("carts"))
+  }
+
+  return total
+}
+
 export async function addToCart({
   variantId,
   quantity,

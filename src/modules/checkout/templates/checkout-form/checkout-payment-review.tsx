@@ -1,7 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Payment, { MercadoPagoCardData } from "@modules/checkout/components/payment"
+import {
+    PAYMENT_NOTICE,
+    type PaymentNotice,
+} from "@modules/checkout/components/payment/notices"
 import Review from "@modules/checkout/components/review"
 import { useFinancing } from "@modules/checkout/context/financing-context"
 
@@ -18,6 +23,12 @@ export default function CheckoutPaymentReview({
     const [mercadoPagoCardData, setMercadoPagoCardData] = useState<MercadoPagoCardData | null>(null)
     const [isHydrated, setIsHydrated] = useState(false)
     const { setFinancingInfo, clearFinancingInfo } = useFinancing()
+    // Aviso del paso de pago (total recalculado / transferencia restaurada, T15).
+    // Vive aqui para sobrevivir al router.refresh() y al cambio de paso.
+    const [paymentNotice, setPaymentNotice] = useState<PaymentNotice | null>(null)
+    const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
 
     // Load card data from sessionStorage on mount (to persist across server re-renders)
     useEffect(() => {
@@ -101,6 +112,19 @@ export default function CheckoutPaymentReview({
         clearFinancingInfo()
     }
 
+    // P2b (T15): la ruta de tarjeta rechazo el cobro porque el total del carrito ya no
+    // es el de la tarjeta capturada (no se cobro nada). Los datos de la tarjeta llevan
+    // el monto viejo, asi que se descartan y el cliente vuelve al paso de pago: al
+    // entrar se recalcula el carrito, se revalida la cache y se refresca el resumen.
+    // Nunca se reintenta el cobro solo.
+    const handleCardTotalChanged = () => {
+        clearCardData()
+        setPaymentNotice(PAYMENT_NOTICE.TOTAL_CHANGED)
+        const params = new URLSearchParams(searchParams)
+        params.set("step", "payment")
+        router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    }
+
     return (
         <>
             <Payment
@@ -108,11 +132,14 @@ export default function CheckoutPaymentReview({
                 availablePaymentMethods={availablePaymentMethods}
                 onMercadoPagoCardDataChange={handleMercadoPagoCardDataChange}
                 mercadoPagoCardData={mercadoPagoCardData}
+                notice={paymentNotice}
+                onNoticeChange={setPaymentNotice}
             />
             <Review
                 cart={cart}
                 mercadoPagoCardData={mercadoPagoCardData}
                 onPaymentComplete={clearCardData}
+                onCardTotalChanged={handleCardTotalChanged}
             />
         </>
     )

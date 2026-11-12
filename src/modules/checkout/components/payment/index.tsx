@@ -2,7 +2,7 @@
 
 import { RadioGroup } from "@headlessui/react"
 import { isStripe as isStripeFunc, isMercadoPago, isMercadoCredito, isManual, paymentInfoMap } from "@lib/constants"
-import { initiatePaymentSession, retrieveCart, completeMercadoPagoOrder } from "@lib/data/cart"
+import { initiatePaymentSession, refreshCheckoutCart } from "@lib/data/cart"
 import { CheckCircleSolid, CreditCard } from "@medusajs/icons"
 import { Button, Container, Heading, Text, clx } from "@medusajs/ui"
 import ErrorMessage from "@modules/checkout/components/error-message"
@@ -14,7 +14,8 @@ import PaymentContainer, {
 } from "@modules/checkout/components/payment-container"
 import Divider from "@modules/common/components/divider"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useState, useId } from "react"
+import { useCallback, useEffect, useId, useRef, useState, useTransition } from "react"
+import { PAYMENT_NOTICE, type PaymentNotice } from "./notices"
 
 // Type for MercadoPago card data
 export type MercadoPagoCardData = {
@@ -38,11 +39,15 @@ const Payment = ({
   availablePaymentMethods,
   onMercadoPagoCardDataChange,
   mercadoPagoCardData,
+  notice = null,
+  onNoticeChange,
 }: {
   cart: any
   availablePaymentMethods: any[]
   onMercadoPagoCardDataChange?: (cardData: MercadoPagoCardData | null) => void
   mercadoPagoCardData?: MercadoPagoCardData | null
+  notice?: PaymentNotice | null
+  onNoticeChange?: (notice: PaymentNotice | null) => void
 }) => {
   const radioGroupId = useId()
   const activeSession = cart.payment_collection?.payment_sessions?.find(
@@ -69,6 +74,56 @@ const Payment = ({
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // P2a/P3 (T15): al ENTRAR al paso de pago se recalcula el carrito en el backend
+  // (descuentos automaticos con la hora actual) antes de mostrar los metodos, para
+  // que el resumen, el Brick y la preferencia de Checkout Pro usen el mismo total
+  // que se va a cobrar. Una vez por entrada: el ref se rearma al salir del paso.
+  const [isRefreshingCart, setIsRefreshingCart] = useState(false)
+  const [isRouteRefreshing, startRouteRefresh] = useTransition()
+  const paymentEntryRef = useRef(false)
+
+  useEffect(() => {
+    if (!isOpen) {
+      paymentEntryRef.current = false
+      onNoticeChange?.(null)
+      return
+    }
+    if (paymentEntryRef.current) {
+      return
+    }
+    paymentEntryRef.current = true
+
+    const shownTotal = typeof cart?.total === "number" ? cart.total : null
+    setIsRefreshingCart(true)
+    refreshCheckoutCart()
+      .then((result) => {
+        if (!result.ok) {
+          return
+        }
+        const totalChanged =
+          result.total !== null &&
+          shownTotal !== null &&
+          Math.abs(result.total - shownTotal) > 0.005
+
+        if (result.transferRestored) {
+          onNoticeChange?.(PAYMENT_NOTICE.TRANSFER_RESTORED)
+        } else if (totalChanged) {
+          onNoticeChange?.(PAYMENT_NOTICE.TOTAL_CHANGED)
+        }
+        if (totalChanged || result.transferRestored) {
+          startRouteRefresh(() => router.refresh())
+        }
+      })
+      .catch((err) => {
+        console.error("Error refreshing cart on payment step:", err)
+      })
+      .finally(() => setIsRefreshingCart(false))
+    // Solo la entrada/salida del paso dispara el recalculo (no cada render).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
+
+  const isUpdatingTotal = isRefreshingCart || isRouteRefreshing
 
   const setPaymentMethod = async (method: string) => {
     setError(null)
@@ -195,7 +250,27 @@ const Payment = ({
       </div>
       <div>
         <div className={isOpen ? "block" : "hidden"}>
-          {!paidByGiftcard && availablePaymentMethods?.length && mounted && (
+          {notice && (
+            <div
+              role="status"
+              className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md"
+              data-testid="payment-total-notice"
+            >
+              <Text className="text-sm text-amber-800">{notice}</Text>
+            </div>
+          )}
+
+          {isOpen && isUpdatingTotal && (
+            <div
+              className="flex items-center gap-x-2 py-4"
+              data-testid="payment-refreshing-total"
+            >
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-main-color" />
+              <Text className="text-sm text-gray-500">Actualizando el total...</Text>
+            </div>
+          )}
+
+          {!paidByGiftcard && availablePaymentMethods?.length && mounted && !isUpdatingTotal && (
             <>
               <RadioGroup
                 value={selectedPaymentMethod}
@@ -293,6 +368,7 @@ const Payment = ({
               onClick={handleSubmit}
               isLoading={isLoading}
               disabled={
+                isUpdatingTotal ||
                 (isStripe && !cardComplete) ||
                 (!selectedPaymentMethod && !paidByGiftcard)
               }

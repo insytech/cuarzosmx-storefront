@@ -3,6 +3,8 @@ import { Text, clx } from "@medusajs/ui"
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState, type JSX } from "react"
 import { HttpTypes } from "@medusajs/types"
 import { initMercadoPago, Wallet, CardPayment } from "@mercadopago/sdk-react"
+import { useRouter } from "next/navigation"
+import { syncCheckoutCartTotal } from "@lib/data/cart"
 
 import Radio from "@modules/common/components/radio"
 import { reportCheckoutError } from "@lib/util/report-checkout-error"
@@ -884,6 +886,7 @@ export const MercadoCreditoContainer = ({
 
   const isSelected = selectedPaymentOptionId === paymentProviderId
   const cartTotal = cart?.total ?? null
+  const router = useRouter()
 
   // Create MercadoPago preference when this payment method is selected
   useEffect(() => {
@@ -924,8 +927,22 @@ export const MercadoCreditoContainer = ({
         }
 
         const data = await response.json()
+
+        // P2b (T15): la ruta de la preferencia recalcula el carrito antes de leer el
+        // total. Si el del backend ya no es el de la pantalla, se refresca la pagina
+        // ANTES de mostrar el boton que redirige a Mercado Pago; el Wallet espera a
+        // que el resumen muestre el mismo total que la preferencia (ver render).
+        let total = cartTotal
+        if (cartTotal !== null) {
+          const backendTotal = await syncCheckoutCartTotal(cartTotal)
+          if (backendTotal !== null && Math.abs(backendTotal - cartTotal) > 0.005) {
+            total = backendTotal
+            router.refresh()
+          }
+        }
+
         setPreferenceId(data.preference_id)
-        setPreferenceTotal(cartTotal)
+        setPreferenceTotal(total)
       } catch (err: any) {
         console.error('Error creating MercadoPago Credits preference:', err)
         setError(err.message || "Error al crear preferencia de Mercado Crédito")
@@ -985,7 +1002,7 @@ export const MercadoCreditoContainer = ({
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-ui-fg-base" />
               </div>
             </div>
-          ) : preferenceId ? (
+          ) : preferenceId && preferenceTotal === cartTotal ? (
             <div className="bg-gray-50 rounded-lg p-4 text-center">
               <Text className="text-sm text-gray-600 mb-3">
                 Te llevaremos a Mercado Pago para completar tu compra

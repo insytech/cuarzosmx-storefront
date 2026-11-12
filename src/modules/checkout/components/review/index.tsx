@@ -9,15 +9,19 @@ import { useSearchParams } from "next/navigation"
 import { isMercadoPago } from "@lib/constants"
 import { completeMercadoPagoOrder } from "@lib/data/cart"
 import type { MercadoPagoCardData } from "../payment"
+import { isCardTotalChanged } from "../payment/notices"
 
 const Review = ({
   cart,
   mercadoPagoCardData,
   onPaymentComplete,
+  onCardTotalChanged,
 }: {
   cart: any
   mercadoPagoCardData?: MercadoPagoCardData | null
   onPaymentComplete?: () => void
+  /** El backend no cobro porque el total del carrito cambio (400 monto / 409 total). */
+  onCardTotalChanged?: () => void
 }) => {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -171,7 +175,17 @@ const Review = ({
         const result = await response.json()
 
         if (!response.ok || !result.success) {
-          throw new Error(result.message || result.error || "Error procesando el pago")
+          const message = String(
+            result.message || result.error || "Error procesando el pago"
+          )
+          // P2b (T15): total recalculado en el servidor -> aviso claro y vuelta al
+          // paso de pago con el total nuevo. "Este carrito ya fue pagado" (409) no
+          // entra aqui y conserva su mensaje.
+          if (onCardTotalChanged && isCardTotalChanged(response.status, message)) {
+            onCardTotalChanged()
+            return
+          }
+          throw new Error(message)
         }
 
         paymentId = result.payment_id ? String(result.payment_id) : null
