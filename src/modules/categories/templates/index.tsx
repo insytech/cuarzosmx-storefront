@@ -8,6 +8,7 @@ import RefinementList from "@modules/store/components/refinement-list"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import PaginatedProducts from "@modules/store/templates/paginated-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import CategorySeoContent from "@modules/categories/components/seo-content"
 import { HttpTypes } from "@medusajs/types"
 
 export default function CategoryTemplate({
@@ -179,6 +180,12 @@ export default function CategoryTemplate({
             </Suspense>
           </div>
         </div>
+
+        {/* SEO content: shown on every paginated page, only when filled */}
+        <CategorySeoContent
+          content={category.metadata?.seo_content}
+          categoryName={category.name}
+        />
       </div>
     </>
   )
