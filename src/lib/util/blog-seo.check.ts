@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { blogPostSeo, plainTextExcerpt } from "./blog-seo"
 import { SITE_URL } from "./seo"
-import type { BlogPost } from "../../types/global"
+import type { StoreBlogPost } from "./blog-api"
 
 let passed = 0
 const t = (name: string, fn: () => void) => {
@@ -10,7 +10,7 @@ const t = (name: string, fn: () => void) => {
   console.log("  ok -", name)
 }
 
-const post = (over: Partial<BlogPost> = {}): BlogPost => ({
+const post = (over: Partial<StoreBlogPost> = {}): StoreBlogPost => ({
   id: "post_1",
   title: "¿Por qué te atrae un cuarzo en particular?",
   url_slug: "por-qu-te-atrae-un-cuarzo-en-particular",
@@ -97,6 +97,22 @@ t("S3: image is the post thumbnail as an absolute URL, or null", () => {
     "https://cdn.example.com/a.jpg"
   )
   assert.equal(blogPostSeo(post(), "mx").image, null)
+})
+
+t("S6: keywords come from seo_keywords, split by commas and trimmed", () => {
+  assert.deepEqual(
+    blogPostSeo(
+      post({ seo_keywords: " cuarzos ,amatista,, cuarzo rosa , " }),
+      "mx"
+    ).keywords,
+    ["cuarzos", "amatista", "cuarzo rosa"]
+  )
+})
+
+t("S6: keywords are undefined when the post has none", () => {
+  for (const seo_keywords of [undefined, null, "", "  ", " , ,"]) {
+    assert.equal(blogPostSeo(post({ seo_keywords }), "mx").keywords, undefined)
+  }
 })
 
 console.log(`\n${passed}/${passed} assertions groups passed`)

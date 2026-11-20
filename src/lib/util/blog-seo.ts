@@ -1,6 +1,6 @@
 import { marked } from "marked"
 import sanitize from "sanitize-html"
-import type { BlogPost } from "../../types/global"
+import type { StoreBlogPost } from "./blog-api"
 import { getImageUrl } from "./blog-utils"
 import { SITE_URL, pageTitle } from "./seo"
 
@@ -118,13 +118,25 @@ export type BlogPostSeo = {
   canonical: string
   /** Imagen del post como URL absoluta, o `null` si no tiene. */
   image: string | null
+  /** Para `<meta name="keywords">`; `undefined` si el post no tiene. */
+  keywords: string[] | undefined
+}
+
+/** `seo_keywords` separadas por comas, sin espacios ni entradas vacias. */
+function parseKeywords(raw: string | null | undefined): string[] | undefined {
+  const keywords = (raw ?? "")
+    .split(",")
+    .map((keyword) => keyword.trim())
+    .filter(Boolean)
+  return keywords.length > 0 ? keywords : undefined
 }
 
 /**
- * Valores SEO de un post del blog. `seo_title` y `seo_description` son los que
- * captura el admin; si estan vacios se usan el titulo y un extracto del cuerpo.
+ * Valores SEO de un post del blog. `seo_title`, `seo_description` y
+ * `seo_keywords` son los que captura el admin; si el titulo o la descripcion
+ * estan vacios se usan el titulo y un extracto del cuerpo.
  */
-export function blogPostSeo(post: BlogPost, countryCode: string): BlogPostSeo {
+export function blogPostSeo(post: StoreBlogPost, countryCode: string): BlogPostSeo {
   const title = pageTitle(post.seo_title, pageTitle(post.title))
   const description =
     post.seo_description?.replace(/\s+/g, " ").trim() ||
@@ -136,5 +148,6 @@ export function blogPostSeo(post: BlogPost, countryCode: string): BlogPostSeo {
     description,
     canonical: `${SITE_URL}/${countryCode}/blog/${post.url_slug}`,
     image: getImageUrl(post.thumbnail_url ?? null),
+    keywords: parseKeywords(post.seo_keywords),
   }
 }
