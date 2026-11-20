@@ -1,29 +1,4 @@
-import * as DOMPurify from 'dompurify'
 import { marked } from 'marked'
-
-export const sanitizeHtml = (markdown: string): string => {
-    // Check if the content is already HTML (contains HTML tags)
-    const isHtml = /<[^>]*>/.test(markdown)
-
-    let html: string
-    if (isHtml) {
-        // If it's already HTML, use it directly
-        html = markdown
-    } else {
-        // If it's markdown, parse it
-        html = marked.parse(markdown) as string
-    }
-
-    return DOMPurify.default.sanitize(html, {
-        ADD_TAGS: ['iframe', 'img', 'div'],
-        ADD_ATTR: [
-            'allow', 'allowfullscreen', 'frameborder',
-            'scrolling', 'src', 'width', 'height', 'alt', 'class', 'style', 'data-youtube-video'
-        ],
-        ALLOWED_URI_REGEXP: /^https?:\/\/.*/,
-        ALLOW_DATA_ATTR: false
-    })
-}
 
 export const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('es-MX', {
