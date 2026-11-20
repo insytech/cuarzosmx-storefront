@@ -3,7 +3,7 @@
 import { useId, useState } from "react"
 
 /**
- * Folds long SEO text behind "Leer más". The children are rendered on the
+ * Folds long SEO text behind "Ver más". The children are rendered on the
  * server and stay in the DOM while folded (only clipped with CSS), so search
  * engines index the full text.
  */
@@ -42,7 +42,7 @@ export default function SeoContentCollapsible({
         className="mt-4 text-sm font-semibold text-main-color-dark hover:text-main-color underline underline-offset-4"
         data-testid="category-seo-content-toggle"
       >
-        {expanded ? "Leer menos" : "Leer más"}
+        {expanded ? "Ver menos" : "Ver más"}
       </button>
     </>
   )

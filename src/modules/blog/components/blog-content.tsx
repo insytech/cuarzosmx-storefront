@@ -1,4 +1,5 @@
-import { sanitizeHtml, processMarkdownImages } from "@util/blog-utils"
+import { processMarkdownImages } from "@util/blog-utils"
+import { sanitizeHtml } from "@util/blog-seo"
 
 interface BlogContentProps {
     markdown: string

@@ -8,7 +8,7 @@ import SeoContentCollapsible from "./collapsible"
  * Editable SEO text shown below a category's products (`metadata.seo_content`).
  * Server component: the text is in the initial HTML so crawlers see it. Blocks
  * are rendered as React text nodes, so any HTML typed in the admin is escaped.
- * Long text starts folded behind "Leer más"; folding is visual only.
+ * Long text starts folded behind "Ver más"; folding is visual only.
  */
 export default function CategorySeoContent({
   content,

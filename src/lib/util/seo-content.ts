@@ -47,7 +47,7 @@ export function parseSeoContent(text: string | null | undefined): SeoContentBloc
 }
 
 /**
- * Character count above which the SEO block starts folded behind "Leer más".
+ * Character count above which the SEO block starts folded behind "Ver más".
  * About two short paragraphs: enough context for the reader without pushing
  * the footer far down on mobile.
  */
