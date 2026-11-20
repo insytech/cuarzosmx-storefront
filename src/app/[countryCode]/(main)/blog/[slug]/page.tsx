@@ -39,7 +39,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     return {
         title: seo.title,
         description: seo.description,
-        keywords: seo.keywords,
+        // Only override when the post has its own keywords: `keywords: undefined`
+        // would erase the site-wide keywords inherited from the root layout.
+        ...(seo.keywords ? { keywords: seo.keywords } : {}),
         alternates: {
             canonical: seo.canonical,
         },
