@@ -23,25 +23,32 @@ export default function CategorySeoContent({
   return (
     <section
       aria-label={`Información sobre ${categoryName}`}
-      className="mt-12 md:mt-16 mb-8 md:mb-12 pt-8 md:pt-10 border-t border-gray-200 max-w-3xl"
+      className="mt-12 md:mt-16 mb-8 md:mb-12 pt-8 md:pt-10 border-t border-gray-200"
       data-testid="category-seo-content"
     >
-      <SeoContentCollapsible collapsible={shouldCollapseSeoContent(blocks)}>
-        {blocks.map((block, i) =>
-          block.type === "h2" ? (
-            <h2
-              key={i}
-              className="text-xl md:text-2xl font-semibold text-main-color-dark mt-8 first:mt-0 mb-3"
-            >
-              {block.text}
-            </h2>
-          ) : (
-            <p key={i} className="text-gray-700 leading-relaxed mb-4 last:mb-0">
-              {block.text}
-            </p>
-          )
-        )}
-      </SeoContentCollapsible>
+      {/* Full-width divider ends the products area; the reading column is
+          centered on the page, with left-aligned text for readability. */}
+      <div className="max-w-3xl mx-auto">
+        <SeoContentCollapsible collapsible={shouldCollapseSeoContent(blocks)}>
+          {blocks.map((block, i) =>
+            block.type === "h2" ? (
+              <h2
+                key={i}
+                className="text-xl md:text-2xl font-semibold text-main-color-dark mt-8 first:mt-0 mb-3"
+              >
+                {block.text}
+              </h2>
+            ) : (
+              <p
+                key={i}
+                className="text-gray-700 leading-relaxed mb-4 last:mb-0"
+              >
+                {block.text}
+              </p>
+            )
+          )}
+        </SeoContentCollapsible>
+      </div>
     </section>
   )
 }
