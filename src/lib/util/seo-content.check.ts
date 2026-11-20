@@ -1,5 +1,9 @@
 import assert from "node:assert/strict"
-import { parseSeoContent } from "./seo-content"
+import {
+  parseSeoContent,
+  SEO_CONTENT_COLLAPSE_CHARS,
+  shouldCollapseSeoContent,
+} from "./seo-content"
 
 let passed = 0
 const t = (name: string, fn: () => void) => {
@@ -66,6 +70,18 @@ t("HTML-like text stays as literal text", () => {
     { type: "p", text: "<script>alert(1)</script>" },
     { type: "h2", text: "<b>x</b>" },
   ])
+})
+
+t("collapses only text longer than the threshold (headings count)", () => {
+  const p = (n: number) => ({ type: "p" as const, text: "a".repeat(n) })
+  const h = (n: number) => ({ type: "h2" as const, text: "b".repeat(n) })
+  assert.equal(shouldCollapseSeoContent([]), false)
+  assert.equal(shouldCollapseSeoContent([p(SEO_CONTENT_COLLAPSE_CHARS)]), false)
+  assert.equal(shouldCollapseSeoContent([p(SEO_CONTENT_COLLAPSE_CHARS + 1)]), true)
+  assert.equal(
+    shouldCollapseSeoContent([h(10), p(SEO_CONTENT_COLLAPSE_CHARS - 9)]),
+    true
+  )
 })
 
 console.log(`\n${passed}/${passed} assertions groups passed`)

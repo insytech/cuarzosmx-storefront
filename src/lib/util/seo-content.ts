@@ -45,3 +45,19 @@ export function parseSeoContent(text: string | null | undefined): SeoContentBloc
 
   return blocks
 }
+
+/**
+ * Character count above which the SEO block starts folded behind "Leer más".
+ * About two short paragraphs: enough context for the reader without pushing
+ * the footer far down on mobile.
+ */
+export const SEO_CONTENT_COLLAPSE_CHARS = 600
+
+/**
+ * Whether the SEO block should start folded. Headings count toward the length.
+ * Folding is visual only: the full text is always in the server HTML.
+ */
+export function shouldCollapseSeoContent(blocks: SeoContentBlock[]): boolean {
+  const length = blocks.reduce((total, block) => total + block.text.length, 0)
+  return length > SEO_CONTENT_COLLAPSE_CHARS
+}
