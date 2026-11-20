@@ -3,7 +3,7 @@ import { buildOpenGraph } from "@lib/util/seo"
 import ReturnsTemplate from "@modules/legal/templates/returns-template"
 
 export const metadata: Metadata = {
-    title: "Cambios y Devoluciones | CuarzosMX",
+    title: "Cambios y Devoluciones",
     description:
         "Conoce nuestra política de cambios y devoluciones. Garantizamos tu satisfacción con proceso de devolución fácil y seguro.",
     openGraph: buildOpenGraph({

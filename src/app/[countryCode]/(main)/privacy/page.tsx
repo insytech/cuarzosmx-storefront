@@ -3,7 +3,7 @@ import { buildOpenGraph } from "@lib/util/seo"
 import PrivacyTemplate from "@modules/legal/templates/privacy-template"
 
 export const metadata: Metadata = {
-    title: "Aviso de Privacidad | CuarzosMX",
+    title: "Aviso de Privacidad",
     description:
         "Aviso de Privacidad de CuarzosMX conforme a la LFPDPPP. Conoce cómo protegemos y utilizamos tus datos personales.",
     openGraph: buildOpenGraph({

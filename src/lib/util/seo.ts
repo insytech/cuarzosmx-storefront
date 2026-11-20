@@ -71,3 +71,27 @@ export function buildTwitter({
     images: [OG_IMAGE.url],
   }
 }
+
+/**
+ * Sufijo de marca al final de un titulo: separador `|`, `-` o `–`, espacios
+ * opcionales y "CuarzosMX" (sin importar mayusculas).
+ */
+const SITE_SUFFIX = /\s*[|\-–]\s*cuarzosmx\s*$/i
+
+/**
+ * Titulo de pagina SIN el sufijo de marca. El `title.template` del layout raiz
+ * ya agrega " | CuarzosMX"; si el titulo lo trae (p.ej. un `seo_title` escrito
+ * en el admin como "Geodas | CuarzosMX") la pestana mostraba la marca dos
+ * veces. Quita cualquier cantidad de sufijos al final y devuelve `fallback`
+ * si no queda nada.
+ */
+export function pageTitle(
+  title: string | null | undefined,
+  fallback = ""
+): string {
+  let clean = (title ?? "").trim()
+  while (SITE_SUFFIX.test(clean)) {
+    clean = clean.replace(SITE_SUFFIX, "").trim()
+  }
+  return clean || fallback
+}

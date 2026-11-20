@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { listProducts } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
 import ProductTemplate from "@modules/products/templates"
-import { OG_IMAGE } from "@lib/util/seo"
+import { OG_IMAGE, pageTitle } from "@lib/util/seo"
 
 // ISR: Revalidate every hour to reduce function invocations
 export const revalidate = 3600
@@ -58,7 +58,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   // Obtener metadatos SEO personalizados del producto
   const metadata = product.metadata as Record<string, string> | null
-  const seoTitle = metadata?.seo_title || product.title
+  const seoTitle = pageTitle(metadata?.seo_title, pageTitle(product.title))
   const seoDescription = metadata?.seo_description ||
     product.description ||
     `Compra ${product.title} en CuarzosMX. Cristales y joyería artesanal de alta calidad con envío a todo México.`

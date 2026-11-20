@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { buildOpenGraph, buildTwitter } from "@lib/util/seo"
+import { buildOpenGraph, buildTwitter, pageTitle } from "@lib/util/seo"
 import { notFound } from "next/navigation"
 
 import { getCollectionByHandle, listCollections } from "@lib/data/collections"
@@ -56,7 +56,10 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   // Obtener metadatos SEO personalizados de la colección
   const collectionMetadata = collection.metadata as Record<string, string> | null
-  const seoTitle = collectionMetadata?.seo_title || collection.title
+  const seoTitle = pageTitle(
+    collectionMetadata?.seo_title,
+    pageTitle(collection.title)
+  )
   const seoDescription = collectionMetadata?.seo_description ||
     `Descubre la colección ${collection.title}. Cristales, cuarzos y joyería artesanal de alta calidad en CuarzosMX.`
   const seoKeywords = collectionMetadata?.seo_keywords
