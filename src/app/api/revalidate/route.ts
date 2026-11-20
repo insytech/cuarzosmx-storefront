@@ -1,4 +1,5 @@
 import { CATEGORIES_CACHE_TAG } from "@lib/data/categories"
+import { BLOG_CACHE_TAG, blogPostCacheTag } from "@lib/util/blog-api"
 import { revalidatePath, revalidateTag } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -9,14 +10,20 @@ import { NextRequest, NextResponse } from "next/server"
  *   `categories` tag and each `/<country>/categories/<handle>` path. An empty
  *   array is valid (for example a deleted category whose handle is gone) and
  *   clears only the tag.
- * Both keys may be sent together.
+ * - `{ secret, blog: string[] }` — blog post changes (create, update, delete),
+ *   with the post's current and previous slugs. Clears each `blog-<slug>` tag
+ *   and `/<country>/blog/<slug>` path, then the global `blog` tag and the
+ *   `/<country>/blog` list. An empty array is valid and clears only the global
+ *   tag and the list. Entries that are not non-empty strings are skipped.
+ * The keys may be sent together.
  */
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { secret, handles, categories } = body as {
+  const { secret, handles, categories, blog } = body as {
     secret?: string
     handles?: string[]
     categories?: string[]
+    blog?: string[]
   }
 
   if (!secret || secret !== process.env.REVALIDATE_SECRET) {
@@ -24,9 +31,11 @@ export async function POST(request: NextRequest) {
   }
 
   const hasCategories = Array.isArray(categories)
+  const hasBlog = Array.isArray(blog)
 
   if (
     !hasCategories &&
+    !hasBlog &&
     (!handles || !Array.isArray(handles) || handles.length === 0)
   ) {
     return NextResponse.json(
@@ -73,6 +82,25 @@ export async function POST(request: NextRequest) {
     // Nested category URLs and the navigation menu read from this tag.
     revalidateTag(CATEGORIES_CACHE_TAG)
     revalidatedTags.push(CATEGORIES_CACHE_TAG)
+  }
+
+  if (hasBlog) {
+    for (const slug of blog) {
+      if (typeof slug !== "string" || !slug) continue
+      const tag = blogPostCacheTag(slug)
+      revalidateTag(tag)
+      revalidatedTags.push(tag)
+      const path = `/${countryCode}/blog/${slug}`
+      revalidatePath(path)
+      revalidated.push(path)
+    }
+
+    // The blog list and every post fetch carry this tag.
+    revalidateTag(BLOG_CACHE_TAG)
+    revalidatedTags.push(BLOG_CACHE_TAG)
+    const listPath = `/${countryCode}/blog`
+    revalidatePath(listPath)
+    revalidated.push(listPath)
   }
 
   return NextResponse.json({

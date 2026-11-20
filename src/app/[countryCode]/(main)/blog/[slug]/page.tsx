@@ -1,6 +1,6 @@
 import { Metadata } from "next"
-import { notFound } from "next/navigation"
-import { getBlogPostBySlug } from "@lib/util/blog-api"
+import { notFound, permanentRedirect } from "next/navigation"
+import { getBlogPostBySlug, StoreBlogPost } from "@lib/util/blog-api"
 import { blogPostSeo } from "@lib/util/blog-seo"
 import { OG_IMAGE } from "@lib/util/seo"
 import BlogPost from "@modules/blog/components/blog-post"
@@ -12,22 +12,34 @@ type Props = {
     params: Promise<{ countryCode: string; slug: string }>
 }
 
+/**
+ * Post publicado del slug. Si el slug es una URL anterior del post, redirige
+ * con 308 (Google lo trata como 301) al slug actual (S5); si no existe, 404.
+ */
+async function loadPost(countryCode: string, slug: string): Promise<StoreBlogPost> {
+    const result = await getBlogPostBySlug(slug)
+
+    if (!result) {
+        notFound()
+    }
+    if ("redirect" in result) {
+        permanentRedirect(`/${countryCode}/blog/${encodeURIComponent(result.redirect)}`)
+    }
+    return result.post
+}
+
 // Server Component: antes la pagina era "use client" y pedia el post en el
 // navegador, asi que el HTML del servidor salia con el <title> generico, el
 // canonical de la home y sin H1 ni cuerpo (S1-S3).
 export async function generateMetadata(props: Props): Promise<Metadata> {
     const { countryCode, slug } = await props.params
-    const post = await getBlogPostBySlug(slug)
-
-    if (!post) {
-        notFound()
-    }
-
+    const post = await loadPost(countryCode, slug)
     const seo = blogPostSeo(post, countryCode)
 
     return {
         title: seo.title,
         description: seo.description,
+        keywords: seo.keywords,
         alternates: {
             canonical: seo.canonical,
         },
@@ -54,12 +66,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 }
 
 export default async function BlogPostPage(props: Props) {
-    const { slug } = await props.params
-    const post = await getBlogPostBySlug(slug)
-
-    if (!post) {
-        notFound()
-    }
+    const { countryCode, slug } = await props.params
+    const post = await loadPost(countryCode, slug)
 
     return (
         <div className="bg-gradient-to-b from-main-color-light/20 to-white min-h-screen">
