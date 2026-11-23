@@ -1,4 +1,6 @@
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import { sanitizeHtml } from "./blog-seo"
 
 // Corre en Node, igual que el render del servidor del post: aqui no hay DOM.
@@ -426,6 +428,51 @@ t("browser form: colors outside the palette or not opaque are still dropped", ()
   assert.equal(sanitizeHtml('<mark style="background-color: rgba(254, 243, 199, 0)">h</mark>'), "<mark>h</mark>")
   const button = sanitizeHtml('<a data-button="" href="/mx/store" style="background-color: rgba(156, 114, 175, 0.5); color: rgba(0, 0, 0, 0.5)">x</a>')
   assert.ok(button.includes("background-color:transparent;color:#FFFFFF;"), button)
+})
+
+// ---------------------------------------------------------------------------
+// Real-browser e2e corrections (D1, D2, D3, D5)
+// ---------------------------------------------------------------------------
+
+const E2E_BUTTON_STYLE =
+  "display: inline-block; background-color: #9C72AF; color: #FFFFFF; border: none; border-radius: 12px; padding: 12px 24px; font-size: 1rem; font-family: 'Montserrat', sans-serif; font-weight: 600; text-transform: none; text-align: center; text-decoration: none"
+
+t("D1: bold inside a button never overrides the button's own color and weight (site CSS)", () => {
+  const css = readFileSync(join(__dirname, "../../styles/editor-content.css"), "utf8")
+  const rule = /\.editor-content a\[data-button\] strong,\s*\.editor-content a\[data-button\] b\s*\{([^}]*)\}/.exec(css)
+  assert.ok(rule, "missing `.editor-content a[data-button] strong, .editor-content a[data-button] b` rule")
+  assert.match(rule![1], /color:\s*inherit/)
+  assert.match(rule![1], /font-weight:\s*inherit/)
+})
+
+t("D2: a button keeps exactly its target: none for internal, _blank only when chosen", () => {
+  const internal = sanitizeHtml(`<p><a data-button="" href="/mx/store" style="${E2E_BUTTON_STYLE}">Ver</a></p>`)
+  assert.ok(!/target=|rel=/.test(internal), internal)
+  const external = sanitizeHtml(
+    `<p><a target="_blank" rel="noopener noreferrer" data-button="" href="https://www.example.com/qa" style="${E2E_BUTTON_STYLE}">Ir</a></p>`
+  )
+  assert.ok(external.includes('<a target="_blank" rel="noopener noreferrer" data-button="" href="https://www.example.com/qa"'), external)
+})
+
+t("D3: internal links in paragraphs and headings stay relative; plain-link target/rel unchanged", () => {
+  const html =
+    '<p><a target="_blank" rel="noopener noreferrer nofollow" class="text-[#9C72AF] underline hover:text-[#5A2D6B]" href="/mx/store">tienda</a></p>' +
+    '<h2><a target="_blank" rel="noopener noreferrer nofollow" href="/mx/categories/cuarzos-por-kilo">kilo</a></h2>' +
+    '<p style="text-align: justify;">Texto justificado</p>'
+  const out = sanitizeHtml(html)
+  assert.ok(out.includes('href="/mx/store">tienda</a>'), out)
+  assert.ok(out.includes('href="/mx/categories/cuarzos-por-kilo">kilo</a>'), out)
+  assert.ok(!/https?:\/\/[^"]*\/mx\/store/.test(out), out)
+  // Same as before this change: a plain _blank link keeps target and gets rel="noopener noreferrer".
+  assert.ok(out.includes('<a target="_blank" rel="noopener noreferrer" class="text-[#9C72AF] underline hover:text-[#5A2D6B]" href="/mx/store">'), out)
+  assert.ok(out.includes('<p style="text-align:justify">Texto justificado</p>'), out)
+})
+
+t("D5: new nocookie embeds and stored www.youtube.com embeds both render", () => {
+  for (const src of ["https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ", "https://www.youtube.com/embed/aqz-KE-bpKQ"]) {
+    const out = sanitizeHtml(`<div data-youtube-video=""><iframe width="560" height="315" allowfullscreen="true" src="${src}"></iframe></div>`)
+    assert.ok(out.includes(`src="${src}"`), out)
+  }
 })
 
 console.log(`\n${passed}/${passed + failed} assertions groups passed`)

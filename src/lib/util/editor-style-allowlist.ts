@@ -135,6 +135,16 @@ export const CALLOUT_TYPES: readonly CalloutTypeOption[] = [
     { value: "error", label: "Error", accent: "#B91C1C", background: "#FEF2F2" },
 ]
 
+export type TextAlignment = "left" | "center" | "right" | "justify"
+
+/** Paragraph and heading alignments of the toolbar (`text-align`). */
+export const TEXT_ALIGNMENTS: readonly { value: TextAlignment; label: string }[] = [
+    { value: "left", label: "Alinear izquierda" },
+    { value: "center", label: "Centrar" },
+    { value: "right", label: "Alinear derecha" },
+    { value: "justify", label: "Justificar" },
+]
+
 export type ButtonAlignment = "left" | "center" | "right"
 
 /** Alignment of the paragraph that holds the button (`text-align`). */
@@ -455,17 +465,32 @@ export const EDITOR_DATA_ATTRIBUTES: Readonly<Record<string, readonly string[]>>
     mark: ["data-color"],
 }
 
+/** Trimmed href if it is an internal path (`/mx/store`, not `//host`) or a URL of one of `schemes`; else null. */
+function normalizeHref(value: string | null | undefined, schemes: RegExp): string | null {
+    if (!value) return null
+    const href = value.trim()
+    if (/[\s\\]/.test(href)) return null
+    if (/^\/(?!\/)/.test(href)) return href
+    if (schemes.test(href)) return href
+    return null
+}
+
 /**
  * Button link target: an internal path (`/mx/store`, not `//host`) or an
  * `https://` URL, without spaces or backslashes. Anything else is null.
  */
 export function normalizeButtonHref(value: string | null | undefined): string | null {
-    if (!value) return null
-    const href = value.trim()
-    if (/[\s\\]/.test(href)) return null
-    if (/^\/(?!\/)/.test(href)) return href
-    if (/^https:\/\/[^/?#]+/i.test(href)) return href
-    return null
+    return normalizeHref(value, /^https:\/\/[^/?#]+/i)
+}
+
+/**
+ * Link dialog target: an internal path (`/mx/store`, kept relative, not
+ * `//host`) or an `http(s)://` URL, without spaces or backslashes. `mailto:`
+ * and `tel:` are not accepted: the storefront sanitizer only keeps http(s)
+ * and relative hrefs, so they would show as a link without a destination.
+ */
+export function normalizeLinkHref(value: string | null | undefined): string | null {
+    return normalizeHref(value, /^https?:\/\/[^/?#]+/i)
 }
 export const isAllowedButtonHref = (value: string | null | undefined) => normalizeButtonHref(value) !== null
 

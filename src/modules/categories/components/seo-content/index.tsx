@@ -15,6 +15,11 @@ import EditorFontsLink from "./editor-fonts-link"
  */
 const CONTENT_CLASSES = [
   "editor-content prose max-w-none",
+  // Same heading font as the blog body and the admin editor, so what the
+  // admin shows is what the category page shows. A font picked in the editor
+  // (inline span) still overrides it.
+  "prose-headings:font-serenity",
+  "prose-h1:text-2xl prose-h1:md:text-3xl prose-h1:font-bold prose-h1:text-gray-900 prose-h1:mt-8 prose-h1:mb-4 [&>h1:first-child]:mt-0",
   "prose-h2:text-xl prose-h2:md:text-2xl prose-h2:font-semibold prose-h2:text-main-color-dark prose-h2:mt-8 prose-h2:mb-3 [&>h2:first-child]:mt-0",
   "prose-h3:text-lg prose-h3:md:text-xl prose-h3:font-semibold prose-h3:text-gray-800 prose-h3:mt-6 prose-h3:mb-3",
   "prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mt-0 prose-p:mb-4",
