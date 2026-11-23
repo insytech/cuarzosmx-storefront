@@ -475,5 +475,29 @@ t("D5: new nocookie embeds and stored www.youtube.com embeds both render", () =>
   }
 })
 
+t("B1: a nocookie embed keeps its ?start= query string", () => {
+  const src = "https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ?start=90"
+  const out = sanitizeHtml(`<div data-youtube-video=""><iframe width="560" height="315" allowfullscreen="true" src="${src}"></iframe></div>`)
+  assert.ok(out.includes(`src="${src}"`), out)
+})
+
+t("probe: hostile styles/attrs never pass", () => {
+  const B = "display: inline-block; background-color: #5A2D6B; color: #FFFFFF; border: none; border-radius: 12px; padding: 12px 24px; font-size: 1rem; font-weight: 600; text-transform: none; text-align: center; text-decoration: none"
+  const cases: [string, string][] = [
+    [`<p><span style="background-color:\\75 rl(javascript:alert(1)); color:#5A2D6B">x</span></p>`, `<p><span style="color:#5A2D6B">x</span></p>`],
+    [`<p><span style="font-family: 'Lora;position:fixed', serif">x</span></p>`, `<p><span>x</span></p>`],
+    [`<p><span style="color:#5A2D6B !important">x</span></p>`, `<p><span>x</span></p>`],
+    [`<div style="position:fixed;inset:0">x</div>`, `<div>x</div>`],
+    [`<details open ontoggle="alert(1)" data-faq="x"><summary onclick="alert(1)">Q</summary><div data-faq-answer="z"><p>A</p></div></details>`, `<details data-faq=""><summary>Q</summary><div data-faq-answer=""><p>A</p></div></details>`],
+    [`<a href="jav&#x09;ascript:alert(1)">l</a>`, `<a>l</a>`],
+    [`<a href="/\\evil.com">l</a>`, `<a>l</a>`],
+    [`<div data-callout="evil" data-x="1">b</div>`, `<div>b</div>`],
+  ]
+  for (const [i, o] of cases) assert.equal(sanitizeHtml(i), o)
+  for (const href of ["java&#x09;script:alert(1)", " JaVaScRiPt:alert(1)", "//evil.com", "/\\evil.com", "http://evil.com", "data:text/html,x"])
+    assert.ok(!/href=/.test(sanitizeHtml(`<a data-button href="${href}" style="${B}">b</a>`)), href)
+  assert.ok(!/position|z-index/.test(sanitizeHtml(`<a data-button href="/mx" style="${B}; position:fixed; z-index:99">b</a>`)))
+})
+
 console.log(`\n${passed}/${passed + failed} assertions groups passed`)
 if (failed > 0) process.exit(1)
