@@ -16,7 +16,11 @@ import {
     buildButtonStyle,
     findFontFamily,
     normalizeButtonHref,
+    normalizeColor,
+    normalizeFontSize,
+    normalizeHighlightColor,
     parseButtonStyle,
+    parseStyleDeclarations,
     type FontFamilyOption,
 } from "./editor-style-allowlist"
 import { SITE_URL, pageTitle } from "./seo"
@@ -147,6 +151,39 @@ function normalizeFontFamilies(style: string | undefined): string | undefined {
         .join(";")
 }
 
+/**
+ * Estilo de `span` y `mark` en forma canonica. El navegador guarda el HTML del
+ * editor normalizado por el CSSOM (`rgb(90, 45, 107)`, `rgba(..., 1)`, fuentes
+ * sin comillas o con comillas dobles, `;` al final): cada valor permitido se
+ * pasa a la forma de la lista (`#5A2D6B`, `'Lora', serif`) y los que no estan
+ * en la lista se quitan. Las demas propiedades quedan como estan y las quita
+ * `ALLOWED_STYLES`.
+ */
+const TEXT_STYLE_NORMALIZERS: Record<"span" | "mark", Record<string, (value: string) => string | null>> = {
+    span: {
+        color: normalizeColor,
+        "background-color": normalizeHighlightColor,
+        "font-size": normalizeFontSize,
+        "font-family": (value) => findFontFamily(value)?.css ?? null,
+    },
+    mark: {
+        "background-color": normalizeHighlightColor,
+        color: (value) => (value.trim().toLowerCase() === "inherit" ? "inherit" : normalizeColor(value)),
+    },
+}
+
+function normalizeTextStyle(tagName: string, style: string | undefined): string | undefined {
+    const normalizers = TEXT_STYLE_NORMALIZERS[tagName as keyof typeof TEXT_STYLE_NORMALIZERS]
+    if (!normalizers || !style) return style
+    const declarations = Object.entries(parseStyleDeclarations(style)).flatMap(([property, value]) => {
+        const normalize = normalizers[property]
+        if (!normalize) return [`${property}: ${value}`]
+        const canonical = normalize(value)
+        return canonical ? [`${property}: ${canonical}`] : []
+    })
+    return declarations.length ? declarations.join("; ") : undefined
+}
+
 /** Atributo `data-*` con su lista de valores; `""` = atributo sin valor. */
 const DATA_ATTRIBUTE_VALUES: Record<string, Record<string, readonly string[]>> = {
     a: { "data-button": [""] },
@@ -194,7 +231,7 @@ function transformEditorTag(tagName: string, attribs: sanitize.Attributes) {
         if (out.target === "_blank") out.rel = "noopener noreferrer"
     }
 
-    const style = normalizeFontFamilies(out.style)
+    const style = normalizeFontFamilies(normalizeTextStyle(tagName, out.style))
     if (style === undefined) delete out.style
     else out.style = style
 

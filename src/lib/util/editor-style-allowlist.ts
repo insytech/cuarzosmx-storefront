@@ -23,6 +23,11 @@
  * - notice:      <div data-callout="info|success|warning|error"> block content </div>
  * - button:      <p style="text-align: center"><a href="/mx/store" data-button="" style="display: ...">Text</a></p>
  *                (a link, never a form element; style built by `buildButtonStyle`)
+ *
+ * HTML saved from a real browser can carry the CSSOM-normalized forms instead
+ * (`rgb()`/`rgba()`, border longhands, unquoted font names, extra spaces):
+ * the validators read them back to the canonical values (`normalizeCssColor`,
+ * `parseButtonBorder`), so the admin and the storefront output canonical style.
  */
 
 export interface PaletteColor {
@@ -287,26 +292,143 @@ export function buildButtonStyle(input: Partial<ButtonConfig>): string {
     return parts.join("; ")
 }
 
-/** Read a button style back into a validated config (unknown properties are ignored). */
+/**
+ * Read a button style back into a validated config (unknown properties are
+ * ignored). Accepts the canonical style and the browser-normalized one (see
+ * `normalizeCssColor`, `parseButtonBorder`, `normalizeCssLength`).
+ */
 export function parseButtonStyle(style: string | null | undefined): ButtonConfig {
     const s = parseStyleDeclarations(style)
-    const border = /^([0-4])px\s+solid\s+(#[0-9a-f]{3}(?:[0-9a-f]{3})?)$/i.exec(s.border ?? "")
-    const weight = (s["font-weight"] ?? "").toLowerCase()
+    const border = parseButtonBorder(s)
+    const weight = normalizeCssLength(s["font-weight"])
+    const padding = normalizeBoxValue(s.padding)
+    const radius = normalizeBoxValue(s["border-radius"])?.replace(/^0px$/, "0")
+    const fontSize = normalizeCssLength(s["font-size"])
     return normalizeButtonConfig({
-        background: s["background-color"],
-        color: s.color,
-        borderColor: border ? border[2] : null,
-        borderWidth: border ? (Number(border[1]) as ButtonBorderWidth) : 0,
-        radius: BUTTON_RADII.find((r) => r.css === s["border-radius"])?.value,
-        size: (BUTTON_SIZES.find((z) => z.padding === s.padding) ?? BUTTON_SIZES.find((z) => z.fontSize === s["font-size"]))
+        background: hexOnly(normalizeCssColor(s["background-color"])),
+        color: hexOnly(normalizeCssColor(s.color)) ?? undefined,
+        borderColor: border?.color ?? null,
+        borderWidth: border?.width ?? 0,
+        radius: BUTTON_RADII.find((r) => r.css === radius)?.value,
+        size: (BUTTON_SIZES.find((z) => z.padding === padding) ?? BUTTON_SIZES.find((z) => z.fontSize === fontSize))
             ?.value,
         fontFamily: s["font-family"],
         fontWeight:
             BUTTON_FONT_WEIGHTS.find((w) => w.css === weight)?.value ??
             (weight === "bold" ? "bold" : weight === "normal" ? "normal" : undefined),
-        uppercase: (s["text-transform"] ?? "").toLowerCase() === "uppercase",
-        fullWidth: (s.display ?? "").toLowerCase() === "block",
+        uppercase: normalizeCssLength(s["text-transform"]) === "uppercase",
+        fullWidth: normalizeCssLength(s.display) === "block",
     })
+}
+
+/*
+ * Browser-normalized CSS. A real browser rewrites inline styles through the
+ * CSSOM before they are saved: hex becomes `rgb(r, g, b)`, `border: none`
+ * becomes `border-width: medium; border-style: none; border-color: currentcolor;
+ * border-image: none`, font names lose or change their quotes, and values may
+ * carry extra spaces or a trailing `;`. These helpers turn those forms back
+ * into the canonical values above; anything else is still rejected.
+ */
+
+const hexOnly = (color: string | null) => (color && color.startsWith("#") ? color : null)
+
+/** Trimmed, lowercase, single-spaced value (`"  12px   24px "` -> `"12px 24px"`). */
+export function normalizeCssLength(value: string | null | undefined): string | null {
+    const v = value?.trim().replace(/\s+/g, " ").toLowerCase()
+    return v ? v : null
+}
+
+/** Box value (padding, border-radius) with 1–4 parts reduced to its shortest equivalent form. */
+function normalizeBoxValue(value: string | null | undefined): string | null {
+    const v = normalizeCssLength(value)
+    if (!v) return null
+    const p = v.split(" ")
+    if (p.length > 4) return null
+    const [top, right = top, bottom = top, left = right] = p
+    if (top === bottom && right === left) return top === right ? top : `${top} ${right}`
+    return null
+}
+
+/** Space-separated tokens, keeping `rgb(...)` with its inner spaces as one token. */
+function cssTokens(value: string): string[] {
+    return value.trim().match(/[a-z-]+\([^)]*\)|[^\s]+/gi) ?? []
+}
+
+/** Alpha of `rgba()`: a number or a percentage; NaN when invalid. */
+function cssAlpha(value: string): number {
+    if (!/^(\d+(\.\d+)?|\.\d+)%?$/.test(value)) return NaN
+    return value.endsWith("%") ? Number(value.slice(0, -1)) / 100 : Number(value)
+}
+
+/**
+ * Any CSS color the editor or a browser writes, as uppercase `#RRGGBB`:
+ * `#rgb`, `#rrggbb`, `rgb(r, g, b)` and `rgba(r, g, b, 1)` (commas or spaces,
+ * `/` before the alpha). Fully transparent (`transparent`, alpha 0) gives
+ * `"transparent"`. Any other alpha, named colors, `currentcolor` and anything
+ * else give null.
+ */
+export function normalizeCssColor(value: string | null | undefined): string | null {
+    if (!value) return null
+    const v = value.trim().toLowerCase()
+    if (v === "transparent") return "transparent"
+    let m = /^#([0-9a-f]{6})$/.exec(v)
+    if (m) return `#${m[1].toUpperCase()}`
+    m = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/.exec(v)
+    if (m) return `#${m[1]}${m[1]}${m[2]}${m[2]}${m[3]}${m[3]}`.toUpperCase()
+    m = /^rgba?\(([^()]*)\)$/.exec(v)
+    if (!m) return null
+    const parts = m[1].trim().split(/\s*[,/]\s*|\s+/)
+    if (parts.length !== 3 && parts.length !== 4) return null
+    const rgb = parts.slice(0, 3)
+    if (!rgb.every((p) => /^\d{1,3}$/.test(p) && Number(p) <= 255)) return null
+    const alpha = parts.length === 4 ? cssAlpha(parts[3]) : 1
+    if (alpha === 0) return "transparent"
+    if (alpha !== 1) return null
+    return `#${rgb.map((p) => toHex(Number(p))).join("")}`
+}
+
+const BORDER_STYLES = new Set(["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"])
+/** CSS keyword widths (as browsers compute them). */
+const BORDER_KEYWORD_WIDTHS: Record<string, string> = { thin: "1px", medium: "3px", thick: "5px" }
+
+/** One value for all four sides (`2px` or `2px 2px 2px 2px`), else null. */
+function sameOnAllSides(value: string | undefined): string | null {
+    if (value === undefined) return null
+    const parts = cssTokens(value.toLowerCase())
+    if (parts.length < 1 || parts.length > 4) return null
+    return parts.every((p) => p === parts[0]) ? parts[0] : null
+}
+
+/**
+ * Button border from the `border` shorthand (any token order) and/or the
+ * `border-width`/`border-style`/`border-color` longhands (longhands win). Only
+ * a solid border, 1–4 px (keywords as computed: thin 1px, medium 3px), with a
+ * valid opaque color is a border; everything else (`border-style: none`,
+ * `currentcolor`, other styles, different sides) is null (no border).
+ * `border-image` is ignored.
+ */
+export function parseButtonBorder(
+    declarations: Record<string, string>
+): { width: ButtonBorderWidth; color: string } | null {
+    let width: string | null = null
+    let style: string | null = null
+    let color: string | null = null
+    const shorthand = declarations.border
+    if (shorthand !== undefined) {
+        for (const token of cssTokens(shorthand.toLowerCase())) {
+            if (BORDER_STYLES.has(token)) style = token
+            else if (/^\d/.test(token) || token in BORDER_KEYWORD_WIDTHS) width = token
+            else color = token
+        }
+    }
+    if ("border-width" in declarations) width = sameOnAllSides(declarations["border-width"])
+    if ("border-style" in declarations) style = sameOnAllSides(declarations["border-style"])
+    if ("border-color" in declarations) color = sameOnAllSides(declarations["border-color"])
+    if (style !== "solid" || !width) return null
+    const px = /^([0-4])px$/.exec(BORDER_KEYWORD_WIDTHS[width] ?? width)
+    const hex = hexOnly(normalizeCssColor(color))
+    if (!px || !hex || px[1] === "0") return null
+    return { width: Number(px[1]) as ButtonBorderWidth, color: hex }
 }
 
 export type ImageAlignment = "left" | "center" | "right"
@@ -363,22 +485,8 @@ export function parseStyleDeclarations(style: string | null | undefined): Record
 
 const toHex = (n: number) => n.toString(16).padStart(2, "0").toUpperCase()
 
-/** `#rrggbb`, `#rgb` or `rgb(r, g, b)` to uppercase `#RRGGBB`; anything else to null. */
-function canonicalHex(value: string | null | undefined): string | null {
-    if (!value) return null
-    const v = value.trim()
-    let m = /^#([0-9a-f]{6})$/i.exec(v)
-    if (m) return `#${m[1].toUpperCase()}`
-    m = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(v)
-    if (m) return `#${m[1]}${m[1]}${m[2]}${m[2]}${m[3]}${m[3]}`.toUpperCase()
-    m = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i.exec(v)
-    if (m) {
-        const parts = [m[1], m[2], m[3]].map(Number)
-        if (parts.some((p) => p > 255)) return null
-        return `#${parts.map(toHex).join("")}`
-    }
-    return null
-}
+/** Any opaque color accepted by `normalizeCssColor`, as `#RRGGBB`; transparent and anything else to null. */
+const canonicalHex = (value: string | null | undefined): string | null => hexOnly(normalizeCssColor(value))
 
 function inPalette(palette: readonly PaletteColor[], value: string | null | undefined): string | null {
     const hex = canonicalHex(value)
@@ -396,7 +504,7 @@ export const isAllowedHighlightColor = (value: string | null | undefined) => nor
 /** Canonical font size (`1.25rem`) if allowed, else null. "Normal" has no value. */
 export function normalizeFontSize(value: string | null | undefined): string | null {
     if (!value) return null
-    const v = value.trim().toLowerCase()
+    const v = normalizeCssLength(value)
     return FONT_SIZES.some((s) => s.value === v) ? v : null
 }
 export const isAllowedFontSize = (value: string | null | undefined) => normalizeFontSize(value) !== null

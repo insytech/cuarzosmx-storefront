@@ -176,7 +176,8 @@ t("S5a/b/d: text style span keeps allowlisted color, font family and size", () =
     assert.equal(styleOf(sanitizeHtml(`<span style="font-size: ${size}">x</span>`), "span"), `font-size:${size}`)
   }
   for (const c of ["#9C72AF", "#111827", "#6B7280", "#15803D", "#B45309", "#B91C1C", "#5a2d6b"]) {
-    assert.equal(styleOf(sanitizeHtml(`<span style="color: ${c}">x</span>`), "span"), `color:${c}`)
+    // Kept in canonical (uppercase) form.
+    assert.equal(styleOf(sanitizeHtml(`<span style="color: ${c}">x</span>`), "span"), `color:${c.toUpperCase()}`)
   }
 })
 
@@ -361,6 +362,70 @@ t("S5: unknown data-* attributes are dropped", () => {
     sanitizeHtml('<p data-x="1">a</p><span data-button="">b</span><div data-faq="">c</div>'),
     "<p>a</p><span>b</span><div>c</div>"
   )
+})
+
+// ---------------------------------------------------------------------------
+// Browser-normalized styles: a real browser saves the editor HTML through the
+// CSSOM (rgb(), border longhands, unquoted fonts, trailing `;`).
+// ---------------------------------------------------------------------------
+
+/** Exact button the admin saved in a real browser (local DB, cuarzos-por-kilo). */
+const SAVED_BUTTON =
+  '<p style="text-align: center;"><a class="text-[#9C72AF] underline hover:text-[#5A2D6B]" data-button="" href="/mx/store" ' +
+  'style="display: inline-block; background-color: rgb(156, 114, 175); color: rgb(255, 255, 255); border-width: medium; ' +
+  "border-style: none; border-color: currentcolor; border-image: none; border-radius: 12px; padding: 12px 24px; " +
+  "font-size: 1rem; font-family: Montserrat, sans-serif; font-weight: 600; text-transform: none; text-align: center; " +
+  'text-decoration: none;">Dinero</a></p>'
+
+t("browser form: the saved button keeps its purple background, white text, no border and its font", () => {
+  const out = sanitizeHtml(SAVED_BUTTON)
+  assert.equal(
+    out,
+    '<p style="text-align:center"><a class="text-[#9C72AF] underline hover:text-[#5A2D6B]" data-button="" href="/mx/store" ' +
+      'style="display:inline-block;background-color:#9C72AF;color:#FFFFFF;border:none;border-radius:12px;' +
+      "padding:12px 24px;font-size:1rem;font-family:var(--font-montserrat), 'Montserrat', sans-serif;" +
+      'font-weight:600;text-transform:none;text-align:center;text-decoration:none">Dinero</a></p>'
+  )
+})
+
+t("browser form: bordered button with longhands keeps its border", () => {
+  const out = sanitizeHtml(
+    '<a data-button="" href="/mx/store" style="background-color: rgba(0, 0, 0, 0); color: rgb(90, 45, 107); ' +
+      'border-width: 2px; border-style: solid; border-color: rgb(90, 45, 107); border-image: none;">x</a>'
+  )
+  assert.ok(out.includes("background-color:transparent;color:#5A2D6B;border:2px solid #5A2D6B;"), out)
+})
+
+t("browser form: span with rgb() color and unquoted font keeps both", () => {
+  assert.equal(
+    styleOf(sanitizeHtml('<p><span style="color: rgb(90, 45, 107); font-family: Lora, serif">x</span></p>'), "span"),
+    "color:#5A2D6B;font-family:'Lora', serif"
+  )
+  assert.equal(
+    styleOf(sanitizeHtml('<span style="font-family: &quot;Playfair Display&quot;, serif; font-size: 1.25rem;">x</span>'), "span"),
+    "font-family:'Playfair Display', serif;font-size:1.25rem"
+  )
+  assert.equal(styleOf(sanitizeHtml('<span style="color: rgba(90, 45, 107, 1)">x</span>'), "span"), "color:#5A2D6B")
+})
+
+t("browser form: mark with rgb() background keeps it", () => {
+  assert.equal(
+    sanitizeHtml('<p><mark style="background-color: rgb(254, 243, 199); color: inherit">h</mark></p>'),
+    '<p><mark style="background-color:#FEF3C7;color:inherit">h</mark></p>'
+  )
+  assert.equal(
+    sanitizeHtml('<mark data-color="#FEF3C7" style="background-color: rgb(254, 243, 199); color: rgb(90, 45, 107);">h</mark>'),
+    '<mark data-color="#FEF3C7" style="background-color:#FEF3C7;color:#5A2D6B">h</mark>'
+  )
+})
+
+t("browser form: colors outside the palette or not opaque are still dropped", () => {
+  assert.equal(styleOf(sanitizeHtml('<span style="color: rgb(1, 2, 3)">x</span>'), "span"), null)
+  assert.equal(styleOf(sanitizeHtml('<span style="color: rgba(90, 45, 107, 0.5)">x</span>'), "span"), null)
+  assert.equal(sanitizeHtml('<mark style="background-color: rgba(254, 243, 199, 0.5)">h</mark>'), "<mark>h</mark>")
+  assert.equal(sanitizeHtml('<mark style="background-color: rgba(254, 243, 199, 0)">h</mark>'), "<mark>h</mark>")
+  const button = sanitizeHtml('<a data-button="" href="/mx/store" style="background-color: rgba(156, 114, 175, 0.5); color: rgba(0, 0, 0, 0.5)">x</a>')
+  assert.ok(button.includes("background-color:transparent;color:#FFFFFF;"), button)
 })
 
 console.log(`\n${passed}/${passed + failed} assertions groups passed`)
