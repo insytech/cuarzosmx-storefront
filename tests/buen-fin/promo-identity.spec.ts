@@ -82,7 +82,7 @@ async function expectIdentity(page: Page, promotion: StorePromotion) {
   // Nav link (desktop): menu text, page address, darker shade of the colour
   const navLink = page.getByTestId("nav-buen-fin-link")
   await expect(navLink).toBeVisible()
-  await expect(navLink).toHaveText(promotion.menu_label)
+  await expect(navLink).toHaveText(promotion.menu_label ?? "")
   await expect(navLink).toHaveAttribute("href", pagePath)
   await expect(navLink).toHaveCSS("color", rgb(palette.dark))
 
@@ -108,7 +108,7 @@ async function expectIdentity(page: Page, promotion: StorePromotion) {
   await page.setViewportSize({ width: 390, height: 844 })
   const mobileLink = page.getByTestId("nav-buen-fin-link-mobile")
   await expect(mobileLink).toBeVisible()
-  await expect(mobileLink).toHaveText(promotion.menu_label)
+  await expect(mobileLink).toHaveText(promotion.menu_label ?? "")
   await expect(mobileLink).toHaveAttribute("href", pagePath)
   await expect(mobileLink).toHaveCSS("color", rgb(palette.dark))
   await page.setViewportSize({ width: 1440, height: 900 })
@@ -120,7 +120,7 @@ async function expectIdentity(page: Page, promotion: StorePromotion) {
   await expect(root).toBeVisible()
   await expect(page.getByTestId("buen-fin-empty")).toHaveCount(0)
 
-  const maxPct = Math.max(...promotion.tiers.map((t) => t.percentage))
+  const maxPct = Math.max(...promotion.tiers.map((t) => t.percentage ?? 0))
   await expect(root.getByRole("heading", { level: 1 })).toHaveText(
     promotion.page_headline ?? BUEN_FIN_HEADLINE
   )

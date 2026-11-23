@@ -5,7 +5,11 @@ import DiscountCode from "@modules/checkout/components/discount-code"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import TierProgress from "@modules/common/components/tier-progress"
 import { HttpTypes } from "@medusajs/types"
-import type { StorePromotionState } from "@lib/util/store-promotion"
+import {
+  getFreeShippingTier,
+  hasPercentageTier,
+  type StorePromotionState,
+} from "@lib/util/store-promotion"
 
 type SummaryProps = {
   cart: HttpTypes.StoreCart & {
@@ -50,7 +54,11 @@ const Summary = ({ cart, promotionState }: SummaryProps) => {
       </div>
 
       {/* Totals */}
-      <CartTotals totals={cart} bulk={promotionState?.bulk} />
+      <CartTotals
+        totals={cart}
+        bulk={promotionState?.bulk}
+        promotion={promotion}
+      />
 
       {/* Checkout Button */}
       <LocalizedClientLink
@@ -79,12 +87,27 @@ const Summary = ({ cart, promotionState }: SummaryProps) => {
         ¿Dudas? Escríbenos
       </a>
 
-      {promotion && (
-        <p className="text-xs text-grey-50">
-          El descuento se calcula sobre el subtotal de productos, sin envío.
-          Solo aplica el rango más alto que alcances.
-        </p>
-      )}
+      {promotion &&
+        (hasPercentageTier(promotion.tiers) ? (
+          getFreeShippingTier(promotion.tiers) ? (
+            // Beneficios acumulables (S14): no decir "solo el rango más alto"
+            <p className="text-xs text-grey-50">
+              La promoción se calcula sobre el subtotal de productos, sin envío.
+              Al llegar a un monto mayor conservas lo que ya tenías: el
+              descuento más alto alcanzado y el envío gratis.
+            </p>
+          ) : (
+            <p className="text-xs text-grey-50">
+              El descuento se calcula sobre el subtotal de productos, sin envío.
+              Solo aplica el rango más alto que alcances.
+            </p>
+          )
+        ) : (
+          <p className="text-xs text-grey-50">
+            El monto para envío gratis se calcula sobre el subtotal de productos,
+            sin envío. Aplica en cualquier opción de envío.
+          </p>
+        ))}
     </div>
   )
 }

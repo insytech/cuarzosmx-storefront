@@ -5,6 +5,7 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import BulkDiscountBanner from "@modules/common/components/bulk-discount-banner"
 import { HttpTypes } from "@medusajs/types"
 import { getActiveStorePromotion } from "@lib/data/store-promotions"
+import { hasPercentageTier } from "@lib/util/store-promotion"
 
 const CartTemplate = async ({
   cart,
@@ -63,7 +64,11 @@ const CartTemplate = async ({
               <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
                 <ItemsTemplate
                   cart={cart}
-                  promotionActive={!!promotionState.promotion}
+                  // "No participa en descuentos" solo si la promoción da %
+                  promotionActive={
+                    !!promotionState.promotion &&
+                    hasPercentageTier(promotionState.promotion.tiers)
+                  }
                   bulkThreshold={promotionState.bulk.threshold}
                 />
               </div>

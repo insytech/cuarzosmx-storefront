@@ -9,7 +9,7 @@ import MobileMenu from "@modules/layout/components/mobile-menu"
 import SearchButton from "@modules/search/components/search-button"
 import { getActiveStorePromotion } from "@lib/data/store-promotions"
 import {
-  getPromotionPagePath,
+  getPromotionMenuLink,
   getSeasonPalette,
 } from "@lib/util/store-promotion"
 
@@ -21,8 +21,10 @@ export default async function Nav() {
 
   // Identidad de la temporada vigente: texto, dirección y color del enlace.
   // El color llega del admin, así que viaja en variables CSS (no en clases).
-  const palette = promotion ? getSeasonPalette(promotion.season_color) : null
-  const seasonHref = promotion ? getPromotionPagePath(promotion.page_slug) : ""
+  // Sin texto de menú o sin página (opcionales, S13) no hay enlace.
+  const seasonLink = getPromotionMenuLink(promotion)
+  const palette =
+    promotion && seasonLink ? getSeasonPalette(promotion.season_color) : null
   const seasonLinkStyle = palette
     ? ({
         "--season-link": palette.dark,
@@ -67,14 +69,14 @@ export default async function Nav() {
             <LocalizedClientLink href="/store" className=" font-semibold text-gray-700 hover:text-gray-900 transition-colors">
               Tienda
             </LocalizedClientLink>
-            {promotion && (
+            {seasonLink && (
               <LocalizedClientLink
-                href={seasonHref}
+                href={seasonLink.href}
                 style={seasonLinkStyle}
                 className="font-semibold text-[color:var(--season-link)] hover:text-[color:var(--season-link-hover)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-main-color-dark rounded-sm"
                 data-testid="nav-buen-fin-link"
               >
-                {promotion.menu_label}
+                {seasonLink.label}
               </LocalizedClientLink>
             )}
 
@@ -92,14 +94,14 @@ export default async function Nav() {
           {/* Acciones Derecha */}
           <div className="flex items-center gap-3 lg:gap-6 lg:pl-8">
             {/* Temporada - Mobile (el menú móvil no lista la promoción) */}
-            {promotion && (
+            {seasonLink && (
               <LocalizedClientLink
-                href={seasonHref}
+                href={seasonLink.href}
                 style={seasonLinkStyle}
                 className="lg:hidden inline-flex items-center min-h-[44px] px-1 text-sm font-bold text-[color:var(--season-link)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-main-color-dark rounded-sm"
                 data-testid="nav-buen-fin-link-mobile"
               >
-                {promotion.menu_label}
+                {seasonLink.label}
               </LocalizedClientLink>
             )}
 

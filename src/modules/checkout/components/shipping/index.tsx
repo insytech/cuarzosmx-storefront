@@ -4,6 +4,11 @@ import { RadioGroup, Radio } from "@headlessui/react"
 import { setShippingMethod } from "@lib/data/cart"
 import { calculatePriceForShippingOption, getShippingProviderInfo, ShippingProviderInfo } from "@lib/data/fulfillment"
 import { convertToLocale } from "@lib/util/money"
+import {
+  getShippingPromoDiscount,
+  promotionGivesFreeShipping,
+} from "@lib/util/store-promotion"
+import { useActiveStorePromotion } from "@lib/util/store-promotion-client"
 import { CheckCircleSolid, Loader } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
 import { Button, Heading, Text, clx } from "@medusajs/ui"
@@ -46,6 +51,19 @@ const formatShippingAmount = (
   // for a delivery option we don't know the price yet.
   return freeWhenUnknown ? "Gratis" : "—"
 }
+
+/**
+ * Option price while the store promotion gives free shipping (S3: every
+ * shipping option): the regular price struck through, then "Gratis".
+ */
+const PromoFreeShippingPrice = ({ regular }: { regular: string }) => (
+  <span data-free-shipping="promotion">
+    {regular !== "Gratis" && regular !== "—" && (
+      <s className="mr-1.5 font-normal text-gray-400">{regular}</s>
+    )}
+    <span className="font-semibold text-green-600">Gratis</span>
+  </span>
+)
 
 type ShippingProps = {
   cart: HttpTypes.StoreCart
@@ -105,6 +123,11 @@ const Shipping: React.FC<ShippingProps> = ({
   const pathname = usePathname()
 
   const isOpen = searchParams.get("step") === "delivery"
+
+  // Promoción vigente con envío gratis en el nivel alcanzado: el backend pone
+  // en cero cualquier opción que se elija (S3/S14), así que se anuncia aquí.
+  const promotion = useActiveStorePromotion()?.promotion ?? null
+  const promoFreeShipping = promotionGivesFreeShipping(promotion, cart.items)
 
   const _shippingMethods = availableShippingMethods?.filter(
     (sm: any) => sm.service_zone?.fulfillment_set?.type !== "pickup"
@@ -230,6 +253,16 @@ const Shipping: React.FC<ShippingProps> = ({
   const selectedIsPickup = _pickupMethods?.some(
     (m) => m.id === selectedMethod?.shipping_option_id
   )
+  // `amount` is the price before adjustments: the promotion's free shipping
+  // lives in the method's adjustments (S14). With a shipping coupon the
+  // promotion only covers the rest, so both adjustments are added up.
+  const selectedPromo = selectedMethod
+    ? getShippingPromoDiscount([selectedMethod])
+    : null
+  const selectedFreeByPromo =
+    !!selectedPromo &&
+    selectedPromo.amount + selectedPromo.coupon_amount >=
+      Number(selectedMethod?.amount ?? 0)
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -370,15 +403,33 @@ const Shipping: React.FC<ShippingProps> = ({
                           </div>
                           <span className="justify-self-end text-gray-600 font-medium">
                             {option.price_type === "flat" ? (
-                              formatShippingAmount(
-                                option.amount,
-                                cart?.currency_code
+                              promoFreeShipping ? (
+                                <PromoFreeShippingPrice
+                                  regular={formatShippingAmount(
+                                    option.amount,
+                                    cart?.currency_code
+                                  )}
+                                />
+                              ) : (
+                                formatShippingAmount(
+                                  option.amount,
+                                  cart?.currency_code
+                                )
                               )
                             ) : typeof calculatedPricesMap[option.id] ===
                               "number" ? (
-                              formatShippingAmount(
-                                calculatedPricesMap[option.id],
-                                cart?.currency_code
+                              promoFreeShipping ? (
+                                <PromoFreeShippingPrice
+                                  regular={formatShippingAmount(
+                                    calculatedPricesMap[option.id],
+                                    cart?.currency_code
+                                  )}
+                                />
+                              ) : (
+                                formatShippingAmount(
+                                  calculatedPricesMap[option.id],
+                                  cart?.currency_code
+                                )
                               )
                             ) : isLoadingPrices ? (
                               <Loader />
@@ -390,6 +441,15 @@ const Shipping: React.FC<ShippingProps> = ({
                       )
                     })}
                   </RadioGroup>
+                  {promoFreeShipping && promotion && (
+                    <p
+                      className="text-sm text-green-700 font-medium"
+                      data-testid="delivery-promo-free-shipping"
+                    >
+                      Tu envío es gratis con {promotion.name}, en cualquier
+                      opción de envío.
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -490,11 +550,13 @@ const Shipping: React.FC<ShippingProps> = ({
                   </Text>
                   <Text className="txt-medium text-ui-fg-subtle">
                     {selectedMethod?.name}{" "}
-                    {formatShippingAmount(
-                      selectedMethod?.amount,
-                      cart?.currency_code,
-                      { freeWhenUnknown: !!selectedIsPickup }
-                    )}
+                    {selectedFreeByPromo
+                      ? "Gratis"
+                      : formatShippingAmount(
+                          selectedMethod?.amount,
+                          cart?.currency_code,
+                          { freeWhenUnknown: !!selectedIsPickup }
+                        )}
                   </Text>
                   {/* Mostrar info del proveedor si está disponible */}
                   {(() => {

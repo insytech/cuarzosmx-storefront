@@ -1,6 +1,11 @@
 import { convertToLocale } from "@lib/util/money"
 import {
+  formatPromotionBenefits,
   formatTierAmount,
+  formatTierBenefit,
+  formatTierBenefitShort,
+  formatTierMarkLabel,
+  accumulateTiers,
   getAmountMissing,
   getCurrentTier,
   getEligibleSubtotal,
@@ -8,6 +13,8 @@ import {
   getNextTier,
   getTierMarkPositions,
   getTierProgressPosition,
+  hasPercentageTier,
+  tierHasPercentage,
   type PromoLineItemLike,
   type StorePromotion,
 } from "@lib/util/store-promotion"
@@ -23,6 +30,8 @@ type TierProgressProps = {
 /**
  * Progress toward the next tier of the store promotion in force. The tier is
  * measured on Σ unit_price × quantity of all items (no shipping, no coupons).
+ * A tier may give a percentage, free shipping or both (S8): the copy names
+ * what reaching the next tier adds ("Agrega $X más y obtén envío gratis").
  * Presentational only (no hooks), so it renders in server and client trees.
  */
 const TierProgress = ({
@@ -37,8 +46,20 @@ const TierProgress = ({
   const next = getNextTier(tiers, subtotal)
   const missing = getAmountMissing(tiers, subtotal)
   const maxPct = getMaxPercentage(tiers)
+  // Promotions without any percentage (free shipping only) talk about the
+  // benefit, not about a "descuento".
+  const anyPct = hasPercentageTier(tiers)
+  const noneLabel = anyPct ? "Sin descuento" : "Sin envío gratis"
   const money = (amount: number) =>
     convertToLocale({ amount, currency_code: currencyCode })
+  /** What reaching `next` adds: "25%", "envío gratis" or both. */
+  const nextGain = next ? formatTierBenefit(next, current) : ""
+  // Benefits accumulate (S14): each tier is shown with what it adds to the
+  // previous ones ("20%", then "+ envío gratis"), never as a replacement.
+  const effectiveTiers = accumulateTiers(tiers)
+  const markLabels = effectiveTiers.map((tier, i) =>
+    formatTierMarkLabel(tier, effectiveTiers[i - 1] ?? null)
+  )
 
   if (variant === "compact") {
     const from = current?.min_amount ?? 0
@@ -56,30 +77,45 @@ const TierProgress = ({
         <p className="mb-2 text-[13px] text-black">
           {current && next && (
             <>
-              Ya tienes <b className="text-main-color-dark">{current.percentage}%</b>.
+              Ya tienes{" "}
+              <b className="text-main-color-dark">{formatTierBenefit(current)}</b>.
               Agrega <b className="text-main-color-dark">{money(missing)}</b> más y
-              obtén <b className="text-main-color-dark">{next.percentage}%</b>.
+              obtén <b className="text-main-color-dark">{nextGain}</b>.
             </>
           )}
           {!current && next && (
             <>
               Agrega <b className="text-main-color-dark">{money(missing)}</b> más y
-              obtén <b className="text-main-color-dark">{next.percentage}%</b> con{" "}
+              obtén <b className="text-main-color-dark">{nextGain}</b> con{" "}
               {name}.
             </>
           )}
           {current && !next && (
-            <>
-              ¡Tienes el descuento máximo:{" "}
-              <b className="text-main-color-dark">{current.percentage}%</b>!
-            </>
+            tierHasPercentage(current) ? (
+              <>
+                ¡Tienes el descuento máximo:{" "}
+                <b className="text-main-color-dark">
+                  {formatTierBenefit(current)}
+                </b>
+                !
+              </>
+            ) : (
+              <>
+                ¡Ya tienes <b className="text-main-color-dark">envío gratis</b>{" "}
+                con {name}!
+              </>
+            )
           )}
         </p>
         <div
           className="h-2 bg-white rounded-full overflow-hidden"
           role="progressbar"
           aria-label={
-            next ? `Avance hacia ${next.percentage}%` : "Descuento máximo alcanzado"
+            next
+              ? `Avance hacia ${nextGain}`
+              : anyPct
+                ? "Descuento máximo alcanzado"
+                : "Envío gratis alcanzado"
           }
           aria-valuemin={from}
           aria-valuemax={to}
@@ -93,12 +129,13 @@ const TierProgress = ({
         <div className="flex justify-between text-[11px] text-grey-50 mt-1">
           <span>
             {current
-              ? `${current.percentage}% · ${formatTierAmount(current.min_amount)}`
-              : "Sin descuento"}
+              ? `${formatTierBenefitShort(current)} · ${formatTierAmount(current.min_amount)}`
+              : noneLabel}
           </span>
           {next && (
             <span>
-              {next.percentage}% · {formatTierAmount(next.min_amount)}
+              {formatTierMarkLabel(next, current)} ·{" "}
+              {formatTierAmount(next.min_amount)}
             </span>
           )}
         </div>
@@ -110,11 +147,23 @@ const TierProgress = ({
   const lastTierMax = tiers[tiers.length - 1]?.min_amount ?? 0
   const fill = getTierProgressPosition(tiers, subtotal)
 
+  const currentHasPct = tierHasPercentage(current)
   const title = current
     ? next
-      ? `Ya tienes ${current.percentage}% de descuento`
-      : "¡Tienes el descuento máximo!"
-    : `${name}: hasta ${maxPct}% de descuento`
+      ? currentHasPct
+        ? `Ya tienes ${current.percentage}% de descuento${current.free_shipping ? " y envío gratis" : ""}`
+        : "Ya tienes envío gratis"
+      : currentHasPct
+        ? current.free_shipping
+          ? "¡Tienes el descuento máximo y envío gratis!"
+          : "¡Tienes el descuento máximo!"
+        : "¡Tienes envío gratis!"
+    : `${name}: ${formatPromotionBenefits(promotion)}`
+  const badge = current
+    ? currentHasPct
+      ? `−${current.percentage}%${current.free_shipping ? " + envío gratis" : ""}`
+      : "Envío gratis"
+    : noneLabel
 
   return (
     <div
@@ -125,25 +174,35 @@ const TierProgress = ({
       <div className="flex justify-between items-baseline gap-2">
         <b className="text-main-color-dark text-[15px]">{title}</b>
         <span className="bg-main-color text-white font-bold text-[13px] rounded-full px-2.5 py-0.5 whitespace-nowrap">
-          {current ? `−${current.percentage}%` : "Sin descuento"}
+          {badge}
         </span>
       </div>
       <p className="mt-1.5 mb-3.5 text-[13px] text-grey-70">
         {next ? (
           <>
-            Agrega <b>{money(missing)}</b> más y obtén <b>{next.percentage}%</b>{" "}
-            en toda tu compra.
+            Agrega <b>{money(missing)}</b> más y obtén <b>{nextGain}</b>
+            {nextGain === "envío gratis"
+              ? " en cualquier opción de envío."
+              : " en toda tu compra."}
+          </>
+        ) : currentHasPct ? (
+          <>
+            Tu compra tiene {current?.percentage ?? maxPct}%
+            {current?.free_shipping ? " y envío gratis" : ""}, el descuento
+            más alto de {name}.
           </>
         ) : (
-          <>
-            Tu compra tiene {maxPct}%, el descuento más alto de {name}.
-          </>
+          <>Tu envío es gratis con {name}, en cualquier opción de envío.</>
         )}
       </p>
       <div
         className="relative h-2.5 bg-grey-10 rounded-full mx-1.5"
         role="progressbar"
-        aria-label="Avance hacia el siguiente descuento"
+        aria-label={
+          anyPct
+            ? "Avance hacia el siguiente descuento"
+            : "Avance hacia el envío gratis"
+        }
         aria-valuemin={0}
         aria-valuemax={lastTierMax}
         aria-valuenow={Math.min(subtotal, lastTierMax)}
@@ -166,13 +225,23 @@ const TierProgress = ({
         {tiers.map((tier, i) => {
           const reached = subtotal >= tier.min_amount
           const isLast = i === tiers.length - 1
+          const label = markLabels[i]
+          // Free-shipping labels are wider than "30%": anchor the last one to
+          // the right edge so it never overflows the card.
+          const anchorRight = isLast && label.includes("envío")
           return (
             <div
               key={tier.min_amount}
-              className="absolute top-1.5 -translate-x-1/2 text-center text-[11px] text-grey-50 leading-[1.3] whitespace-nowrap"
-              style={{
-                left: isLast ? "calc(100% - 22px)" : `${marks[i]}%`,
-              }}
+              className={
+                anchorRight
+                  ? "absolute top-1.5 right-0 text-right text-[11px] text-grey-50 leading-[1.3] whitespace-nowrap"
+                  : "absolute top-1.5 -translate-x-1/2 text-center text-[11px] text-grey-50 leading-[1.3] whitespace-nowrap"
+              }
+              style={
+                anchorRight
+                  ? undefined
+                  : { left: isLast ? "calc(100% - 22px)" : `${marks[i]}%` }
+              }
             >
               <b
                 className={
@@ -182,7 +251,7 @@ const TierProgress = ({
                 }
               >
                 {reached && "✓ "}
-                {tier.percentage}%
+                {label}
               </b>
               {formatTierAmount(tier.min_amount)}
             </div>

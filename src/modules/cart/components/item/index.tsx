@@ -27,7 +27,7 @@ type ItemProps = {
   type?: "full" | "preview"
   currencyCode: string
   bulkActive?: boolean
-  /** A tiered store promotion (Buen Fin, ...) is in force. */
+  /** A store promotion that gives a percentage (Buen Fin, ...) is in force. */
   promotionActive?: boolean
 }
 

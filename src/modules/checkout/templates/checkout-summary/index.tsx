@@ -7,6 +7,7 @@ import Divider from "@modules/common/components/divider"
 import BulkDiscountBanner from "@modules/common/components/bulk-discount-banner"
 import TierProgress from "@modules/common/components/tier-progress"
 import { getActiveStorePromotion } from "@lib/data/store-promotions"
+import { hasPercentageTier } from "@lib/util/store-promotion"
 import FinancingCostDisplay from "./financing-cost-display"
 
 const CheckoutSummary = async ({ cart }: { cart: any }) => {
@@ -34,11 +35,14 @@ const CheckoutSummary = async ({ cart }: { cart: any }) => {
           Tu Carrito
         </Heading>
         <div className="border-t border-gray-100 pt-4">
-          <CartTotals totals={cart} bulk={bulk} />
+          <CartTotals totals={cart} bulk={bulk} promotion={promotion} />
           <FinancingCostDisplay />
         </div>
         <div className="border-t border-gray-100 mt-4 pt-4">
-          <ItemsPreviewTemplate cart={cart} promotionActive={!!promotion} />
+          <ItemsPreviewTemplate
+            cart={cart}
+            promotionActive={!!promotion && hasPercentageTier(promotion.tiers)}
+          />
         </div>
         <div className="border-t border-gray-100 mt-4 pt-4">
           <DiscountCode cart={cart} />

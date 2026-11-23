@@ -1,10 +1,12 @@
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import {
+  accumulateTiers,
   formatPromotionDateRange,
+  formatPromotionHeadline,
   formatTierAmount,
-  getMaxPercentage,
-  getPromotionPagePath,
+  getPromotionPageHref,
   getSeasonPalette,
+  tierHasPercentage,
   isPromotionInForce,
   type StorePromotion,
 } from "@lib/util/store-promotion"
@@ -24,9 +26,25 @@ export default function SeasonBand({ promotion }: SeasonBandProps) {
     return null
   }
 
-  const maxPct = getMaxPercentage(promotion.tiers)
   const dates = formatPromotionDateRange(promotion.starts_at, promotion.ends_at)
   const logo = promotion.band_logo_url
+  // The page is optional (S13): without it the band has no CTA column.
+  const pageHref = getPromotionPageHref(promotion)
+  const gridCols = logo
+    ? pageHref
+      ? "lg:grid-cols-[132px_1fr_auto_auto]"
+      : "lg:grid-cols-[132px_1fr_auto]"
+    : pageHref
+      ? "lg:grid-cols-[1fr_auto_auto]"
+      : "lg:grid-cols-[1fr_auto]"
+  // Mobile chip grid: one column per tier, up to three.
+  const chipCols =
+    promotion.tiers.length === 1
+      ? "grid-cols-1"
+      : promotion.tiers.length === 2
+        ? "grid-cols-2"
+        : "grid-cols-3"
+  const hasPct = promotion.tiers.some(tierHasPercentage)
   // Admin-chosen colour: applied through `style`, never as a Tailwind class.
   const palette = getSeasonPalette(promotion.season_color)
 
@@ -39,11 +57,7 @@ export default function SeasonBand({ promotion }: SeasonBandProps) {
         style={{
           backgroundImage: `linear-gradient(to right, ${palette.dark}, ${palette.base})`,
         }}
-        className={`rounded-xl text-white flex flex-col items-center text-center gap-4 px-4 pt-[14px] pb-5 lg:grid lg:items-center lg:text-left lg:gap-7 lg:px-8 lg:py-[14px] ${
-          logo
-            ? "lg:grid-cols-[132px_1fr_auto_auto]"
-            : "lg:grid-cols-[1fr_auto_auto]"
-        }`}
+        className={`rounded-xl text-white flex flex-col items-center text-center gap-4 px-4 pt-[14px] pb-5 lg:grid lg:items-center lg:text-left lg:gap-7 lg:px-8 lg:py-[14px] ${gridCols}`}
       >
         {logo && (
           // Plain <img>: the logo host is configured in the admin and may not
@@ -58,7 +72,7 @@ export default function SeasonBand({ promotion }: SeasonBandProps) {
 
         <div>
           <h2 className="m-0 text-[22px] lg:text-[28px] leading-[1.15] font-bold [text-wrap:balance]">
-            Hasta {maxPct}% de descuento en toda la tienda
+            {formatPromotionHeadline(promotion)}
           </h2>
           <p className="mt-1 text-sm opacity-95">
             {dates} · Se aplica solo en tu carrito.
@@ -66,20 +80,38 @@ export default function SeasonBand({ promotion }: SeasonBandProps) {
         </div>
 
         <ul
-          className="grid grid-cols-3 gap-2 w-full lg:flex lg:w-auto lg:gap-2.5"
-          aria-label="Descuentos por monto de compra"
+          className={`grid ${chipCols} gap-2 w-full lg:flex lg:w-auto lg:gap-2.5`}
+          aria-label={
+            hasPct ? "Descuentos por monto de compra" : "Beneficios por monto de compra"
+          }
         >
-          {promotion.tiers.map((tier) => (
+          {/* Benefits accumulate (S14): each chip shows everything in force
+              from its amount, e.g. "20% + envío gratis desde $3,000". */}
+          {accumulateTiers(promotion.tiers).map((tier) => (
             <li
               key={tier.min_amount}
               className="bg-white text-black rounded-[10px] px-2 lg:px-3.5 py-2 text-center"
             >
-              <b
-                className="block text-2xl leading-none font-extrabold"
-                style={{ color: palette.base }}
-              >
-                {tier.percentage}%
-              </b>
+              {tierHasPercentage(tier) ? (
+                <b
+                  className="block text-2xl leading-none font-extrabold"
+                  style={{ color: palette.base }}
+                >
+                  {tier.percentage}%
+                  {tier.free_shipping && (
+                    <span className="block text-xs font-bold leading-tight mt-0.5">
+                      + envío gratis
+                    </span>
+                  )}
+                </b>
+              ) : (
+                <b
+                  className="block text-lg leading-none font-extrabold"
+                  style={{ color: palette.base }}
+                >
+                  Envío gratis
+                </b>
+              )}
               <span className="block text-xs font-semibold text-grey-70 lg:whitespace-nowrap">
                 desde {formatTierAmount(tier.min_amount)}
               </span>
@@ -87,14 +119,16 @@ export default function SeasonBand({ promotion }: SeasonBandProps) {
           ))}
         </ul>
 
-        <LocalizedClientLink
-          href={getPromotionPagePath(promotion.page_slug)}
-          style={{ color: palette.dark }}
-          className="block w-full lg:w-auto text-center bg-white font-bold rounded-xl px-[22px] py-3 whitespace-nowrap hover:bg-grey-5 transition-colors focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-white"
-          data-testid="season-band-cta"
-        >
-          Ver promociones →
-        </LocalizedClientLink>
+        {pageHref && (
+          <LocalizedClientLink
+            href={pageHref}
+            style={{ color: palette.dark }}
+            className="block w-full lg:w-auto text-center bg-white font-bold rounded-xl px-[22px] py-3 whitespace-nowrap hover:bg-grey-5 transition-colors focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-white"
+            data-testid="season-band-cta"
+          >
+            Ver promociones →
+          </LocalizedClientLink>
+        )}
       </section>
     </div>
   )

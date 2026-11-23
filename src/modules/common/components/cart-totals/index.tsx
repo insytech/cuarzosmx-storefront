@@ -4,8 +4,12 @@ import { convertToLocale } from "@lib/util/money"
 import { calculateBulkDiscount } from "@lib/util/bulk-discount"
 import {
   FALLBACK_BULK_STATE,
+  getShippingPromoDiscount,
   getTierDiscount,
+  promotionGivesFreeShipping,
+  type PromoShippingMethodLike,
   type StoreBulkState,
+  type StorePromotion,
 } from "@lib/util/store-promotion"
 import { HttpTypes } from "@medusajs/types"
 import React from "react"
@@ -20,15 +24,23 @@ type CartTotalsProps = {
     gift_card_total?: number | null
     currency_code: string
     shipping_subtotal?: number | null
+    original_shipping_total?: number | null
     items?: HttpTypes.StoreCartLineItem[]
+    shipping_methods?: PromoShippingMethodLike[] | null
   }
   /** Live bulk values (label only); the amount always comes from adjustments. */
   bulk?: StoreBulkState
+  /**
+   * Store promotion in force: names the free-shipping row and shows "Gratis"
+   * before a shipping method is chosen when the reached tier gives it (S3).
+   */
+  promotion?: StorePromotion | null
 }
 
 const CartTotals: React.FC<CartTotalsProps> = ({
   totals,
   bulk = FALLBACK_BULK_STATE,
+  promotion = null,
 }) => {
   const {
     currency_code,
@@ -44,8 +56,7 @@ const CartTotals: React.FC<CartTotalsProps> = ({
   // backend resolved its cost to 0 (store pickup, free-shipping promos, ...).
   // Deciding this from the method NAME would show "Gratis" for any option whose
   // label happens to contain "tienda"/"recoger" even when we do charge for it.
-  const hasShippingMethod =
-    ((totals as any).shipping_methods?.length ?? 0) > 0
+  const hasShippingMethod = (totals.shipping_methods?.length ?? 0) > 0
   // NB: Number(null) === 0, so check the type instead of coercing.
   const shippingAmount =
     typeof shipping_subtotal === "number" && Number.isFinite(shipping_subtotal)
@@ -62,6 +73,29 @@ const CartTotals: React.FC<CartTotalsProps> = ({
   // Descuento por monto (Buen Fin, etc.): detectado por la descripción del ajuste
   const tierDiscount = getTierDiscount(totals.items)
 
+  // Envío gratis de la promoción: ajuste sin código en el método de envío (S14).
+  // shipping_subtotal es el costo ANTES del ajuste; shipping_total, después.
+  const shippingPromo = getShippingPromoDiscount(totals.shipping_methods)
+  const shippingTotal =
+    typeof totals.shipping_total === "number" ? totals.shipping_total : null
+  const shippingFreeByPromo =
+    !!shippingPromo && hasShippingMethod && (shippingTotal ?? 0) <= 0
+  // discount_total incluye el descuento del envío: se separa para no mostrarlo
+  // como "Descuento promoción". Envío en cero sin cupón de envío → todo su
+  // costo original. Con cupón de envío, la promoción solo cubre lo que el
+  // cupón dejó (su ajuste) y el cupón sigue en "Descuento promoción".
+  const shippingPromoDiscount = shippingPromo
+    ? shippingFreeByPromo &&
+      shippingPromo.coupon_amount <= 0 &&
+      typeof totals.original_shipping_total === "number"
+      ? totals.original_shipping_total
+      : shippingPromo.amount
+    : 0
+  // Sin método elegido todavía: el nivel alcanzado ya garantiza envío gratis
+  // en cualquier opción, así que no decimos "Por calcular".
+  const freeShippingExpected =
+    !hasShippingMethod && promotionGivesFreeShipping(promotion, totals.items)
+
   // Separar descuento de promoción (cupones) del bulk y del descuento por monto
   // para no duplicar visualmente
   const promoDiscountOnly = Math.max(
@@ -69,7 +103,8 @@ const CartTotals: React.FC<CartTotalsProps> = ({
     Math.round(
       ((discount_total ?? 0) -
         (showBulkDiscount ? bulkDiscount.discountAmount : 0) -
-        (tierDiscount?.amount ?? 0)) *
+        (tierDiscount?.amount ?? 0) -
+        shippingPromoDiscount) *
         100
     ) / 100
   )
@@ -149,14 +184,44 @@ const CartTotals: React.FC<CartTotalsProps> = ({
             </svg>
             Envío
           </span>
-          <span className="font-medium text-gray-900" data-testid="cart-shipping" data-value={shipping_subtotal || 0}>
-            {shippingAmount !== null && shippingAmount > 0
+          <span
+            className={
+              shippingFreeByPromo || freeShippingExpected
+                ? "font-semibold text-green-600"
+                : "font-medium text-gray-900"
+            }
+            data-testid="cart-shipping"
+            data-value={shipping_subtotal || 0}
+            data-free-shipping={
+              shippingFreeByPromo || freeShippingExpected ? "promotion" : undefined
+            }
+          >
+            {shippingFreeByPromo ? (
+              <>
+                {shippingAmount !== null && shippingAmount > 0 && (
+                  <s className="mr-1.5 font-normal text-gray-400">
+                    {convertToLocale({ amount: shippingAmount, currency_code })}
+                  </s>
+                )}
+                Gratis
+              </>
+            ) : shippingAmount !== null && shippingAmount > 0
               ? convertToLocale({ amount: shippingAmount, currency_code })
               : shippingAmount === 0 && hasShippingMethod
                 ? 'Gratis'
-                : 'Por calcular'}
+                : freeShippingExpected
+                  ? 'Gratis'
+                  : 'Por calcular'}
           </span>
         </div>
+        {(shippingFreeByPromo || freeShippingExpected) && (
+          <p
+            className="-mt-2 text-right text-xs text-green-700"
+            data-testid="cart-shipping-promo"
+          >
+            Envío gratis con {shippingPromo?.name ?? promotion?.name ?? "la promoción"}
+          </p>
+        )}
 
         <div className="flex items-center justify-between">
           <span className="text-gray-600">Impuestos (IVA)</span>
@@ -191,14 +256,24 @@ const CartTotals: React.FC<CartTotalsProps> = ({
             {convertToLocale({ amount: total ?? 0, currency_code })}
           </span>
         </div>
-        {tierDiscount && (
+        {(tierDiscount || shippingPromoDiscount > 0) && (
           <p
             className="mt-1 text-right text-[13px] font-semibold text-green-700"
             data-testid="cart-tier-savings"
           >
             Ahorras{" "}
-            {convertToLocale({ amount: tierDiscount.amount, currency_code })} con{" "}
-            {tierDiscount.name}
+            {convertToLocale({
+              amount:
+                Math.round(
+                  ((tierDiscount?.amount ?? 0) + shippingPromoDiscount) * 100
+                ) / 100,
+              currency_code,
+            })}{" "}
+            con{" "}
+            {tierDiscount?.name ??
+              shippingPromo?.name ??
+              promotion?.name ??
+              "la promoción"}
           </p>
         )}
       </div>

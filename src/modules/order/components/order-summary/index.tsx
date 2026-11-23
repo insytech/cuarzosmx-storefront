@@ -1,5 +1,8 @@
 import { convertToLocale } from "@lib/util/money"
-import { getTierDiscount } from "@lib/util/store-promotion"
+import {
+  getShippingPromoDiscount,
+  getTierDiscount,
+} from "@lib/util/store-promotion"
 import { HttpTypes } from "@medusajs/types"
 
 type OrderSummaryProps = {
@@ -21,10 +24,25 @@ const OrderSummary = ({ order }: OrderSummaryProps) => {
   // Descuento por monto (Buen Fin, ...) detectado por la descripción del ajuste.
   // Solo se separa si el pedido trae los ajustes de sus líneas.
   const tierDiscount = getTierDiscount(order.items)
+  // Envío gratis de la promoción: ajuste sin código del método de envío (S14).
+  // discount_total lo incluye, así que se separa de "Descuento".
+  const shippingPromo = getShippingPromoDiscount(order.shipping_methods)
+  const hasShippingMethod = (order.shipping_methods?.length ?? 0) > 0
+  const shippingIsFree = hasShippingMethod && (order.shipping_total ?? 0) <= 0
+  const shippingPromoDiscount = shippingPromo
+    ? shippingIsFree &&
+      shippingPromo.coupon_amount <= 0 &&
+      typeof order.original_shipping_total === "number"
+      ? order.original_shipping_total
+      : shippingPromo.amount
+    : 0
   const otherDiscount = Math.max(
     0,
     Math.round(
-      ((order.discount_total ?? 0) - (tierDiscount?.amount ?? 0)) * 100
+      ((order.discount_total ?? 0) -
+        (tierDiscount?.amount ?? 0) -
+        shippingPromoDiscount) *
+        100
     ) / 100
   )
 
@@ -64,7 +82,17 @@ const OrderSummary = ({ order }: OrderSummaryProps) => {
           )}
           <div className="flex items-center justify-between">
             <span>Envío</span>
-            <span>{getAmount(order.shipping_total)}</span>
+            {shippingIsFree ? (
+              <span
+                className="font-semibold text-green-700"
+                data-testid="order-shipping-free"
+              >
+                Gratis
+                {shippingPromo?.name && ` con ${shippingPromo.name}`}
+              </span>
+            ) : (
+              <span>{getAmount(order.shipping_total)}</span>
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span>Impuestos (IVA)</span>

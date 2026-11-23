@@ -5,6 +5,8 @@ import { getActiveStorePromotion } from "@lib/data/store-promotions"
 import {
     BULK_FAQ_QUESTION,
     getBulkFaqParagraphs,
+    getShippingFaqNote,
+    SHIPPING_FAQ_QUESTION,
 } from "@lib/util/store-promotion"
 
 export const metadata: Metadata = {
@@ -26,7 +28,7 @@ const faqSchemaItems = [
         answer: "Por mayoreo manejamos un descuento de 20% a partir de 12 piezas. Pueden ser de productos diferentes. El descuento no aplica a productos por kilo ni a productos que ya cuenten con un descuento o promoción activa.",
     },
     {
-        question: "¿Cuentan con servicio de envíos?",
+        question: SHIPPING_FAQ_QUESTION,
         answer: "Contamos con el servicio de envío por paquetería a todo el país por un costo adicional a su compra. El costo varía dependiendo del destino.",
     },
     {
@@ -54,12 +56,19 @@ const faqSchemaItems = [
 export default async function FAQPage() {
     const promotionState = await getActiveStorePromotion()
     // La respuesta de mayoreo refleja el estado actual (promoción o bulk, S13)
-    const schemaItems = faqSchemaItems.map((item) =>
-        item.question === BULK_FAQ_QUESTION &&
-        (promotionState.promotion || !promotionState.bulk.enabled)
-            ? { ...item, answer: getBulkFaqParagraphs(promotionState).join(" ") }
-            : item
-    )
+    const shippingNote = getShippingFaqNote(promotionState)
+    const schemaItems = faqSchemaItems.map((item) => {
+        if (
+            item.question === BULK_FAQ_QUESTION &&
+            (promotionState.promotion || !promotionState.bulk.enabled)
+        ) {
+            return { ...item, answer: getBulkFaqParagraphs(promotionState).join(" ") }
+        }
+        if (item.question === SHIPPING_FAQ_QUESTION && shippingNote) {
+            return { ...item, answer: `${item.answer} ${shippingNote}` }
+        }
+        return item
+    })
 
     return (
         <>

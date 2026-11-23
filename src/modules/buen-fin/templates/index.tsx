@@ -1,14 +1,22 @@
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import {
+  accumulateTiers,
   formatCountdown,
   formatDayAfter,
   formatPromotionDateRange,
   formatPromotionValidity,
+  formatPromotionBenefits,
   formatTierAmount,
+  formatTierList,
+  getFreeShippingTier,
   getPromotionPageHeadline,
+  getPromotionPageHref,
   getPromotionPageSubtitle,
   getSeasonPalette,
   getTierExampleAmount,
+  hasPercentageTier,
+  tierHasPercentage,
+  type StorePromotion,
   type StorePromotionState,
 } from "@lib/util/store-promotion"
 
@@ -22,38 +30,74 @@ const CATEGORIES = [
   { name: "Artesanías", image: "/categorias/ARTESANIAS.webp", href: "/categories/artesanias" },
 ]
 
-const STEPS = [
-  {
+interface Step {
+  title: string
+  text: string
+}
+
+/** "Cómo funciona" steps for what the promotion gives (S8). */
+function getSteps(hasPct: boolean, hasFree: boolean): Step[] {
+  const choose: Step = {
     title: "Elige tus cristales",
     text: "Todos los productos suman para llegar al monto, incluidos los de oferta y por kilo.",
-  },
-  {
-    title: "Mira tu avance",
-    text: "En el carrito ves cuánto te falta para el siguiente descuento.",
-  },
-  {
-    title: "Paga con descuento",
-    text: "Se aplica el rango más alto que alcances, sobre el subtotal sin envío.",
-  },
-]
+  }
+  if (!hasFree) {
+    return [
+      choose,
+      {
+        title: "Mira tu avance",
+        text: "En el carrito ves cuánto te falta para el siguiente descuento.",
+      },
+      {
+        title: "Paga con descuento",
+        text: "Se aplica el rango más alto que alcances, sobre el subtotal sin envío.",
+      },
+    ]
+  }
+  return [
+    choose,
+    {
+      title: "Mira tu avance",
+      text: hasPct
+        ? "En el carrito ves cuánto te falta para el siguiente beneficio."
+        : "En el carrito ves cuánto te falta para el envío gratis.",
+    },
+    hasPct
+      ? {
+          title: "Paga menos",
+          text: "Los beneficios se suman: al llegar a un monto mayor conservas el descuento más alto alcanzado y el envío gratis, sobre el subtotal sin envío.",
+        }
+      : {
+          title: "Recibe sin costo de envío",
+          text: "Al llegar al monto, sobre el subtotal sin envío, cualquier opción de envío queda gratis.",
+        },
+  ]
+}
 
-/** No promotion in force: friendly message + link to the store (no 404). */
-function NoPromotion() {
+/**
+ * No promotion owns this address: friendly message + link (no 404). When a
+ * promotion is in force elsewhere (another page, or none, S13) it is named.
+ */
+function NoPromotion({ inForce }: { inForce: StorePromotion | null }) {
+  const inForceHref = inForce ? getPromotionPageHref(inForce) : null
   return (
     <div className="content-container py-16 md:py-24" data-testid="buen-fin-empty">
       <div className="max-w-xl mx-auto text-center bg-white border border-grey-20 rounded-2xl px-6 py-10">
         <h1 className="font-serenity text-3xl md:text-4xl text-gray-800 mb-3">
-          Por ahora no hay promociones activas
+          {inForce
+            ? "Esta promoción ya no está vigente"
+            : "Por ahora no hay promociones activas"}
         </h1>
         <p className="text-grey-70 mb-8">
-          Nuestra próxima temporada de descuentos se anunciará aquí. Mientras
-          tanto, descubre todos nuestros cristales y cuarzos.
+          {inForce
+            ? `Ahora tenemos ${inForce.name}: ${formatPromotionBenefits(inForce)}, aplicado automáticamente en tu carrito.`
+            : "Nuestra próxima temporada de descuentos se anunciará aquí. Mientras tanto, descubre todos nuestros cristales y cuarzos."}
         </p>
         <LocalizedClientLink
-          href="/store"
+          href={inForceHref ?? "/store"}
           className={`inline-block w-full sm:w-auto bg-main-color hover:bg-main-color-dark text-white font-semibold rounded-xl px-[26px] py-3 transition-colors ${FOCUS_RING}`}
         >
-          Ver la tienda
+          {inForceHref ? `Ver ${inForce?.name}` : "Ver la tienda"}
         </LocalizedClientLink>
       </div>
     </div>
@@ -67,11 +111,21 @@ function NoPromotion() {
  */
 export default function BuenFinTemplate({
   promotionState,
+  promotionInForce = null,
 }: {
   promotionState: StorePromotionState
+  /** Promotion in force even when it does not own this page (or has none). */
+  promotionInForce?: StorePromotion | null
 }) {
   const { promotion, bulk } = promotionState
-  if (!promotion) return <NoPromotion />
+  if (!promotion) return <NoPromotion inForce={promotionInForce} />
+
+  // Tiers may give a percentage, free shipping or both (S8): the copy only
+  // talks about "descuento" when some tier has a percentage.
+  const hasPct = hasPercentageTier(promotion.tiers)
+  const hasFree = getFreeShippingTier(promotion.tiers) !== null
+  const benefitWord = !hasFree ? "descuento" : hasPct ? "beneficio" : "envío gratis"
+  const steps = getSteps(hasPct, hasFree)
 
   const palette = getSeasonPalette(promotion.season_color)
   const dates = formatPromotionDateRange(promotion.starts_at, promotion.ends_at)
@@ -123,28 +177,47 @@ export default function BuenFinTemplate({
 
         <div className="bg-white text-black rounded-2xl p-[22px]">
           <h2 className="text-[15px] font-bold text-main-color-dark mb-2.5">
-            Tu descuento según tu compra
+            {hasFree ? "Tus beneficios según tu compra" : "Tu descuento según tu compra"}
           </h2>
           <ul>
-            {promotion.tiers.map((tier) => {
+            {/* Benefits accumulate (S14): each row shows everything the
+                cart has from that amount, so the examples keep the % */}
+            {accumulateTiers(promotion.tiers).map((tier) => {
               const example = getTierExampleAmount(tier)
-              const pays =
-                Math.round(example * (1 - tier.percentage / 100) * 100) / 100
+              const pays = tierHasPercentage(tier)
+                ? Math.round(example * (1 - tier.percentage / 100) * 100) / 100
+                : example
               return (
                 <li
                   key={tier.min_amount}
                   className="grid grid-cols-[84px_1fr] items-center py-2.5 border-t border-grey-20 first:border-t-0"
                 >
-                  <b
-                    className="text-[32px] font-extrabold leading-none"
-                    style={{ color: palette.base }}
-                  >
-                    {tier.percentage}%
-                  </b>
+                  {tierHasPercentage(tier) ? (
+                    <b
+                      className="text-[32px] font-extrabold leading-none"
+                      style={{ color: palette.base }}
+                    >
+                      {tier.percentage}%
+                    </b>
+                  ) : (
+                    <b
+                      className="text-lg font-extrabold leading-tight"
+                      style={{ color: palette.base }}
+                    >
+                      Envío gratis
+                    </b>
+                  )}
                   <span className="text-sm">
                     Desde {money(tier.min_amount)}
+                    {tierHasPercentage(tier) && tier.free_shipping && (
+                      <b className="block text-xs" style={{ color: palette.dark }}>
+                        + envío gratis
+                      </b>
+                    )}
                     <small className="block text-grey-50 text-xs">
-                      {money(example)} → pagas {money(pays)}
+                      {tierHasPercentage(tier)
+                        ? `${money(example)} → pagas ${money(pays)}${tier.free_shipping ? " sin costo de envío" : ""}`
+                        : "En cualquier opción de envío"}
                     </small>
                   </span>
                 </li>
@@ -166,10 +239,10 @@ export default function BuenFinTemplate({
           CÓMO FUNCIONA
         </h2>
         <p className="text-center text-grey-70 mb-6">
-          Sin códigos: el descuento aparece solo en tu carrito.
+          Sin códigos: el {benefitWord} aparece solo en tu carrito.
         </p>
         <ol className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {STEPS.map((step, i) => (
+          {steps.map((step, i) => (
             <li
               key={step.title}
               className="bg-white border border-grey-20 rounded-xl p-5"
@@ -199,7 +272,8 @@ export default function BuenFinTemplate({
           COMPRA POR CATEGORÍA
         </h2>
         <p className="text-center text-grey-70 mb-6">
-          Toda la tienda participa. Ideas para llegar a tu siguiente descuento.
+          Toda la tienda participa. Ideas para llegar a tu{" "}
+          {hasFree && !hasPct ? "envío gratis" : `siguiente ${benefitWord}`}.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {CATEGORIES.map((cat) => (
@@ -222,7 +296,7 @@ export default function BuenFinTemplate({
                   className="block text-xs font-semibold"
                   style={{ color: palette.dark }}
                 >
-                  Todo suma para tu descuento
+                  Todo suma para tu {benefitWord}
                 </span>
               </div>
             </LocalizedClientLink>
@@ -252,21 +326,38 @@ export default function BuenFinTemplate({
             {formatPromotionValidity(promotion.starts_at, promotion.ends_at)}{" "}
             (hora del centro de México).
           </li>
-          <li>
-            Descuentos: {promotion.tiers
-              .map((t) => `${t.percentage}% desde ${money(t.min_amount)}`)
-              .join(", ")}
-            .
-          </li>
-          <li>
-            El monto se calcula sobre el subtotal de productos, sin envío. Se
-            aplica un solo rango: el más alto alcanzado.
-          </li>
-          <li>
-            Los productos con oferta reciben el descuento sobre su precio
-            rebajado. Los productos por kilo suman para el monto pero no
-            reciben descuento.
-          </li>
+          {hasFree ? (
+            <li>Beneficios: {formatTierList(promotion.tiers)}.</li>
+          ) : (
+            <li>
+              Descuentos: {promotion.tiers
+                .map((t) => `${t.percentage}% desde ${money(t.min_amount)}`)
+                .join(", ")}
+              .
+            </li>
+          )}
+          {hasFree && hasPct ? (
+            <li>
+              El monto se calcula sobre el subtotal de productos, sin envío.
+              Los beneficios se acumulan: aplica el descuento más alto
+              alcanzado y el envío gratis desde que llegas a su monto.
+            </li>
+          ) : (
+            <li>
+              El monto se calcula sobre el subtotal de productos, sin envío. Se
+              aplica un solo rango: el más alto alcanzado.
+            </li>
+          )}
+          {hasFree && (
+            <li>El envío gratis aplica a todas las opciones de envío.</li>
+          )}
+          {hasPct && (
+            <li>
+              Los productos con oferta reciben el descuento sobre su precio
+              rebajado. Los productos por kilo suman para el monto pero no
+              reciben descuento.
+            </li>
+          )}
           <li>
             Se combina con cupones.{" "}
             {bulk.enabled
