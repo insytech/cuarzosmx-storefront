@@ -1,0 +1,256 @@
+/*
+ * Rich editor blocks (S5): blog body (`blog-content.tsx`) and category SEO
+ * text (`seo-content/index.tsx`), both rendered with the class
+ * `editor-content`. The HTML comes from `sanitizeHtml` (`blog-seo.ts`); the
+ * colors of the notices mirror CALLOUT_TYPES in `editor-style-allowlist.ts`.
+ * Plain CSS on purpose: no JavaScript is needed (FAQ uses <details>).
+ */
+
+/* Floated figures never stick out of the block. */
+.editor-content {
+  display: flow-root;
+}
+
+.editor-content :is(h1, h2, table) {
+  clear: both;
+}
+
+/* ---------- Notices: <div data-callout="info|success|warning|error"> ---------- */
+.editor-content [data-callout] {
+  --callout-accent: #2563eb;
+  --callout-bg: #eff6ff;
+  --callout-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4M12 8h.01'/%3E%3C/svg%3E");
+  position: relative;
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem 1rem 3.25rem;
+  border-left: 4px solid var(--callout-accent);
+  border-radius: 0 0.75rem 0.75rem 0;
+  background-color: var(--callout-bg);
+  color: #374151;
+}
+
+.editor-content [data-callout]::before {
+  content: "";
+  position: absolute;
+  top: 1.1rem;
+  left: 1.1rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  background-color: var(--callout-accent);
+  -webkit-mask: var(--callout-icon) center / contain no-repeat;
+  mask: var(--callout-icon) center / contain no-repeat;
+}
+
+.editor-content [data-callout="success"] {
+  --callout-accent: #15803d;
+  --callout-bg: #f0fdf4;
+  --callout-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m8 12 3 3 5-6'/%3E%3C/svg%3E");
+}
+
+.editor-content [data-callout="warning"] {
+  --callout-accent: #b45309;
+  --callout-bg: #fffbeb;
+  --callout-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'/%3E%3Cpath d='M12 9v4M12 17h.01'/%3E%3C/svg%3E");
+}
+
+.editor-content [data-callout="error"] {
+  --callout-accent: #b91c1c;
+  --callout-bg: #fef2f2;
+  --callout-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m15 9-6 6M9 9l6 6'/%3E%3C/svg%3E");
+}
+
+.editor-content [data-callout] > :first-child {
+  margin-top: 0;
+}
+
+.editor-content [data-callout] > :last-child {
+  margin-bottom: 0;
+}
+
+.editor-content [data-callout] :is(h1, h2, h3, h4) {
+  color: var(--callout-accent);
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ---------- FAQ: <details data-faq><summary>…</summary><div data-faq-answer> ---------- */
+.editor-content details[data-faq] {
+  margin: 1rem 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.editor-content details[data-faq] > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  list-style: none;
+  cursor: pointer;
+  font-weight: 600;
+  color: #5a2d6b;
+  transition: background-color 0.15s ease;
+}
+
+.editor-content details[data-faq] > summary::-webkit-details-marker {
+  display: none;
+}
+
+.editor-content details[data-faq] > summary::after {
+  content: "";
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform 0.2s ease;
+}
+
+.editor-content details[data-faq][open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.editor-content details[data-faq] > summary:hover {
+  background-color: #f9f5fb;
+}
+
+.editor-content details[data-faq] > summary:focus-visible {
+  outline: 2px solid #9c72af;
+  outline-offset: -2px;
+}
+
+.editor-content details[data-faq][open] > summary {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.editor-content [data-faq-answer] {
+  padding: 1rem 1.25rem;
+}
+
+.editor-content [data-faq-answer] > :first-child {
+  margin-top: 0;
+}
+
+.editor-content [data-faq-answer] > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Tables ---------- */
+.editor-content table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.editor-content :is(th, td) {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: top;
+}
+
+.editor-content th {
+  background-color: #f3eef7;
+  color: #5a2d6b;
+  font-weight: 600;
+}
+
+.editor-content :is(th, td) > p {
+  margin: 0;
+}
+
+/* Mobile: the table scrolls sideways instead of overflowing the page. */
+@media (max-width: 767px) {
+  .editor-content table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ---------- Figures: <figure data-align="left|center|right"> ---------- */
+.editor-content figure[data-align] {
+  margin: 2rem auto;
+}
+
+.editor-content figure[data-align] img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+.editor-content figure[data-align="center"] {
+  text-align: center;
+}
+
+.editor-content figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* Desktop: left/right figures float with the text around them. */
+@media (min-width: 768px) {
+  .editor-content figure[data-align="left"],
+  .editor-content figure[data-align="right"] {
+    width: 45%;
+    max-width: 22rem;
+    margin-top: 0.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .editor-content figure[data-align="left"] {
+    float: left;
+    margin-right: 1.5rem;
+    margin-left: 0;
+  }
+
+  .editor-content figure[data-align="right"] {
+    float: right;
+    margin-left: 1.5rem;
+    margin-right: 0;
+  }
+}
+
+/* ---------- Highlight: <mark data-color style="background-color: …"> ---------- */
+.editor-content mark {
+  padding: 0 0.15em;
+  border-radius: 0.2em;
+}
+
+/* ---------- Buttons: <a data-button style="…"> ----------
+ * Colors, border and size come from the inline style (validated by the
+ * sanitizer), which beats the prose link classes. Hover darkens it. */
+.editor-content a[data-button] {
+  line-height: 1.3;
+  margin: 0.25rem 0;
+  transition: filter 0.15s ease;
+}
+
+.editor-content a[data-button]:hover,
+.editor-content a[data-button]:focus-visible {
+  filter: brightness(0.9);
+}
+
+/* Bold saved inside a button (older editor saves inferred it from the button's
+ * own font-weight) keeps the button's color and weight instead of the prose
+ * `strong` color. */
+.editor-content a[data-button] strong,
+.editor-content a[data-button] b {
+  color: inherit;
+  font-weight: inherit;
+}
+
+.editor-content a[data-button]:focus-visible {
+  outline: 2px solid #9c72af;
+  outline-offset: 2px;
+}
