@@ -82,4 +82,28 @@ t("S1: fold decision on HTML counts text only (threshold unchanged)", () => {
   assert.equal(shouldCollapseSeoContent(`<h2>${a(10)}</h2><p>${a(590)}</p>`), true)
 })
 
+t("S5: category block keeps notices, FAQ, buttons, tables, figures and text styles", () => {
+  const html =
+    '<div data-callout="warning"><p>Aviso</p></div>' +
+    '<details data-faq=""><summary>¿Pregunta?</summary><div data-faq-answer=""><p>Respuesta</p></div></details>' +
+    '<p style="text-align: center"><a data-button="" style="display: inline-block; background-color: #5A2D6B; color: #FFFFFF; border: none; border-radius: 12px; padding: 12px 24px; font-size: 1rem; font-weight: 600; text-transform: none; text-align: center; text-decoration: none" href="/mx/store">Ver tienda</a></p>' +
+    '<table style="min-width: 50px"><tbody><tr><th colspan="1" rowspan="1"><p>H</p></th></tr></tbody></table>' +
+    '<figure data-align="right"><img src="https://cdn.example.com/a.jpg" alt="a" data-image-key="K"><figcaption>Pie</figcaption></figure>' +
+    `<p><span style="color: #5A2D6B; font-family: 'Lora', serif">x</span> <span style="position: fixed">y</span></p>`
+  const out = renderSeoContent(html)
+  for (const piece of [
+    '<div data-callout="warning"><p>Aviso</p></div>',
+    '<details data-faq=""><summary>¿Pregunta?</summary><div data-faq-answer=""><p>Respuesta</p></div></details>',
+    'data-button="" style="display:inline-block;background-color:#5A2D6B;',
+    '<th colspan="1" rowspan="1"><p>H</p></th>',
+    '<figure data-align="right">',
+    '<figcaption>Pie</figcaption>',
+    `<span style="color:#5A2D6B;font-family:'Lora', serif">x</span> <span>y</span>`,
+  ]) {
+    assert.ok(out.includes(piece), `${piece}\n-> ${out}`)
+  }
+  // the FAQ answer is text of the block: it counts toward the fold
+  assert.ok(seoContentTextLength(out) >= "Aviso ¿Pregunta? Respuesta Ver tienda H Pie x y".length, out)
+})
+
 console.log(`\n${passed}/${passed} assertions groups passed`)

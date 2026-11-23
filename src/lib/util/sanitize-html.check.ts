@@ -4,10 +4,17 @@ import { sanitizeHtml } from "./blog-seo"
 // Corre en Node, igual que el render del servidor del post: aqui no hay DOM.
 
 let passed = 0
+let failed = 0
 const t = (name: string, fn: () => void) => {
-  fn()
-  passed++
-  console.log("  ok -", name)
+  try {
+    fn()
+    passed++
+    console.log("  ok -", name)
+  } catch (error) {
+    failed++
+    console.log("  not ok -", name)
+    console.log("    " + String((error as Error).message).split("\n").slice(0, 6).join("\n    "))
+  }
 }
 
 t("drops <script> and <style> with their content", () => {
@@ -115,4 +122,246 @@ t("renders markdown bodies to sanitized HTML", () => {
   assert.ok(out.includes('<a href="https://www.cuarzos.mx">tienda</a>'), out)
 })
 
-console.log(`\n${passed}/${passed} assertions groups passed`)
+
+// ---------------------------------------------------------------------------
+// S5: rich editor styles and blocks. Allowed values mirror
+// `editor-style-allowlist.ts`; anything else is dropped.
+// ---------------------------------------------------------------------------
+
+/** Inline style of the first `<tag ...>` in `html` (as serialized), or null. */
+const styleOf = (html: string, tag: string): string | null => {
+  const m = new RegExp(`<${tag}\\b[^>]*\\sstyle="([^"]*)"`).exec(html)
+  return m ? m[1] : null
+}
+
+t("S5 inventory: every style, class and attribute of the 34 published posts is kept", () => {
+  // Inventory of production on 2026-11-23: styles are only `text-align`
+  // (left|center|justify) on p/h1/h2/h3/h4; classes on `a` and `img`.
+  const html =
+    '<h1 style="text-align: justify">A</h1><h2 style="text-align: center">B</h2>' +
+    '<h3 style="text-align: left">C</h3><h4 style="text-align: justify">D</h4>' +
+    '<p style="text-align: justify">E <strong>s</strong> <u>u</u> <em>e</em><br></p>' +
+    '<p style="text-align: center"><a target="_blank" rel="noopener noreferrer nofollow" class="text-[#9C72AF] underline hover:text-[#5A2D6B]" href="https://www.cuarzos.mx/mx/store">x</a>' +
+    ' <a target="_blank" rel="noopener noreferrer nofollow" class="text-blue-600 underline" href="/mx/blog">y</a></p>' +
+    '<blockquote><p>q</p></blockquote><hr><ul><li><p>l</p></li></ul><ol><li><p>o</p></li></ol>' +
+    '<img class="rounded-xl shadow-lg my-8 w-full max-h-[500px] object-cover" src="https://cdn.example.com/a.jpg" alt="a">' +
+    '<img class="max-w-full rounded" src="https://cdn.example.com/b.jpg" alt="b">'
+  const out = sanitizeHtml(html)
+  for (const piece of [
+    '<h1 style="text-align:justify">A</h1>',
+    '<h2 style="text-align:center">B</h2>',
+    '<h3 style="text-align:left">C</h3>',
+    '<h4 style="text-align:justify">D</h4>',
+    '<p style="text-align:justify">E <strong>s</strong> <u>u</u> <em>e</em><br /></p>',
+    'class="text-[#9C72AF] underline hover:text-[#5A2D6B]"',
+    'class="text-blue-600 underline"',
+    '<blockquote><p>q</p></blockquote><hr /><ul><li><p>l</p></li></ul><ol><li><p>o</p></li></ol>',
+    'class="rounded-xl shadow-lg my-8 w-full max-h-[500px] object-cover"',
+    'class="max-w-full rounded"',
+  ]) {
+    assert.ok(out.includes(piece), `${piece}\n-> ${out}`)
+  }
+  assert.ok(sanitizeHtml('<p style="text-align: right">r</p>').includes('style="text-align:right"'))
+})
+
+t("S5a/b/d: text style span keeps allowlisted color, font family and size", () => {
+  const out = sanitizeHtml(
+    `<p><span style="color: #5A2D6B; font-family: 'Lora', serif; font-size: 1.25rem">x</span></p>`
+  )
+  assert.equal(
+    out,
+    `<p><span style="color:#5A2D6B;font-family:'Lora', serif;font-size:1.25rem">x</span></p>`
+  )
+  for (const size of ["0.875rem", "1.5rem"]) {
+    assert.equal(styleOf(sanitizeHtml(`<span style="font-size: ${size}">x</span>`), "span"), `font-size:${size}`)
+  }
+  for (const c of ["#9C72AF", "#111827", "#6B7280", "#15803D", "#B45309", "#B91C1C", "#5a2d6b"]) {
+    assert.equal(styleOf(sanitizeHtml(`<span style="color: ${c}">x</span>`), "span"), `color:${c}`)
+  }
+})
+
+t("S5d: site fonts kept; Montserrat maps to the next/font variable", () => {
+  assert.equal(
+    styleOf(sanitizeHtml(`<span style="font-family: 'Montserrat', sans-serif">x</span>`), "span"),
+    `font-family:var(--font-montserrat), 'Montserrat', sans-serif`
+  )
+  assert.equal(
+    styleOf(sanitizeHtml(`<span style="font-family: 'Simple Serenity Serif', serif">x</span>`), "span"),
+    `font-family:'Simple Serenity Serif', serif`
+  )
+  assert.equal(
+    styleOf(sanitizeHtml(`<span style="font-family: 'Dancing Script', cursive">x</span>`), "span"),
+    `font-family:'Dancing Script', cursive`
+  )
+})
+
+t("S5: non-allowlisted text styles are dropped", () => {
+  const cases: [string, string | null][] = [
+    ["color: red; position: fixed", null],
+    ["color: #123456", null],
+    ["color: #5A2D6B; position: fixed; top: 0", "color:#5A2D6B"],
+    ["font-family: 'Comic Sans MS', cursive", null],
+    ["font-family: Arial", null],
+    ["font-family: 'Lora', serif; font-size: 99px", "font-family:'Lora', serif"],
+    ["font-size: 2rem", null],
+    ["background-color: url(https://evil.example.com/x.png)", null],
+    ["background-image: url(https://evil.example.com/x.png)", null],
+    ["color: expression(alert(1))", null],
+    ["display: none", null],
+  ]
+  for (const [style, expected] of cases) {
+    const out = sanitizeHtml(`<p><span style="${style}">x</span></p>`)
+    assert.equal(styleOf(out, "span"), expected, `${style} -> ${out}`)
+    assert.ok(out.includes(">x</span>"), out)
+  }
+  // text-align only with its 4 values, and not on spans
+  assert.equal(sanitizeHtml('<p style="text-align: start; color: red">x</p>'), "<p>x</p>")
+  assert.equal(styleOf(sanitizeHtml('<p style="text-align: center; position: fixed">x</p>'), "p"), "text-align:center")
+  // no style at all on tags outside the allowlist (div, li, img, blockquote)
+  assert.equal(
+    sanitizeHtml('<div style="color: #5A2D6B">a</div><ul><li style="color: #5A2D6B">b</li></ul>'),
+    "<div>a</div><ul><li>b</li></ul>"
+  )
+})
+
+t("S5c: highlight mark keeps palette background and data-color, drops others", () => {
+  const html = '<p><mark data-color="#FEF3C7" style="background-color: #FEF3C7; color: inherit">h</mark></p>'
+  assert.equal(
+    sanitizeHtml(html),
+    '<p><mark data-color="#FEF3C7" style="background-color:#FEF3C7;color:inherit">h</mark></p>'
+  )
+  assert.equal(
+    sanitizeHtml('<mark data-color="red" style="background-color: red; color: #FF0000">h</mark>'),
+    "<mark>h</mark>"
+  )
+  assert.equal(
+    sanitizeHtml('<mark style="background-color: url(javascript:alert(1))">h</mark>'),
+    "<mark>h</mark>"
+  )
+})
+
+t("S5e: notices keep data-callout with the 4 types only, and their rich content", () => {
+  for (const type of ["info", "success", "warning", "error"]) {
+    const html = `<div data-callout="${type}"><h3>T</h3><p>a <a href="/mx/store">l</a></p><ul><li><p>i</p></li></ul></div>`
+    assert.equal(sanitizeHtml(html), html)
+  }
+  assert.equal(sanitizeHtml('<div data-callout="x"><p>a</p></div>'), "<div><p>a</p></div>")
+  assert.equal(sanitizeHtml('<p data-callout="info">a</p>'), "<p>a</p>")
+})
+
+const BUTTON_STYLE =
+  "display: inline-block; background-color: #5A2D6B; color: #FFFFFF; border: 2px solid #111827; " +
+  "border-radius: 12px; padding: 12px 24px; font-size: 1rem; font-family: 'Lora', serif; " +
+  "font-weight: 600; text-transform: uppercase; text-align: center; text-decoration: none"
+
+t("S5f: buttons keep every validated property, data-button, class and href", () => {
+  const html =
+    `<p style="text-align: center"><a target="_blank" rel="noopener noreferrer" class="cta" data-button="" style="${BUTTON_STYLE}" href="/mx/store">Comprar</a></p>`
+  const out = sanitizeHtml(html)
+  assert.equal(
+    out,
+    '<p style="text-align:center"><a target="_blank" rel="noopener noreferrer" class="cta" data-button="" ' +
+      "style=\"display:inline-block;background-color:#5A2D6B;color:#FFFFFF;border:2px solid #111827;" +
+      "border-radius:12px;padding:12px 24px;font-size:1rem;font-family:'Lora', serif;" +
+      'font-weight:600;text-transform:uppercase;text-align:center;text-decoration:none" href="/mx/store">Comprar</a></p>'
+  )
+  const plain = sanitizeHtml(
+    '<a data-button="" style="display: block; background-color: transparent; color: #5A2D6B; border: none; border-radius: 9999px; padding: 8px 16px; font-size: 0.875rem; font-weight: 400; text-transform: none; text-align: center; text-decoration: none" href="https://www.cuarzos.mx/mx/store">x</a>'
+  )
+  assert.ok(
+    plain.includes(
+      'style="display:block;background-color:transparent;color:#5A2D6B;border:none;border-radius:9999px;padding:8px 16px;font-size:0.875rem;font-weight:400;text-transform:none;text-align:center;text-decoration:none"'
+    ),
+    plain
+  )
+  assert.ok(plain.includes('href="https://www.cuarzos.mx/mx/store"'), plain)
+})
+
+t("S5f: button values outside the allowlist are dropped or normalized", () => {
+  const out = sanitizeHtml(
+    '<a data-button="" style="display: inline-block; background-color: url(https://e.x/a.png); color: red; ' +
+      "border: 9px dashed #000; border-radius: 3px; padding: 0; font-size: 40px; font-family: 'Comic Sans MS'; " +
+      'font-weight: 900; position: fixed; top: 0; z-index: 9999" href="/mx/store">x</a>'
+  )
+  const style = styleOf(out, "a") ?? ""
+  assert.ok(!/url\(|red|dashed|Comic|position|z-index|9px|900|40px/.test(style), style)
+  for (const p of style.split(";")) {
+    const prop = p.split(":")[0]
+    assert.ok(
+      ["display", "background-color", "color", "border", "border-radius", "padding", "font-size", "font-family", "font-weight", "text-transform", "text-align", "text-decoration"].includes(prop),
+      `${prop} in ${style}`
+    )
+  }
+})
+
+t("S5f: button-only properties are dropped on links without data-button", () => {
+  assert.equal(
+    sanitizeHtml(`<a style="${BUTTON_STYLE}" href="/mx/store">x</a>`),
+    '<a href="/mx/store">x</a>'
+  )
+  assert.equal(
+    sanitizeHtml('<p style="display: inline-block; padding: 12px 24px; border: none">x</p>'),
+    "<p>x</p>"
+  )
+})
+
+t("S5f: button hrefs are a relative path or https only", () => {
+  for (const href of ["http://evil.example.com", "javascript:alert(1)", "//evil.example.com", "data:text/html,x", "mailto:a@b.c"]) {
+    const out = sanitizeHtml(`<a data-button="" href="${href}">x</a>`)
+    assert.ok(!/href=/.test(out), `${href} -> ${out}`)
+    assert.ok(out.includes(">x</a>"), out)
+  }
+  // ordinary links keep today's rules (http allowed)
+  assert.ok(sanitizeHtml('<a href="http://example.com">x</a>').includes('href="http://example.com"'))
+})
+
+t("S5g: FAQ details/summary with answer is kept", () => {
+  const html = '<details data-faq=""><summary>Pregunta</summary><div data-faq-answer=""><p>Respuesta <strong>larga</strong></p></div></details>'
+  assert.equal(sanitizeHtml(html), html)
+  assert.equal(
+    sanitizeHtml('<details open ontoggle="alert(1)"><summary onclick="x()">P</summary></details>'),
+    "<details><summary>P</summary></details>"
+  )
+})
+
+t("S5h: tables with colgroup, header cells, spans and min-width are kept", () => {
+  const html =
+    '<table style="min-width: 50px"><colgroup><col style="min-width: 25px"><col style="min-width: 25px"></colgroup>' +
+    '<tbody><tr><th colspan="1" rowspan="1"><p>H</p></th><th colspan="2" rowspan="1"><p>H2</p></th></tr>' +
+    '<tr><td colspan="1" rowspan="2"><p>c</p></td><td colspan="1" rowspan="1"><p>d</p></td></tr></tbody></table>'
+  assert.equal(
+    sanitizeHtml(html),
+    '<table style="min-width:50px"><colgroup><col style="min-width:25px" /><col style="min-width:25px" /></colgroup>' +
+      '<tbody><tr><th colspan="1" rowspan="1"><p>H</p></th><th colspan="2" rowspan="1"><p>H2</p></th></tr>' +
+      '<tr><td colspan="1" rowspan="2"><p>c</p></td><td colspan="1" rowspan="1"><p>d</p></td></tr></tbody></table>'
+  )
+  assert.equal(
+    sanitizeHtml('<table style="min-width: 50px; position: absolute; width: 9999px"><thead><tr><th style="min-width: 1px">a</th></tr></thead></table>'),
+    '<table style="min-width:50px"><thead><tr><th>a</th></tr></thead></table>'
+  )
+  assert.equal(sanitizeHtml('<table style="min-width: calc(100vw)"><tbody><tr><td colspan="x">a</td></tr></tbody></table>'), "<table><tbody><tr><td>a</td></tr></tbody></table>")
+})
+
+t("S5i: figures keep data-align (3 values), image key and caption", () => {
+  for (const align of ["left", "center", "right"]) {
+    const html = `<figure data-align="${align}"><img src="https://cdn.example.com/a.jpg" alt="a" data-image-key="K1"><figcaption>Pie</figcaption></figure>`
+    assert.equal(
+      sanitizeHtml(html),
+      `<figure data-align="${align}"><img src="https://cdn.example.com/a.jpg" alt="a" data-image-key="K1" /><figcaption>Pie</figcaption></figure>`
+    )
+  }
+  assert.equal(
+    sanitizeHtml('<figure data-align="top" style="float: left"><figcaption>x</figcaption></figure>'),
+    "<figure><figcaption>x</figcaption></figure>"
+  )
+})
+
+t("S5: unknown data-* attributes are dropped", () => {
+  assert.equal(
+    sanitizeHtml('<p data-x="1">a</p><span data-button="">b</span><div data-faq="">c</div>'),
+    "<p>a</p><span>b</span><div>c</div>"
+  )
+})
+
+console.log(`\n${passed}/${passed + failed} assertions groups passed`)
+if (failed > 0) process.exit(1)

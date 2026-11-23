@@ -3,15 +3,18 @@ import {
   shouldCollapseSeoContent,
 } from "@lib/util/seo-content"
 import SeoContentCollapsible from "./collapsible"
+import EditorFontsLink from "./editor-fonts-link"
 
 /**
  * Typography of the SEO HTML, taken from the blog body (`blog-content.tsx`)
  * at a smaller scale, with the h2 look this block already had. Tiptap's
  * `text-align` comes as inline style; the YouTube embed is made responsive
  * 16:9 by `[data-youtube-video]` in `globals.css`, here only full width.
+ * `editor-content` styles the editor blocks (notices, FAQ, tables, aligned
+ * figures, buttons) from `styles/editor-content.css`, like the blog body.
  */
 const CONTENT_CLASSES = [
-  "prose max-w-none",
+  "editor-content prose max-w-none",
   "prose-h2:text-xl prose-h2:md:text-2xl prose-h2:font-semibold prose-h2:text-main-color-dark prose-h2:mt-8 prose-h2:mb-3 [&>h2:first-child]:mt-0",
   "prose-h3:text-lg prose-h3:md:text-xl prose-h3:font-semibold prose-h3:text-gray-800 prose-h3:mt-6 prose-h3:mb-3",
   "prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mt-0 prose-p:mb-4",
@@ -49,6 +52,7 @@ export default function CategorySeoContent({
     >
       {/* Full-width divider ends the products area; the reading column is
           centered on the page, with left-aligned text for readability. */}
+      <EditorFontsLink html={html} />
       <div className="max-w-3xl mx-auto">
         <SeoContentCollapsible collapsible={shouldCollapseSeoContent(html)}>
           <div
