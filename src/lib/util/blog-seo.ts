@@ -16,8 +16,29 @@ import { SITE_URL, pageTitle } from "./seo"
  * Equivale a la config anterior: etiquetas de texto, `img`, `div` e `iframe`
  * (embeds de YouTube del editor) con los mismos atributos extra, y URLs solo
  * `http(s)` (o relativas). Nunca pasan `script`, `style`, atributos `on*` ni
- * `javascript:`; los `iframe` solo con `src` https.
+ * `javascript:`. Los `iframe` solo pasan con un embed https de YouTube
+ * (`YOUTUBE_EMBED_HOSTS`, ruta `/embed/...`); cualquier otro se quita entero.
+ * `style` se permite (lo usa la alineacion `text-align` del editor).
  */
+const YOUTUBE_EMBED_HOSTS = new Set(['www.youtube.com', 'www.youtube-nocookie.com'])
+
+/** `src` de un embed de YouTube por https, sin usuario ni puerto. */
+export function isYoutubeEmbedSrc(src: string | undefined): boolean {
+    if (!src) return false
+    let url: URL
+    try {
+        url = new URL(src)
+    } catch {
+        return false
+    }
+    return (
+        url.protocol === 'https:' &&
+        YOUTUBE_EMBED_HOSTS.has(url.hostname) &&
+        !url.port && !url.username && !url.password &&
+        url.pathname.startsWith('/embed/')
+    )
+}
+
 const SANITIZE_OPTIONS: sanitize.IOptions = {
     allowedTags: [
         ...sanitize.defaults.allowedTags,
@@ -32,7 +53,12 @@ const SANITIZE_OPTIONS: sanitize.IOptions = {
     },
     allowedSchemes: ['http', 'https'],
     allowedSchemesByTag: { iframe: ['https'] },
+    allowedIframeHostnames: Array.from(YOUTUBE_EMBED_HOSTS),
+    allowIframeRelativeUrls: false,
     allowProtocolRelative: false,
+    // Quita el iframe completo (no solo su `src`) si no es un embed de YouTube.
+    exclusiveFilter: (frame) =>
+        frame.tag === 'iframe' && !isYoutubeEmbedSrc(frame.attribs.src),
     transformTags: {
         a: (tagName, attribs) => {
             if (attribs.target === '_blank') {
@@ -85,19 +111,27 @@ function decodeEntities(text: string): string {
 }
 
 /**
- * Texto plano de un cuerpo en markdown o HTML, recortado a 160 caracteres como
- * maximo en un limite de palabra (con "…" si se corto). Es el respaldo de la
- * meta description cuando el post no tiene `seo_description`.
+ * Texto visible de un HTML: sin etiquetas ni el contenido de `script`,
+ * `style` e `iframe`, con entidades decodificadas y espacios colapsados.
  */
-export function plainTextExcerpt(body: string, max = DESCRIPTION_MAX): string {
-  const html = /<[^>]*>/.test(body) ? body : (marked.parse(body) as string)
-  const text = decodeEntities(
+export function htmlToPlainText(html: string): string {
+  return decodeEntities(
     html
       .replace(/<(script|style|iframe)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
       .replace(/<[^>]*>/g, " ")
   )
     .replace(/\s+/g, " ")
     .trim()
+}
+
+/**
+ * Texto plano de un cuerpo en markdown o HTML, recortado a 160 caracteres como
+ * maximo en un limite de palabra (con "…" si se corto). Es el respaldo de la
+ * meta description cuando el post no tiene `seo_description`.
+ */
+export function plainTextExcerpt(body: string, max = DESCRIPTION_MAX): string {
+  const html = /<[^>]*>/.test(body) ? body : (marked.parse(body) as string)
+  const text = htmlToPlainText(html)
 
   if (text.length <= max) return text
 

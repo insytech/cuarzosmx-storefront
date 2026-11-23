@@ -1,7 +1,8 @@
 import assert from "node:assert/strict"
 import {
-  parseSeoContent,
+  renderSeoContent,
   SEO_CONTENT_COLLAPSE_CHARS,
+  seoContentTextLength,
   shouldCollapseSeoContent,
 } from "./seo-content"
 
@@ -12,76 +13,73 @@ const t = (name: string, fn: () => void) => {
   console.log("  ok -", name)
 }
 
-t("returns no blocks for empty, whitespace, null or undefined", () => {
-  assert.deepEqual(parseSeoContent(""), [])
-  assert.deepEqual(parseSeoContent("   \n\n  \r\n "), [])
-  assert.deepEqual(parseSeoContent(null), [])
-  assert.deepEqual(parseSeoContent(undefined), [])
+t("renders nothing for empty, whitespace, non-string, null or undefined", () => {
+  assert.equal(renderSeoContent(""), "")
+  assert.equal(renderSeoContent("   \n\n  \r\n "), "")
+  assert.equal(renderSeoContent(null), "")
+  assert.equal(renderSeoContent(undefined), "")
+  assert.equal(renderSeoContent(42), "")
+  assert.equal(renderSeoContent({ html: "<p>x</p>" }), "")
 })
 
-t("one or more blank lines (with spaces or CRLF) separate paragraphs", () => {
-  assert.deepEqual(parseSeoContent("Uno\n\nDos"), [
-    { type: "p", text: "Uno" },
-    { type: "p", text: "Dos" },
-  ])
-  assert.deepEqual(parseSeoContent("Uno\r\n  \r\n\r\nDos\n \t\nTres"), [
-    { type: "p", text: "Uno" },
-    { type: "p", text: "Dos" },
-    { type: "p", text: "Tres" },
-  ])
-})
-
-t("single newlines inside a paragraph are joined with a space", () => {
-  assert.deepEqual(parseSeoContent("Línea uno\nlínea dos\r\n  línea tres  "), [
-    { type: "p", text: "Línea uno línea dos línea tres" },
-  ])
-})
-
-t("a line starting with '## ' becomes an h2, even without a blank line after it", () => {
-  assert.deepEqual(
-    parseSeoContent("## Cuarzos por kilo\nTexto del párrafo\nsigue aquí\n\n##   Otro título  \n\nFinal"),
-    [
-      { type: "h2", text: "Cuarzos por kilo" },
-      { type: "p", text: "Texto del párrafo sigue aquí" },
-      { type: "h2", text: "Otro título" },
-      { type: "p", text: "Final" },
-    ]
+t("S1: legacy plain text keeps its '## ' headings and blank-line paragraphs", () => {
+  const out = renderSeoContent(
+    "## Cuarzos por kilo\nTexto del párrafo\nsigue aquí\n\nSegundo párrafo"
   )
+  assert.ok(out.includes("<h2>Cuarzos por kilo</h2>"), out)
+  assert.equal((out.match(/<p>/g) ?? []).length, 2, out)
+  assert.ok(out.includes("Segundo párrafo"), out)
 })
 
-t("a heading in the middle of a paragraph splits it", () => {
-  assert.deepEqual(parseSeoContent("Antes\n## Título\nDespués"), [
-    { type: "p", text: "Antes" },
-    { type: "h2", text: "Título" },
-    { type: "p", text: "Después" },
-  ])
+t("S1: editor HTML keeps headings, links, marks, lists, alignment and images", () => {
+  const html =
+    '<h2 style="text-align: center">Título</h2>' +
+    '<p><strong>a</strong> <em>b</em> <u>c</u> <s>d</s> ' +
+    '<a target="_blank" rel="noopener noreferrer nofollow" class="text-[#9C72AF] underline hover:text-[#5A2D6B]" href="https://www.cuarzos.mx/mx/store">tienda</a></p>' +
+    "<ul><li><p>uno</p></li></ul><ol><li><p>dos</p></li></ol>" +
+    '<img class="rounded-xl" src="https://cdn.example.com/a.jpg" alt="a.jpg" data-image-key="abc">'
+  const out = renderSeoContent(html)
+  assert.ok(out.includes('<h2 style="text-align:center">Título</h2>'), out)
+  assert.ok(out.includes('<a target="_blank" rel="noopener noreferrer"'), out)
+  assert.ok(out.includes('href="https://www.cuarzos.mx/mx/store"'), out)
+  for (const tag of ["<strong>", "<em>", "<u>", "<s>", "<ul>", "<ol>"]) {
+    assert.ok(out.includes(tag), `${tag} missing: ${out}`)
+  }
+  assert.ok(out.includes('src="https://cdn.example.com/a.jpg"'), out)
 })
 
-t("'##' without text is ignored", () => {
-  assert.deepEqual(parseSeoContent("##\n\n##   \n\nTexto"), [{ type: "p", text: "Texto" }])
+t("S1: scripts and handlers in the stored value are dropped", () => {
+  const out = renderSeoContent('<p onclick="x()">Hola</p><script>alert(1)</script>')
+  assert.equal(out, "<p>Hola</p>")
 })
 
-t("'##' without a following space is plain text", () => {
-  assert.deepEqual(parseSeoContent("##Hola"), [{ type: "p", text: "##Hola" }])
-})
-
-t("HTML-like text stays as literal text", () => {
-  assert.deepEqual(parseSeoContent("<script>alert(1)</script>\n\n## <b>x</b>"), [
-    { type: "p", text: "<script>alert(1)</script>" },
-    { type: "h2", text: "<b>x</b>" },
-  ])
-})
-
-t("collapses only text longer than the threshold (headings count)", () => {
-  const p = (n: number) => ({ type: "p" as const, text: "a".repeat(n) })
-  const h = (n: number) => ({ type: "h2" as const, text: "b".repeat(n) })
-  assert.equal(shouldCollapseSeoContent([]), false)
-  assert.equal(shouldCollapseSeoContent([p(SEO_CONTENT_COLLAPSE_CHARS)]), false)
-  assert.equal(shouldCollapseSeoContent([p(SEO_CONTENT_COLLAPSE_CHARS + 1)]), true)
+t("S1: text length ignores tags and attributes, decodes entities, collapses whitespace", () => {
+  assert.equal(seoContentTextLength(""), 0)
   assert.equal(
-    shouldCollapseSeoContent([h(10), p(SEO_CONTENT_COLLAPSE_CHARS - 9)]),
-    true
+    seoContentTextLength('<h2 style="text-align: center">ab</h2><p><a href="https://x.com/very/long">c</a></p>'),
+    "ab c".length
   )
+  assert.equal(seoContentTextLength("<p>a &amp; b</p>"), "a & b".length)
+  assert.equal(seoContentTextLength("<p>a \n\n\t  b</p>\n\n<p>  c </p>"), "a b c".length)
+  assert.equal(
+    seoContentTextLength(
+      '<div data-youtube-video=""><iframe src="https://www.youtube.com/embed/abc"></iframe></div><img src="https://cdn.example.com/a.jpg" alt="x">'
+    ),
+    0
+  )
+})
+
+t("S1: fold decision on HTML counts text only (threshold unchanged)", () => {
+  assert.equal(SEO_CONTENT_COLLAPSE_CHARS, 600)
+  const a = (n: number) => "a".repeat(n)
+  const longAttr = `<p style="text-align: left" class="${a(2000)}">`
+  assert.equal(shouldCollapseSeoContent(""), false)
+  assert.equal(shouldCollapseSeoContent(`<p>${a(600)}</p>`), false)
+  assert.equal(shouldCollapseSeoContent(`<p>${a(601)}</p>`), true)
+  // 2000 chars of markup, 600 chars of text: still not folded.
+  assert.equal(shouldCollapseSeoContent(`${longAttr}${a(600)}</p>`), false)
+  // headings count toward the length
+  assert.equal(shouldCollapseSeoContent(`<h2>${a(10)}</h2><p>${a(590)}</p>`), true)
 })
 
 console.log(`\n${passed}/${passed} assertions groups passed`)

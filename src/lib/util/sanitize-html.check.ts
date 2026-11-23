@@ -63,6 +63,49 @@ t("drops iframes that are not https", () => {
   assert.ok(!/src=/.test(out), out)
 })
 
+t("S3: keeps the nocookie YouTube embed Tiptap's paste rule produces", () => {
+  const html =
+    '<div data-youtube-video=""><iframe width="640" height="480" allowfullscreen="true" autoplay="false" disablekbcontrols="false" src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?start=10" class="rounded-xl"></iframe></div>'
+  const out = sanitizeHtml(html)
+  assert.ok(
+    out.includes('src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?start=10"'),
+    out
+  )
+  assert.ok(!/autoplay|disablekbcontrols/.test(out), out)
+})
+
+t("S3: drops iframes whose src is not an https YouTube embed", () => {
+  const bad = [
+    "http://www.youtube.com/embed/abc",
+    "http://www.youtube-nocookie.com/embed/abc",
+    "https://player.vimeo.com/video/123",
+    "https://evil.example.com/embed/abc",
+    "https://www.youtube.com.evil.example.com/embed/abc",
+    "https://evil.example.com/?u=https://www.youtube.com/embed/abc",
+    "https://www.youtube.com/watch?v=abc",
+    "https://user@www.youtube.com/embed/abc",
+    "https://www.youtube.com:8443/embed/abc",
+    "//www.youtube.com/embed/abc",
+    "/embed/abc",
+    "javascript:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+  ]
+  for (const src of bad) {
+    const out = sanitizeHtml(`<p>a</p><iframe src="${src}"></iframe><p>b</p>`)
+    assert.ok(!/<iframe/i.test(out), `${src} -> ${out}`)
+    assert.ok(out.includes("<p>a</p>") && out.includes("<p>b</p>"), out)
+  }
+  assert.ok(!/<iframe/i.test(sanitizeHtml("<p>a</p><iframe></iframe>")))
+})
+
+t("keeps Tiptap text-align styles on headings and paragraphs", () => {
+  const html = '<h2 style="text-align: center">T</h2><p style="text-align: right">x</p>'
+  assert.equal(
+    sanitizeHtml(html),
+    '<h2 style="text-align:center">T</h2><p style="text-align:right">x</p>'
+  )
+})
+
 t("renders markdown bodies to sanitized HTML", () => {
   const out = sanitizeHtml(
     "## La conexión espiritual\n\n- uno\n- dos\n\n[tienda](https://www.cuarzos.mx)"

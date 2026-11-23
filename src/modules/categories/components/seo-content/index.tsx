@@ -1,14 +1,35 @@
 import {
-  parseSeoContent,
+  renderSeoContent,
   shouldCollapseSeoContent,
 } from "@lib/util/seo-content"
 import SeoContentCollapsible from "./collapsible"
 
 /**
+ * Typography of the SEO HTML, taken from the blog body (`blog-content.tsx`)
+ * at a smaller scale, with the h2 look this block already had. Tiptap's
+ * `text-align` comes as inline style; the YouTube embed is made responsive
+ * 16:9 by `[data-youtube-video]` in `globals.css`, here only full width.
+ */
+const CONTENT_CLASSES = [
+  "prose max-w-none",
+  "prose-h2:text-xl prose-h2:md:text-2xl prose-h2:font-semibold prose-h2:text-main-color-dark prose-h2:mt-8 prose-h2:mb-3 [&>h2:first-child]:mt-0",
+  "prose-h3:text-lg prose-h3:md:text-xl prose-h3:font-semibold prose-h3:text-gray-800 prose-h3:mt-6 prose-h3:mb-3",
+  "prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mt-0 prose-p:mb-4",
+  "prose-a:text-main-color prose-a:no-underline hover:prose-a:underline hover:prose-a:text-main-color-dark",
+  "prose-strong:text-gray-900 prose-strong:font-semibold",
+  "[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4",
+  "[&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-4",
+  "[&_li]:mb-2 [&_li]:text-gray-700 [&_li>p]:my-0 [&_li::marker]:text-main-color",
+  "[&_img]:w-full [&_img]:h-auto [&_img]:max-h-[500px] [&_img]:object-cover [&_img]:rounded-xl [&_img]:shadow-md [&_img]:my-8",
+  "[&_[data-youtube-video]]:my-8 [&_iframe]:w-full [&_iframe]:rounded-xl [&_iframe]:shadow-md",
+  "[&>*:last-child]:mb-0",
+].join(" ")
+
+/**
  * Editable SEO text shown below a category's products (`metadata.seo_content`).
- * Server component: the text is in the initial HTML so crawlers see it. Blocks
- * are rendered as React text nodes, so any HTML typed in the admin is escaped.
- * Long text starts folded behind "Ver más"; folding is visual only.
+ * Server component: the sanitized HTML is in the initial HTML so crawlers see
+ * it (legacy plain text is rendered as markdown). Long text starts folded
+ * behind "Ver más"; folding is visual only.
  */
 export default function CategorySeoContent({
   content,
@@ -17,8 +38,8 @@ export default function CategorySeoContent({
   content: unknown
   categoryName: string
 }) {
-  const blocks = parseSeoContent(typeof content === "string" ? content : null)
-  if (!blocks.length) return null
+  const html = renderSeoContent(content)
+  if (!html) return null
 
   return (
     <section
@@ -29,24 +50,11 @@ export default function CategorySeoContent({
       {/* Full-width divider ends the products area; the reading column is
           centered on the page, with left-aligned text for readability. */}
       <div className="max-w-3xl mx-auto">
-        <SeoContentCollapsible collapsible={shouldCollapseSeoContent(blocks)}>
-          {blocks.map((block, i) =>
-            block.type === "h2" ? (
-              <h2
-                key={i}
-                className="text-xl md:text-2xl font-semibold text-main-color-dark mt-8 first:mt-0 mb-3"
-              >
-                {block.text}
-              </h2>
-            ) : (
-              <p
-                key={i}
-                className="text-gray-700 leading-relaxed mb-4 last:mb-0"
-              >
-                {block.text}
-              </p>
-            )
-          )}
+        <SeoContentCollapsible collapsible={shouldCollapseSeoContent(html)}>
+          <div
+            className={CONTENT_CLASSES}
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
         </SeoContentCollapsible>
       </div>
     </section>
