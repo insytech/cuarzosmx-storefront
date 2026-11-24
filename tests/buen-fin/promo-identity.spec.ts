@@ -82,7 +82,7 @@ async function expectIdentity(page: Page, promotion: StorePromotion) {
   // Nav link (desktop): menu text, page address, darker shade of the colour
   const navLink = page.getByTestId("nav-buen-fin-link")
   await expect(navLink).toBeVisible()
-  await expect(navLink).toHaveText(promotion.menu_label)
+  await expect(navLink).toHaveText(promotion.menu_label ?? "")
   await expect(navLink).toHaveAttribute("href", pagePath)
   await expect(navLink).toHaveCSS("color", rgb(palette.dark))
 
@@ -108,7 +108,7 @@ async function expectIdentity(page: Page, promotion: StorePromotion) {
   await page.setViewportSize({ width: 390, height: 844 })
   const mobileLink = page.getByTestId("nav-buen-fin-link-mobile")
   await expect(mobileLink).toBeVisible()
-  await expect(mobileLink).toHaveText(promotion.menu_label)
+  await expect(mobileLink).toHaveText(promotion.menu_label ?? "")
   await expect(mobileLink).toHaveAttribute("href", pagePath)
   await expect(mobileLink).toHaveCSS("color", rgb(palette.dark))
   await page.setViewportSize({ width: 1440, height: 900 })
@@ -120,7 +120,7 @@ async function expectIdentity(page: Page, promotion: StorePromotion) {
   await expect(root).toBeVisible()
   await expect(page.getByTestId("buen-fin-empty")).toHaveCount(0)
 
-  const maxPct = Math.max(...promotion.tiers.map((t) => t.percentage))
+  const maxPct = Math.max(...promotion.tiers.map((t) => t.percentage ?? 0))
   await expect(root.getByRole("heading", { level: 1 })).toHaveText(
     promotion.page_headline ?? BUEN_FIN_HEADLINE
   )
@@ -203,13 +203,12 @@ test.describe("Promotion identity", () => {
         ).not.toHaveText(BUEN_FIN_HEADLINE)
       }
 
-      // The Buen Fin address is not the one in force: friendly message, no 404
+      // The Buen Fin address is not the one in force: the page does not exist
       const response = await page.goto(
         `/${COUNTRY_CODE}/promociones/buen-fin`,
         { waitUntil: "domcontentloaded" }
       )
-      expect(response?.status()).toBe(200)
-      await expect(page.getByTestId("buen-fin-empty")).toBeVisible()
+      expect(response?.status()).toBe(404)
       await expect(page.getByTestId("buen-fin-page")).toHaveCount(0)
     }
   )
@@ -291,32 +290,21 @@ test.describe("Promotion identity", () => {
       )
 
       // Old address: always redirects, whatever promotion is in force
-      await page.goto(`/${COUNTRY_CODE}/buen-fin`, { waitUntil: "domcontentloaded" })
+      // (the Buen Fin page itself exists only while Buen Fin is in force)
+      const old = await page.goto(`/${COUNTRY_CODE}/buen-fin`, { waitUntil: "domcontentloaded" })
       await page.waitForURL(`**/${COUNTRY_CODE}/promociones/buen-fin`)
-      await expect(
-        page.getByTestId("buen-fin-page").or(page.getByTestId("buen-fin-empty"))
-      ).toBeVisible()
+      if (old?.status() === 200) {
+        await expect(page.getByTestId("buen-fin-page")).toBeVisible()
+      } else {
+        expect(old?.status()).toBe(404)
+      }
 
-      // Address that no promotion owns: message + link to the store, no 404
+      // Address that no promotion in force owns: 404
       const response = await page.goto(
         `/${COUNTRY_CODE}/promociones/no-existe-esta-promo`,
         { waitUntil: "domcontentloaded" }
       )
-      expect(response?.status()).toBe(200)
-      // ...and kept out of search results
-      await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
-        "content",
-        /noindex/
-      )
-      const empty = page.getByTestId("buen-fin-empty")
-      await expect(empty).toBeVisible()
-      await expect(empty.getByRole("heading", { level: 1 })).toHaveText(
-        "Por ahora no hay promociones activas"
-      )
-      await expect(empty.getByRole("link", { name: "Ver la tienda" })).toHaveAttribute(
-        "href",
-        `/${COUNTRY_CODE}/store`
-      )
+      expect(response?.status()).toBe(404)
       await expect(page.getByTestId("buen-fin-page")).toHaveCount(0)
     }
   )

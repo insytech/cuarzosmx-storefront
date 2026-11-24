@@ -1,5 +1,6 @@
 import { convertToLocale } from "@lib/util/money"
 import { getShippingProviderInfo } from "@lib/data/fulfillment"
+import { getShippingPromoDiscount } from "@lib/util/store-promotion"
 import { HttpTypes } from "@medusajs/types"
 import { Heading, Text } from "@medusajs/ui"
 
@@ -92,12 +93,16 @@ const ShippingDetails = async ({ order }: ShippingDetailsProps) => {
           <Text className="txt-medium-plus text-gray-800 mb-1 font-semibold">Método</Text>
           <Text className="txt-medium text-gray-600">
             {shippingMethod?.name} (
-            {convertToLocale({
-              amount: order.shipping_methods?.[0]?.total ?? 0,
-              currency_code: order.currency_code,
-            })
-              .replace(/,/g, "")
-              .replace(/\./g, ",")}
+            {/* Total ya con ajustes: 0 con el envío gratis de la promoción */}
+            {getShippingPromoDiscount(order.shipping_methods?.slice(0, 1)) &&
+            (order.shipping_methods?.[0]?.total ?? 0) <= 0
+              ? "Gratis"
+              : convertToLocale({
+                  amount: order.shipping_methods?.[0]?.total ?? 0,
+                  currency_code: order.currency_code,
+                })
+                  .replace(/,/g, "")
+                  .replace(/\./g, ",")}
             )
           </Text>
           {/* Mostrar info del proveedor si está disponible */}

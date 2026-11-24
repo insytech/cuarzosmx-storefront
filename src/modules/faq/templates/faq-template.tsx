@@ -6,6 +6,8 @@ import {
     BULK_FAQ_QUESTION,
     FALLBACK_PROMOTION_STATE,
     getBulkFaqParagraphs,
+    getShippingFaqNote,
+    SHIPPING_FAQ_QUESTION,
     type StorePromotionState,
 } from "@lib/util/store-promotion"
 
@@ -40,7 +42,7 @@ const faqItems: FAQItem[] = [
         answer: null
     },
     {
-        question: "¿Cuentan con servicio de envíos?",
+        question: SHIPPING_FAQ_QUESTION,
         answer: "Contamos con el servicio de envío por paquetería a todo el país por un costo adicional a su compra. El costo varía dependiendo del destino."
     },
     {
@@ -144,11 +146,25 @@ export default function FAQTemplate({
     promotionState?: StorePromotionState
 }) {
     const [openIndex, setOpenIndex] = useState<number | null>(0)
-    const items = faqItems.map((item) =>
-        item.question === BULK_FAQ_QUESTION
-            ? { ...item, answer: getBulkAnswer(promotionState) }
-            : item
-    )
+    const shippingNote = getShippingFaqNote(promotionState)
+    const items = faqItems.map((item) => {
+        if (item.question === BULK_FAQ_QUESTION) {
+            return { ...item, answer: getBulkAnswer(promotionState) }
+        }
+        // Envío gratis de la promoción vigente (S3): se agrega a la respuesta
+        if (item.question === SHIPPING_FAQ_QUESTION && shippingNote) {
+            return {
+                ...item,
+                answer: (
+                    <>
+                        {item.answer}
+                        <p className="mt-2"><strong>{shippingNote}</strong></p>
+                    </>
+                ),
+            }
+        }
+        return item
+    })
 
     const handleToggle = (index: number) => {
         setOpenIndex(openIndex === index ? null : index)

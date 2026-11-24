@@ -12,9 +12,16 @@ export const PROMO_TIMEZONE = "America/Mexico_City"
 /** Line-item adjustments written by the tier engine start with this prefix. */
 export const TIER_ADJUSTMENT_PREFIX = "Promo por monto:"
 
+/**
+ * One tier of a promotion (S8/S14): from `min_amount` the cart gets a
+ * percentage, free shipping on every shipping method, or both. At least one
+ * benefit is always present after parsing.
+ */
 export interface StorePromotionTier {
   min_amount: number
-  percentage: number
+  /** null → the tier gives no percentage (free shipping only). */
+  percentage: number | null
+  free_shipping: boolean
 }
 
 export interface StorePromotion {
@@ -26,9 +33,12 @@ export interface StorePromotion {
   show_band: boolean
   band_logo_url: string | null
   topbar_message: string | null
-  /** Season identity (always present after parsing, see the fallbacks below). */
-  menu_label: string
-  page_slug: string
+  /**
+   * Season identity. null → the promotion has no menu link / no page (S13).
+   * A backend that predates identities (keys absent) gets the Buen Fin defaults.
+   */
+  menu_label: string | null
+  page_slug: string | null
   /** "#RRGGBB", upper case. */
   season_color: string
   /** null → DEFAULT_PAGE_HEADLINE / getDefaultPageSubtitle(). */
@@ -113,11 +123,14 @@ function parseTiers(value: unknown): StorePromotionTier[] {
   for (const raw of value) {
     if (!isRecord(raw)) continue
     const min = toFiniteNumber(raw.min_amount)
-    const pct = toFiniteNumber(raw.percentage)
-    if (min === null || pct === null || min < 0 || pct <= 0 || pct > 100) {
+    const rawPct = toFiniteNumber(raw.percentage)
+    const pct = rawPct !== null && rawPct > 0 && rawPct <= 100 ? rawPct : null
+    // Older backends do not send free_shipping: treat it as false.
+    const freeShipping = raw.free_shipping === true
+    if (min === null || min < 0 || (pct === null && !freeShipping)) {
       continue
     }
-    tiers.push({ min_amount: min, percentage: pct })
+    tiers.push({ min_amount: min, percentage: pct, free_shipping: freeShipping })
   }
   return tiers.sort((a, b) => a.min_amount - b.min_amount)
 }
@@ -125,9 +138,22 @@ function parseTiers(value: unknown): StorePromotionTier[] {
 const PAGE_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
 const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i
 
-function parsePageSlug(value: unknown): string {
+/**
+ * Absent key (backend without identities) → Buen Fin default; null or empty →
+ * no page (S13); a malformed string keeps the old fallback to the default.
+ */
+function parsePageSlug(value: unknown): string | null {
+  if (value === undefined) return DEFAULT_PAGE_SLUG
+  if (value === null) return null
   const slug = typeof value === "string" ? value.trim() : ""
+  if (!slug) return null
   return PAGE_SLUG_PATTERN.test(slug) ? slug : DEFAULT_PAGE_SLUG
+}
+
+/** Absent key → Buen Fin default; null or empty → no menu link (S13). */
+function parseMenuLabel(value: unknown): string | null {
+  if (value === undefined) return DEFAULT_MENU_LABEL
+  return typeof value === "string" && value.trim() ? value.trim() : null
 }
 
 function parseSeasonColor(value: unknown): string {
@@ -158,7 +184,7 @@ function parsePromotion(value: unknown): StorePromotion | null {
     show_band: value.show_band === true,
     band_logo_url: nonEmpty(value.band_logo_url),
     topbar_message: nonEmpty(value.topbar_message),
-    menu_label: nonEmpty(value.menu_label) ?? DEFAULT_MENU_LABEL,
+    menu_label: parseMenuLabel(value.menu_label),
     page_slug: parsePageSlug(value.page_slug),
     season_color: parseSeasonColor(value.season_color),
     page_headline: nonEmpty(value.page_headline),
@@ -215,6 +241,20 @@ export function resolvePromotionState(
 /** Storefront path of a promotion page, without the country prefix. */
 export function getPromotionPagePath(slug: string): string {
   return `/promociones/${slug}`
+}
+
+/** Page path of the promotion, or null when it has no page (S13). */
+export function getPromotionPageHref(promotion: StorePromotion): string | null {
+  return promotion.page_slug ? getPromotionPagePath(promotion.page_slug) : null
+}
+
+/** Menu link of the promotion: needs both a label and a page (S13). */
+export function getPromotionMenuLink(
+  promotion: StorePromotion | null | undefined
+): { label: string; href: string } | null {
+  if (!promotion?.menu_label) return null
+  const href = getPromotionPageHref(promotion)
+  return href ? { label: promotion.menu_label, href } : null
 }
 
 export interface SeasonPalette {
@@ -310,40 +350,185 @@ export function getDefaultPageSubtitle(maxPercentage: number): string {
   return `Hasta ${maxPercentage}% de descuento en toda la tienda, aplicado automáticamente en tu carrito. Se combina con cupones.`
 }
 
-/** Promotion page subtitle: the admin text or today's default. */
+/** Promotion page subtitle: the admin text or a default for its benefits. */
 export function getPromotionPageSubtitle(promotion: StorePromotion): string {
-  return (
-    promotion.page_subtitle ??
-    getDefaultPageSubtitle(getMaxPercentage(promotion.tiers))
-  )
+  if (promotion.page_subtitle) return promotion.page_subtitle
+  const maxPct = getMaxPercentage(promotion.tiers)
+  const freeTier = getFreeShippingTier(promotion.tiers)
+  if (!freeTier) return getDefaultPageSubtitle(maxPct)
+  const freeFrom = formatTierAmount(freeTier.min_amount)
+  if (maxPct <= 0) {
+    return `Envío gratis en compras desde ${freeFrom}, en cualquier opción de envío y aplicado automáticamente en tu carrito.`
+  }
+  return `Hasta ${maxPct}% de descuento y envío gratis desde ${freeFrom}, aplicados automáticamente en tu carrito. Se combina con cupones.`
 }
 
 // ---------------------------------------------------------------------------
 // Tiers
 // ---------------------------------------------------------------------------
 
+/** Highest percentage of the promotion; 0 when no tier gives one. */
 export function getMaxPercentage(tiers: StorePromotionTier[]): number {
-  return tiers.reduce((max, t) => Math.max(max, t.percentage), 0)
+  return tiers.reduce((max, t) => Math.max(max, t.percentage ?? 0), 0)
 }
 
-/** Highest tier reached by `amount` (only one tier ever applies). */
+/** The tier gives a percentage discount. */
+export function tierHasPercentage(
+  tier: StorePromotionTier | null | undefined
+): tier is StorePromotionTier & { percentage: number } {
+  return typeof tier?.percentage === "number" && tier.percentage > 0
+}
+
+/** Some tier of the promotion gives a percentage discount. */
+export function hasPercentageTier(tiers: StorePromotionTier[]): boolean {
+  return tiers.some(tierHasPercentage)
+}
+
+/** Lowest tier that gives free shipping, or null when none does. */
+export function getFreeShippingTier(
+  tiers: StorePromotionTier[]
+): StorePromotionTier | null {
+  return tiers.find((t) => t.free_shipping) ?? null
+}
+
+/**
+ * Benefits of a tier as text: "25%", "envío gratis" or "25% y envío gratis".
+ * `previous` limits the text to what the tier adds on top of it (e.g. going
+ * from 20% to 20% + free shipping only adds "envío gratis").
+ */
+export function formatTierBenefit(
+  tier: StorePromotionTier,
+  previous?: StorePromotionTier | null
+): string {
+  const pctIsNew =
+    tierHasPercentage(tier) &&
+    (!previous || tier.percentage !== previous.percentage)
+  const freeIsNew = tier.free_shipping && !previous?.free_shipping
+  const showPct = pctIsNew || (!freeIsNew && tierHasPercentage(tier))
+  const showFree = freeIsNew || (!pctIsNew && tier.free_shipping)
+  const parts: string[] = []
+  if (showPct) parts.push(`${tier.percentage}%`)
+  if (showFree) parts.push("envío gratis")
+  return parts.join(" y ")
+}
+
+/**
+ * Short chip/label text: "25%", "Envío gratis" or "25% + envío gratis". Pass
+ * an accumulated tier (accumulateTiers) to show everything it includes.
+ */
+export function formatTierBenefitShort(tier: StorePromotionTier): string {
+  if (tierHasPercentage(tier)) {
+    return tier.free_shipping
+      ? `${tier.percentage}% + envío gratis`
+      : `${tier.percentage}%`
+  }
+  return "Envío gratis"
+}
+
+/**
+ * One-line summary of what the promotion offers, without the name:
+ * "hasta 30% de descuento" / "envío gratis desde $1,500" /
+ * "hasta 30% de descuento y envío gratis desde $3,000".
+ */
+export function formatPromotionBenefits(promotion: StorePromotion): string {
+  const maxPct = getMaxPercentage(promotion.tiers)
+  const freeTier = getFreeShippingTier(promotion.tiers)
+  const pctText = maxPct > 0 ? `hasta ${maxPct}% de descuento` : ""
+  const freeText = freeTier
+    ? `envío gratis desde ${formatTierAmount(freeTier.min_amount)}`
+    : ""
+  return [pctText, freeText].filter(Boolean).join(" y ")
+}
+
+/** Same as formatPromotionBenefits, capitalised for titles. */
+export function formatPromotionHeadline(promotion: StorePromotion): string {
+  const maxPct = getMaxPercentage(promotion.tiers)
+  const freeTier = getFreeShippingTier(promotion.tiers)
+  if (!freeTier) return `Hasta ${maxPct}% de descuento en toda la tienda`
+  const freeFrom = formatTierAmount(freeTier.min_amount)
+  if (maxPct <= 0) return `Envío gratis en compras desde ${freeFrom}`
+  return `Hasta ${maxPct}% de descuento y envío gratis desde ${freeFrom}`
+}
+
+/**
+ * Benefits in force at each tier (S14, L9): benefits of reached tiers
+ * ACCUMULATE. The percentage is the highest one among the tiers reached so
+ * far and free shipping stays once a reached tier gives it, so a higher tier
+ * never takes a benefit away ("20% desde $1,500 + envío gratis desde $3,000"
+ * → at $3,000: 20% y envío gratis). Same order and min_amount as `tiers`.
+ */
+export function accumulateTiers(
+  tiers: StorePromotionTier[]
+): StorePromotionTier[] {
+  let pct: number | null = null
+  let free = false
+  return tiers.map((tier) => {
+    if (tierHasPercentage(tier) && (pct === null || tier.percentage > pct)) {
+      pct = tier.percentage
+    }
+    free = free || tier.free_shipping
+    return { min_amount: tier.min_amount, percentage: pct, free_shipping: free }
+  })
+}
+
+function sameBenefits(
+  a: StorePromotionTier | null,
+  b: StorePromotionTier
+): boolean {
+  return (
+    !!a &&
+    (a.percentage ?? 0) === (b.percentage ?? 0) &&
+    a.free_shipping === b.free_shipping
+  )
+}
+
+/**
+ * Benefits in force for `amount` (accumulated over every reached tier), with
+ * the min_amount of the highest tier reached; null when none is reached.
+ */
 export function getCurrentTier(
   tiers: StorePromotionTier[],
   amount: number
 ): StorePromotionTier | null {
   let current: StorePromotionTier | null = null
-  for (const tier of tiers) {
+  for (const tier of accumulateTiers(tiers)) {
     if (amount >= tier.min_amount) current = tier
   }
   return current
 }
 
-/** Lowest tier not reached yet, or null when the max tier is reached. */
+/**
+ * Next tier that adds something to what `amount` already has (accumulated
+ * benefits), or null when nothing is left to gain. A tier that repeats the
+ * benefits already in force (e.g. same percentage, no new free shipping) is
+ * skipped, so the cart never says "Agrega $X y obtén" something it has.
+ */
 export function getNextTier(
   tiers: StorePromotionTier[],
   amount: number
 ): StorePromotionTier | null {
-  return tiers.find((tier) => amount < tier.min_amount) ?? null
+  const current = getCurrentTier(tiers, amount)
+  return (
+    accumulateTiers(tiers).find(
+      (tier) => amount < tier.min_amount && !sameBenefits(current, tier)
+    ) ?? null
+  )
+}
+
+/**
+ * Label of a tier on the progress track: what it adds to the previous one.
+ * "25%", "Envío gratis" (first benefit), "+ envío gratis" (added to a
+ * percentage) or "25% + envío gratis". Takes accumulated tiers.
+ */
+export function formatTierMarkLabel(
+  tier: StorePromotionTier,
+  previous?: StorePromotionTier | null
+): string {
+  const added = formatTierBenefit(tier, previous)
+  if (added === "envío gratis") {
+    return tierHasPercentage(previous) ? "+ envío gratis" : "Envío gratis"
+  }
+  return added.replace(" y envío gratis", " + envío gratis")
 }
 
 /** Amount (rounded to cents) still missing to reach the next tier. */
@@ -419,6 +604,26 @@ export interface PromoLineItemLike {
 export interface TierAdjustmentInfo {
   name: string
   percentage: number | null
+  /** "Promo por monto: {name} envío gratis" (shipping-method adjustment). */
+  free_shipping: boolean
+}
+
+export interface PromoShippingMethodLike {
+  amount?: number | string | null
+  adjustments?: PromoAdjustmentLike[] | null
+}
+
+export interface ShippingPromoSummary {
+  /** Sum of the promotion's shipping adjustments (what it took off shipping). */
+  amount: number
+  /** Promotion name, when the adjustment description was fetched (orders). */
+  name: string | null
+  /**
+   * Shipping adjustments of coupons (with code) on the same methods. With a
+   * shipping coupon the promotion only covers what the coupon left, so its
+   * adjustment can be less than the method price (S14).
+   */
+  coupon_amount: number
 }
 
 export interface TierDiscountSummary {
@@ -458,17 +663,94 @@ export function isTierAdjustment(
   )
 }
 
-/** "Promo por monto: Buen Fin 2026 -25%" → { name: "Buen Fin 2026", percentage: 25 } */
+const FREE_SHIPPING_SUFFIX = /\s*env[ií]o\s+gratis\s*$/i
+
+/**
+ * "Promo por monto: Buen Fin 2026 -25%" → { name: "Buen Fin 2026", percentage: 25 }
+ * "Promo por monto: Diciembre envío gratis" → { name: "Diciembre", free_shipping: true }
+ */
 export function parseTierAdjustmentDescription(
   description: string
 ): TierAdjustmentInfo {
   const rest = description.slice(TIER_ADJUSTMENT_PREFIX.length).trim()
+  if (FREE_SHIPPING_SUFFIX.test(rest)) {
+    return {
+      name: rest.replace(FREE_SHIPPING_SUFFIX, "").trim() || "Promoción",
+      percentage: null,
+      free_shipping: true,
+    }
+  }
   const match = rest.match(/^(.*?)\s*-\s*(\d+(?:[.,]\d+)?)\s*%\s*$/)
-  if (!match) return { name: rest || "Promoción", percentage: null }
+  if (!match) {
+    return { name: rest || "Promoción", percentage: null, free_shipping: false }
+  }
   return {
     name: match[1].trim() || "Promoción",
     percentage: Number(match[2].replace(",", ".")),
+    free_shipping: false,
   }
+}
+
+/**
+ * Free-shipping adjustment of the promotion on a shipping method (S14): no
+ * code (coupons always have one) and, when the description was fetched, the
+ * "Promo por monto:" prefix. The store cart endpoint does not return
+ * shipping adjustment descriptions by default, so a code-less adjustment
+ * without description also counts.
+ */
+export function isShippingPromoAdjustment(
+  adjustment: PromoAdjustmentLike | null | undefined
+): boolean {
+  if (!adjustment || adjustment.code) return false
+  const { description } = adjustment
+  return (
+    description === undefined ||
+    description === null ||
+    (typeof description === "string" &&
+      description.startsWith(TIER_ADJUSTMENT_PREFIX))
+  )
+}
+
+/** What the promotion took off shipping in a cart/order, or null if nothing. */
+export function getShippingPromoDiscount(
+  shippingMethods: PromoShippingMethodLike[] | null | undefined
+): ShippingPromoSummary | null {
+  let amount = 0
+  let couponAmount = 0
+  let name: string | null = null
+  for (const method of shippingMethods ?? []) {
+    for (const adj of method.adjustments ?? []) {
+      if (!isShippingPromoAdjustment(adj)) {
+        if (adj?.code) couponAmount += toFiniteNumber(adj.amount) ?? 0
+        continue
+      }
+      amount += toFiniteNumber(adj.amount) ?? 0
+      if (!name && typeof adj.description === "string") {
+        name = parseTierAdjustmentDescription(adj.description).name
+      }
+    }
+  }
+  if (amount <= 0) return null
+  return {
+    amount: Math.round(amount * 100) / 100,
+    name,
+    coupon_amount: Math.round(couponAmount * 100) / 100,
+  }
+}
+
+/**
+ * The promotion gives free shipping to a cart with these items: some reached
+ * tier gives it (benefits accumulate, S3/S14).
+ */
+export function promotionGivesFreeShipping(
+  promotion: StorePromotion | null | undefined,
+  items: PromoLineItemLike[] | null | undefined
+): boolean {
+  if (!promotion) return false
+  return (
+    getCurrentTier(promotion.tiers, getEligibleSubtotal(items))?.free_shipping ===
+    true
+  )
 }
 
 /** Tier adjustment info of one item, or null if the tier did not touch it. */
@@ -605,19 +887,38 @@ export function formatTierAmount(amount: number): string {
   }).format(amount)
 }
 
-/** "20% desde $1,500, 25% desde $5,000 y 30% desde $10,000" */
+/**
+ * "20% desde $1,500, 25% desde $5,000 y 30% desde $10,000";
+ * "envío gratis desde $1,500"; "20% desde $1,500 y envío gratis desde $3,000"
+ * (at $3,000 the cart keeps the 20%); "20% + envío gratis desde $1,500".
+ */
 export function formatTierList(tiers: StorePromotionTier[]): string {
-  const parts = tiers.map(
-    (t) => `${t.percentage}% desde ${formatTierAmount(t.min_amount)}`
-  )
+  // Each tier says what it ADDS to the previous ones (benefits accumulate,
+  // S14): "20% desde $1,500 y envío gratis desde $3,000".
+  const effective = accumulateTiers(tiers)
+  const parts = effective.map((t, i) => {
+    const benefit = formatTierBenefit(t, effective[i - 1] ?? null).replace(
+      /^(\d+(?:\.\d+)?%) y envío gratis$/,
+      "$1 + envío gratis"
+    )
+    return `${benefit} desde ${formatTierAmount(t.min_amount)}`
+  })
   if (parts.length <= 1) return parts.join("")
   return `${parts.slice(0, -1).join(", ")} y ${parts[parts.length - 1]}`
 }
 
 /** Default top-bar copy when the admin left topbar_message empty. */
 export function getDefaultTopbarMessage(promotion: StorePromotion): string {
-  const first = promotion.tiers[0]
-  return `${promotion.name}: hasta ${getMaxPercentage(promotion.tiers)}% de descuento desde ${formatTierAmount(first.min_amount)}`
+  const maxPct = getMaxPercentage(promotion.tiers)
+  const firstPct = promotion.tiers.find(tierHasPercentage)
+  const freeTier = getFreeShippingTier(promotion.tiers)
+  const pctText = firstPct
+    ? `hasta ${maxPct}% de descuento desde ${formatTierAmount(firstPct.min_amount)}`
+    : ""
+  const freeText = freeTier
+    ? `envío gratis ${firstPct ? "desde" : "en compras desde"} ${formatTierAmount(freeTier.min_amount)}`
+    : ""
+  return `${promotion.name}: ${[pctText, freeText].filter(Boolean).join(" y ")}`
 }
 
 /**
@@ -633,6 +934,19 @@ export function getTierExampleAmount(tier: StorePromotionTier): number {
 // ---------------------------------------------------------------------------
 
 export const BULK_FAQ_QUESTION = "¿Tienen descuentos por mayoreo?"
+export const SHIPPING_FAQ_QUESTION = "¿Cuentan con servicio de envíos?"
+
+/**
+ * Extra sentence for the shipping FAQ while a promotion with free shipping is
+ * in force; null otherwise (the regular answer stays as is).
+ */
+export function getShippingFaqNote(state: StorePromotionState): string | null {
+  const { promotion } = state
+  const freeTier = promotion ? getFreeShippingTier(promotion.tiers) : null
+  if (!promotion || !freeTier) return null
+  const range = formatPromotionDateRange(promotion.starts_at, promotion.ends_at)
+  return `${range}, con ${promotion.name}, el envío es gratis en compras desde ${formatTierAmount(freeTier.min_amount)} (subtotal de productos), en cualquier opción de envío.`
+}
 
 /** Paragraphs of the bulk FAQ answer for the current state (plain text). */
 export function getBulkFaqParagraphs(state: StorePromotionState): string[] {
@@ -643,9 +957,13 @@ export function getBulkFaqParagraphs(state: StorePromotionState): string[] {
     const bulkNote = bulk.enabled
       ? `Durante esas fechas no aplica el descuento de ${bulk.threshold} piezas; regresa el ${formatDayAfter(promotion.ends_at)}.`
       : "Durante esas fechas no aplica el descuento por mayoreo."
+    // The "by kilo" exclusion is about the percentage; free shipping has none.
+    const kiloNote = hasPercentageTier(promotion.tiers)
+      ? " No aplica a productos por kilo."
+      : ""
     return [
       `${range} tenemos ${promotion.name}: ${formatTierList(promotion.tiers)} en tu compra.`,
-      `${bulkNote} No aplica a productos por kilo.`,
+      `${bulkNote}${kiloNote}`,
     ]
   }
 
