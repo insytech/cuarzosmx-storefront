@@ -108,7 +108,7 @@ const TierProgress = ({
           )}
         </p>
         <div
-          className="h-2 bg-white rounded-full overflow-hidden"
+          className="h-2.5 bg-grey-20 rounded-full overflow-hidden"
           role="progressbar"
           aria-label={
             next
@@ -126,16 +126,23 @@ const TierProgress = ({
             style={{ width: `${fill}%` }}
           />
         </div>
-        <div className="flex justify-between text-[11px] text-grey-50 mt-1">
+        {/* Where the cart is (left) and the goal (right), so the bar reads
+            as "MX$799.60 of $1,500" instead of two abstract labels. */}
+        <div className="flex justify-between gap-2 text-[11px] text-grey-50 mt-1">
           <span>
-            {current
-              ? `${formatTierBenefitShort(current)} · ${formatTierAmount(current.min_amount)}`
-              : noneLabel}
+            Llevas{" "}
+            <b className="text-black font-semibold">{money(subtotal)}</b>
           </span>
-          {next && (
-            <span>
-              {formatTierMarkLabel(next, current)} ·{" "}
-              {formatTierAmount(next.min_amount)}
+          {next ? (
+            <span className="text-right">
+              Meta {formatTierAmount(next.min_amount)}:{" "}
+              <b className="text-main-color-dark font-semibold">
+                {formatTierMarkLabel(next, current).replace(/^\+\s*/, "")}
+              </b>
+            </span>
+          ) : (
+            <span className="text-right text-main-color-dark font-semibold">
+              {current ? `✓ ${formatTierBenefitShort(current)}` : noneLabel}
             </span>
           )}
         </div>
