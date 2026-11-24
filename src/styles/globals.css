@@ -2,9 +2,6 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-/* Rich editor blocks (blog body and category SEO text). */
-@import "./editor-content.css";
-
 /* Prevent horizontal overflow globally */
 html,
 body {

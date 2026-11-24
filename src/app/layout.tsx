@@ -1,6 +1,10 @@
 import { Metadata } from "next"
 import { Montserrat } from "next/font/google"
 import "styles/globals.css"
+// Rich editor blocks (blog body and category SEO text). Imported here, not with
+// @import in globals.css: Tailwind expands its base layer first, which leaves a
+// later @import after other rules (invalid CSS; Turbopack refuses it).
+import "styles/editor-content.css"
 import CookieConsentWrapper from "@modules/common/components/cookie-consent-wrapper"
 import GoogleTagManager from "@modules/common/components/google-tag-manager"
 import LazySpeedInsights from "@modules/common/components/lazy-speed-insights"
