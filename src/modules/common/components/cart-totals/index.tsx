@@ -18,6 +18,8 @@ type CartTotalsProps = {
   totals: {
     total?: number | null
     subtotal?: number | null
+    /** Products only. Medusa 2.9 `subtotal` also includes shipping. */
+    item_subtotal?: number | null
     tax_total?: number | null
     shipping_total?: number | null
     discount_total?: number | null
@@ -45,12 +47,15 @@ const CartTotals: React.FC<CartTotalsProps> = ({
   const {
     currency_code,
     total,
-    subtotal,
     tax_total,
     discount_total,
     gift_card_total,
     shipping_subtotal,
   } = totals
+  // "Subtotal" is the products (the lines listed). Medusa 2.9 `subtotal`
+  // adds shipping, which made it double count with the "Envío" row.
+  const subtotal =
+    typeof totals.item_subtotal === "number" ? totals.item_subtotal : totals.subtotal
 
   // A shipping method is only "free" once one has actually been chosen and the
   // backend resolved its cost to 0 (store pickup, free-shipping promos, ...).
