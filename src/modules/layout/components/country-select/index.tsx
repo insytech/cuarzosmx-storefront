@@ -47,7 +47,9 @@ const CountrySelect = ({ toggleState, regions }: CountrySelectProps) => {
         }))
       })
       .flat()
-      .sort((a, b) => (a?.label ?? "").localeCompare(b?.label ?? ""))
+      // A country without code or name cannot be selected or shown.
+      .filter((o): o is CountryOption => !!o?.country && !!o?.label)
+      .sort((a, b) => a.label.localeCompare(b.label))
   }, [regions])
 
   useEffect(() => {
