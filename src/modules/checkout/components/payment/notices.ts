@@ -6,6 +6,8 @@ export const PAYMENT_NOTICE = {
   TOTAL_CHANGED: "El total de tu carrito cambió. Revísalo antes de pagar.",
   TRANSFER_RESTORED:
     "Tu total se actualizó; volvimos a seleccionar transferencia.",
+  PENDING_TICKET:
+    "Tienes una ficha de pago pendiente para este carrito (por ejemplo, OXXO). Si pagas ahora con otro método, ya no pagues la ficha: si se pagan las dos, tendremos que reembolsarte una.",
 } as const
 
 export type PaymentNotice = (typeof PAYMENT_NOTICE)[keyof typeof PAYMENT_NOTICE]
