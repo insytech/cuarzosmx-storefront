@@ -19,7 +19,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   // Optimizaciones de rendimiento
   poweredByHeader: false,
