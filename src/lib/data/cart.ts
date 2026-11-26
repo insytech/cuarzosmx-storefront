@@ -708,6 +708,40 @@ export async function createMercadoPagoPreference(cartId?: string) {
 }
 
 /**
+ * Does the cart have an unpaid Mercado Pago ticket (OXXO)? Used only to warn the
+ * shopper before paying another way; any failure answers `false` (no notice).
+ */
+export async function hasPendingMercadoPagoTicket(cartId: string): Promise<boolean> {
+  if (!cartId) {
+    return false
+  }
+  const backendUrl =
+    process.env.MEDUSA_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+    "http://localhost:9000"
+  try {
+    const response = await fetch(
+      `${backendUrl}/store/mercadopago-pending-payment?cart_id=${encodeURIComponent(cartId)}`,
+      {
+        headers: {
+          "x-publishable-api-key":
+            process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+          ...(await getAuthHeaders()),
+        },
+        cache: "no-store",
+      }
+    )
+    if (!response.ok) {
+      return false
+    }
+    const data = (await response.json()) as { pending?: boolean }
+    return data?.pending === true
+  } catch {
+    return false
+  }
+}
+
+/**
  * Completes the order after a successful MercadoPago payment
  * @param cartId - The ID of the cart to complete
  * @param paymentId - The MercadoPago payment ID. When provided, the backend

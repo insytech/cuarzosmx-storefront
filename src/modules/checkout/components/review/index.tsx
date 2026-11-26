@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation"
 import PaymentButton from "../payment-button"
 import { useSearchParams } from "next/navigation"
 import { isMercadoPago } from "@lib/constants"
-import { completeMercadoPagoOrder } from "@lib/data/cart"
+import { completeMercadoPagoOrder, hasPendingMercadoPagoTicket } from "@lib/data/cart"
 import type { MercadoPagoCardData } from "../payment"
-import { isCardTotalChanged } from "../payment/notices"
+import { PAYMENT_NOTICE, isCardTotalChanged } from "../payment/notices"
 
 const Review = ({
   cart,
@@ -49,6 +49,24 @@ const Review = ({
   }, [cart?.id])
 
   const isOpen = searchParams.get("step") === "review"
+
+  // Unpaid OXXO ticket on this cart: paying another way is allowed, but the shopper
+  // must not pay the ticket too (S8b). Asked once per cart when the step opens.
+  const [hasPendingTicket, setHasPendingTicket] = useState(false)
+  useEffect(() => {
+    if (!isOpen || !cart?.id) {
+      return
+    }
+    let cancelled = false
+    hasPendingMercadoPagoTicket(cart.id).then((pending) => {
+      if (!cancelled) {
+        setHasPendingTicket(pending)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, cart?.id])
 
   // MercadoPago redirect return (Wallet / Mercado Crédito): the preference
   // back_urls point to /checkout?step=review&payment_status=success and
@@ -347,6 +365,18 @@ const Review = ({
               </Text>
             </div>
           </div>
+
+          {hasPendingTicket && (
+            <div
+              className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md"
+              role="status"
+              data-testid="pending-ticket-notice"
+            >
+              <Text className="text-sm text-amber-800">
+                {PAYMENT_NOTICE.PENDING_TICKET}
+              </Text>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
