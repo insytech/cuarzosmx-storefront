@@ -96,7 +96,7 @@ export default async function CollectionTemplate({
           </h1>
 
           {/* Description */}
-          {collection.metadata?.description && (
+          {!!collection.metadata?.description && (
             <p className="text-white/90 text-base md:text-lg max-w-3xl drop-shadow-md">
               {collection.metadata.description as string}
             </p>

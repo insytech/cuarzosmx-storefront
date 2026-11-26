@@ -27,7 +27,8 @@ type CartTotalsProps = {
     currency_code: string
     shipping_subtotal?: number | null
     original_shipping_total?: number | null
-    items?: HttpTypes.StoreCartLineItem[]
+    /** Cart lines, or the order's lines on the confirmation page. */
+    items?: HttpTypes.StoreCartLineItem[] | HttpTypes.StoreOrderLineItem[] | null
     shipping_methods?: PromoShippingMethodLike[] | null
   }
   /** Live bulk values (label only); the amount always comes from adjustments. */

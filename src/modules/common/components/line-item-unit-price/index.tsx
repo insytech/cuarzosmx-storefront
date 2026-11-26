@@ -13,7 +13,9 @@ const LineItemUnitPrice = ({
   style = "default",
   currencyCode,
 }: LineItemUnitPriceProps) => {
-  const { total, original_total } = item
+  // Medusa types the totals as optional; a missing original means no discount.
+  const total = item.total ?? 0
+  const original_total = item.original_total ?? total
   const hasReducedPrice = total < original_total
 
   const percentage_diff = Math.round(
